@@ -74,7 +74,8 @@ button.row{border:0;border-bottom:1px solid var(--rule);text-align:start;width:1
 .row .meta .time{font-weight:600;color:var(--ink)}
 .row .meta > span + span::before{content:"";display:none}
 .std{font-size:var(--fs-sm);color:var(--ink-2);overflow-wrap:anywhere;max-width:60ch}
-.std b{color:var(--ink);font-weight:600}
+.std b{color:var(--ink);font-weight:600;margin-inline-end:4px}
+.shift-progress{margin:0 0 var(--s4)}
 .empty{padding:var(--s4) 0 var(--s5);color:var(--ink-2)}
 .empty strong{color:var(--ink);font-family:var(--serif);font-weight:500;font-size:var(--fs-lg);display:block;margin-bottom:2px}
 .skel{height:56px;border-bottom:1px solid var(--rule);background:linear-gradient(90deg,transparent 0,var(--tint) 30%,transparent 60%) 0 0/200% 100%;animation:shimmer 1.4s linear infinite}
@@ -97,7 +98,6 @@ button.row{border:0;border-bottom:1px solid var(--rule);text-align:start;width:1
 .row.completing{transition:opacity .35s var(--ease) .25s,transform .35s var(--ease) .25s}
 .row.completing .name{text-decoration:line-through;text-decoration-color:var(--ink-3);color:var(--ink-2)}
 .row.gone{opacity:0;transform:translateX(12px)}
-.claim{grid-column:1/-1}
 
 /* Swipe: content slides, actions sit behind */
 .swipe{position:relative;overflow:hidden}
@@ -113,18 +113,11 @@ button.row{border:0;border-bottom:1px solid var(--rule);text-align:start;width:1
 .linkish::after{content:"";position:absolute;inset:-12px -6px}
 .linkish.quiet{color:var(--ink-2)}
 
-/* Today summary line instead of stat tiles */
+/* Today summary */
 .summary{font-size:var(--fs-base);color:var(--ink-2);margin:0 0 var(--s4);max-width:60ch}
 .summary b{color:var(--ink);font-weight:600}
 .caught{padding:var(--s4) 0 var(--s5);display:flex;flex-direction:column;gap:4px}
 .caught .big{font-family:var(--serif);font-size:var(--fs-2xl);color:var(--forest)}
-.tonight{display:grid;grid-template-columns:1fr auto;gap:var(--s3);align-items:center;padding:var(--s4);border-radius:var(--r);background:var(--tint);border:0;width:100%;text-align:start;color:inherit;margin-bottom:var(--s6)}
-.tonight .t-title{font-family:var(--serif);font-size:var(--fs-xl)}
-.tonight .t-meta{font-size:var(--fs-sm);color:var(--ink-2)}
-.tonight.closed{background:var(--forest-wash)}
-.progress{height:4px;border-radius:99px;background:var(--rule);overflow:hidden;margin:var(--s2) 0 2px}
-.progress i{display:block;height:100%;background:var(--forest);transition:width .5s var(--ease)}
-.fresh i{background:var(--sage)}
 
 /* Callouts: the few things that should be seen first (weather prep, tonight's shift, the season) */
 .callout{display:grid;grid-template-columns:1fr auto;align-items:center;gap:var(--s3);width:100%;text-align:start;border:0;border-radius:var(--r);padding:14px 16px;background:var(--tint);color:inherit;margin:0 0 var(--s3)}
@@ -164,7 +157,7 @@ button.row{border:0;border-bottom:1px solid var(--rule);text-align:start;width:1
 .fold.day .f-title{font-family:var(--sans);font-size:var(--fs-base);font-weight:600}
 .fold > summary::-webkit-details-marker{display:none}
 .fold .f-title{font-family:var(--serif);font-weight:500;font-size:var(--fs-lg)}
-.group-head .f-sub,.fold .f-sub{font-family:var(--sans);font-size:var(--fs-xs);font-weight:600;color:var(--forest);margin-inline-start:6px}
+.fold .f-sub{font-family:var(--sans);font-size:var(--fs-xs);font-weight:600;color:var(--forest);margin-inline-start:6px}
 .fold .chevd{width:18px;height:18px;color:var(--ink-2);align-self:center;transition:transform .2s var(--ease)}
 .fold[open] .chevd{transform:rotate(180deg)}
 .fold .f-body{padding-bottom:var(--s4)}
@@ -240,9 +233,6 @@ textarea{min-height:72px;resize:vertical}
 .chip[aria-pressed="true"]{background:var(--forest-wash);color:var(--forest);border-color:var(--forest)}
 .switch{display:flex;align-items:center;gap:var(--s3);font-size:var(--fs-md)}
 .switch input{width:20px;height:20px;accent-color:var(--forest)}
-.daypick{display:flex;gap:6px;flex-wrap:wrap}
-.daypick label{display:flex;align-items:center;gap:5px;font-size:var(--fs-sm);border:1px solid var(--rule);border-radius:999px;padding:5px 10px}
-.daypick input{accent-color:var(--forest)}
 .cmtform{display:flex;gap:var(--s2)}
 .cmtform input{flex:1}
 .calbox{display:flex;flex-direction:column;gap:var(--s3);padding:var(--s4);border-radius:var(--r);background:var(--tint)}
@@ -293,7 +283,6 @@ nav.tabs .brand{display:none}
 .scrim{position:fixed;inset:0;background:rgb(16 22 18 / .36);z-index:30;animation:fade .2s var(--ease)}
 .sheet{position:fixed;inset-inline:0;bottom:0;z-index:31;display:flex;justify-content:center}
 .sheet .panel{background:var(--leaf);width:100%;max-width:640px;max-height:90vh;overflow:auto;border-radius:var(--r-lg) var(--r-lg) 0 0;padding:var(--s5) max(18px,env(safe-area-inset-right,0px)) calc(var(--s5) + env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:var(--s4);animation:rise .28s var(--ease)}
-.sheet .bar{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--s3)}
 .sheet h2{font-family:var(--serif);font-weight:500;font-size:var(--fs-2xl)}
 .toasts{position:fixed;inset-inline:0;bottom:0;z-index:40;pointer-events:none;display:flex;justify-content:center;padding:0 max(8px,env(safe-area-inset-right,0px)) env(safe-area-inset-bottom,0px) max(8px,env(safe-area-inset-left,0px))}
 .toasts.top{bottom:auto;top:0;padding-top:calc(env(safe-area-inset-top,0px) + 8px)}
@@ -417,10 +406,6 @@ input.sw:disabled{opacity:.5}
 .cal-acts{display:flex;gap:6px;flex-wrap:wrap}
 
 /* Setup */
-.packs{display:grid;gap:0}
-.pack{display:grid;grid-template-columns:auto 1fr;gap:var(--s3);align-items:start;padding:var(--s3) 0;border-bottom:1px solid var(--rule)}
-.pack input{width:20px;height:20px;margin-top:2px;accent-color:var(--forest)}
-.pack small{color:var(--ink-2);display:block}
 
 /* Kid view: big, friendly cards with an obvious done button */
 .kid-head{align-items:center}
@@ -454,6 +439,17 @@ input.sw:disabled{opacity:.5}
 .k-check.big{width:64px;height:64px;background:var(--forest);border-color:var(--forest)}
 .k-check.big svg{opacity:1;width:30px;height:30px}
 .kid-rewards{margin-top:var(--s6)}
+
+
+/* Swipe actions, pull to sync, PIN pad */
+.swipe .acts button{min-width:85px}
+.timer{font-size:var(--fs-2xl);font-variant-numeric:tabular-nums}
+.ptr{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 8px);transform:translate(-50%,0);background:var(--ink);color:var(--paper);font-size:var(--fs-sm);font-weight:600;padding:6px 14px;border-radius:999px;opacity:0;pointer-events:none;z-index:45;transition:opacity .2s}
+.pindots{display:flex;gap:14px;margin:var(--s3) 0}
+.pindots i{width:14px;height:14px;border-radius:50%;border:1.6px solid var(--ink-3)}
+.pindots i.on{background:var(--forest);border-color:var(--forest)}
+.pinpad{display:grid;grid-template-columns:repeat(3,72px);gap:12px;justify-content:center}
+.pinpad button{width:72px;height:72px;border-radius:50%;border:1px solid var(--rule);background:var(--paper);font-size:var(--fs-2xl);font-weight:500;color:var(--ink)}
 
 @keyframes rise{from{transform:translateY(14px);opacity:0}to{transform:none;opacity:1}}
 @keyframes fade{from{opacity:0}to{opacity:1}}

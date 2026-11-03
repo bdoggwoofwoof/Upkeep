@@ -16,14 +16,6 @@ function seasonTasks(){
  const done=list.filter(t=>t.lastDone&&t.lastDone>=s.start),left=list.filter(t=>!(t.lastDone&&t.lastDone>=s.start));
  return{s,list,done,left};
 }
-function seasonBlock(){
- const {s,list,done,left}=seasonTasks();if(!list.length)return"";
- return `<section class="group"><div class="group-head"><h2>${s.name} checklist</h2><span class="stamp">${done.length} of ${list.length} done</span></div>
- <div class="progress fresh" style="margin:var(--s3) 0"><i style="width:${done.length/list.length*100}%"></i></div>
- <div class="list">${left.sort((a,b)=>a.next.localeCompare(b.next)).map(taskRow).join("")}</div>
- ${done.length?`<div class="list" style="opacity:.7">${done.map(t=>`<div class="row"><span class="main"><span class="name" style="color:var(--ink-2)">${esc(t.name)}</span><span class="meta"><span class="checked-by">Done ${nice(t.lastDone)}${t.lastBy?" · "+esc(pShort(t.lastBy)):""}</span></span></span><span></span></div>`).join("")}</div>`:""}
- ${!left.length?`<div class="caught"><span class="big">The ${s.name.toLowerCase()} checklist is done.</span><span class="muted">Everything this season asked of the house is taken care of.</span></div>`:""}</section>`;
-}
 
 /* Milestones: recorded once per house */
 const MILESTONE_TEXT={

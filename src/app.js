@@ -378,12 +378,6 @@ function endPause(){
  logEvent({kind:"pause",text:`is back. Due dates moved ${shift} day${shift===1?"":"s"}`});render();
 }
 
-/* ---------- Freshness ---------- */
-function freshness(room){
- const ts=tasks().filter(t=>t.room===room);if(!ts.length)return null;
- const v=ts.map(t=>{const total=intervalDays(t),left=daysBetween(today(),t.next);return Math.max(0,Math.min(1,left/total))});
- return v.reduce((a,b)=>a+b,0)/v.length;
-}
 
 /* ---------- Expenses ---------- */
 function balances(){
@@ -416,10 +410,10 @@ function planBlock(){
  const ids=ui.plan.ids.filter(id=>D.tasks[id]);const list=ids.map(id=>D.tasks[id]);
  const total=list.reduce((a,t)=>a+(t.mins|0),0);
  const s=timer.running?Math.max(0,Math.round((timer.end-Date.now())/1000)):timer.left;
- if(!list.length)return `<p class="note" style="margin:0">Nothing's due. You're ahead.</p>`;
- return `<p class="note" style="margin:0">${list.length} task${list.length>1?"s":""} · ${total} min, oldest first</p>
- <div class="list">${list.map(t=>`<div class="row" style="grid-template-columns:auto 1fr"><button class="check" data-done="${t.id}" aria-label="Mark ${esc(t.name)} done"><i>${I.check}</i></button><button class="main" data-edit="${t.id}"><span class="name">${esc(t.name)}</span><span class="meta"><span>${t.mins} min</span><span>${esc(t.room)}</span></span></button></div>`).join("")}</div>
- <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="stamp" id="clock" style="font-size:1.4rem">${fmtTime(s)}</span>${timer.running?`<button class="btn small" data-timer="pause">Pause</button>`:`<button class="btn small primary" data-timer="start">${s<total*60?"Resume":"Start timer"}</button>`}<button class="btn small" data-timer="reset">Reset</button><button class="linkish" data-plan="0">Close</button></div>`;
+ if(!list.length)return `<p class="note">Nothing's due. You're ahead.</p>`;
+ return `<p class="note">${list.length} task${list.length>1?"s":""}, about ${fmtMins(total)}, oldest first</p>
+ <div class="list">${list.map(t=>`<div class="row"><button class="main" data-edit="${t.id}"><span class="name">${esc(t.name)}</span><span class="meta"><span>${fmtMins(t.mins)}</span><span>${esc(t.room)}</span></span></button><button class="check" data-done="${t.id}" aria-label="Complete ${esc(t.name)}"><i>${IC.check}</i></button></div>`).join("")}</div>
+ <div class="btn-row"><span class="timer" id="clock" role="timer">${fmtTime(s)}</span>${timer.running?`<button class="btn small" data-timer="pause">Pause</button>`:`<button class="btn small primary" data-timer="start">${s<total*60?"Resume":"Start timer"}</button>`}<button class="btn small" data-timer="reset">Reset</button><button class="linkish" data-plan="0">Close</button></div>`;
 }
 function viewShiftEdit(r){
  const days=r.days||[0,1,2,3,4,5,6];
@@ -584,12 +578,9 @@ function renderLayer(){
  }
  if(s&&s.kind==="finish"){
   const t=D.tasks[s.id];
-  h+=`<div class="scrim" data-close="1"></div><div class="sheet" role="dialog" aria-label="Finish task"><div class="panel">
-  <div class="bar"><h2>${esc(t?t.name:"")}</h2><button class="btn small" data-close="1">Close</button></div>
-  ${t&&t.standard?`<p class="std"><b>Done means:</b> ${esc(t.standard)}</p>`:""}
-  ${S.photos?`<label class="field"><span>Add a photo of the finished job</span><input type="file" accept="image/*" capture="environment" id="fin-photo"></label>`:`<p class="note">Photos aren't available in this view, so this one goes through without one.</p>`}
-  ${s.err?`<p class="note err">${esc(s.err)}</p>`:""}
-  <div><button class="btn primary" data-finish="1" ${s.busy?"disabled":""}>${s.busy?"Uploading…":"Complete task"}</button></div></div></div>`;
+  h+=sheetShell(t?t.name:"Finish task",`<h2 class="sheet-title" tabindex="-1">${esc(t?t.name:"")}</h2>`,`${t&&t.standard?`<div class="std-box"><b>Done means</b><p>${esc(t.standard)}</p></div>`:""}
+  ${S.photos?`<label class="field"><span>Add a photo of the finished job</span><input type="file" accept="image/*" capture="environment" id="fin-photo"></label>`:`<p class="note">Photos aren't available here, so this one goes through without one.</p>`}
+  ${s.err?`<p class="note err" role="alert">${esc(s.err)}</p>`:""}`,`<button class="btn primary" data-finish="1" ${s.busy?"disabled":""}>${s.busy?"Uploading…":"Complete task"}</button><button class="btn text" data-close="1">Cancel</button>`,"edit-one");
  }
  if(s&&s.kind==="form")h+=formSheet(s);
  h+=toastHtml();

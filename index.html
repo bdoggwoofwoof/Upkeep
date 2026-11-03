@@ -88,7 +88,8 @@ button.row{border:0;border-bottom:1px solid var(--rule);text-align:start;width:1
 .row .meta .time{font-weight:600;color:var(--ink)}
 .row .meta > span + span::before{content:"";display:none}
 .std{font-size:var(--fs-sm);color:var(--ink-2);overflow-wrap:anywhere;max-width:60ch}
-.std b{color:var(--ink);font-weight:600}
+.std b{color:var(--ink);font-weight:600;margin-inline-end:4px}
+.shift-progress{margin:0 0 var(--s4)}
 .empty{padding:var(--s4) 0 var(--s5);color:var(--ink-2)}
 .empty strong{color:var(--ink);font-family:var(--serif);font-weight:500;font-size:var(--fs-lg);display:block;margin-bottom:2px}
 .skel{height:56px;border-bottom:1px solid var(--rule);background:linear-gradient(90deg,transparent 0,var(--tint) 30%,transparent 60%) 0 0/200% 100%;animation:shimmer 1.4s linear infinite}
@@ -111,7 +112,6 @@ button.row{border:0;border-bottom:1px solid var(--rule);text-align:start;width:1
 .row.completing{transition:opacity .35s var(--ease) .25s,transform .35s var(--ease) .25s}
 .row.completing .name{text-decoration:line-through;text-decoration-color:var(--ink-3);color:var(--ink-2)}
 .row.gone{opacity:0;transform:translateX(12px)}
-.claim{grid-column:1/-1}
 
 /* Swipe: content slides, actions sit behind */
 .swipe{position:relative;overflow:hidden}
@@ -127,18 +127,11 @@ button.row{border:0;border-bottom:1px solid var(--rule);text-align:start;width:1
 .linkish::after{content:"";position:absolute;inset:-12px -6px}
 .linkish.quiet{color:var(--ink-2)}
 
-/* Today summary line instead of stat tiles */
+/* Today summary */
 .summary{font-size:var(--fs-base);color:var(--ink-2);margin:0 0 var(--s4);max-width:60ch}
 .summary b{color:var(--ink);font-weight:600}
 .caught{padding:var(--s4) 0 var(--s5);display:flex;flex-direction:column;gap:4px}
 .caught .big{font-family:var(--serif);font-size:var(--fs-2xl);color:var(--forest)}
-.tonight{display:grid;grid-template-columns:1fr auto;gap:var(--s3);align-items:center;padding:var(--s4);border-radius:var(--r);background:var(--tint);border:0;width:100%;text-align:start;color:inherit;margin-bottom:var(--s6)}
-.tonight .t-title{font-family:var(--serif);font-size:var(--fs-xl)}
-.tonight .t-meta{font-size:var(--fs-sm);color:var(--ink-2)}
-.tonight.closed{background:var(--forest-wash)}
-.progress{height:4px;border-radius:99px;background:var(--rule);overflow:hidden;margin:var(--s2) 0 2px}
-.progress i{display:block;height:100%;background:var(--forest);transition:width .5s var(--ease)}
-.fresh i{background:var(--sage)}
 
 /* Callouts: the few things that should be seen first (weather prep, tonight's shift, the season) */
 .callout{display:grid;grid-template-columns:1fr auto;align-items:center;gap:var(--s3);width:100%;text-align:start;border:0;border-radius:var(--r);padding:14px 16px;background:var(--tint);color:inherit;margin:0 0 var(--s3)}
@@ -178,7 +171,7 @@ button.row{border:0;border-bottom:1px solid var(--rule);text-align:start;width:1
 .fold.day .f-title{font-family:var(--sans);font-size:var(--fs-base);font-weight:600}
 .fold > summary::-webkit-details-marker{display:none}
 .fold .f-title{font-family:var(--serif);font-weight:500;font-size:var(--fs-lg)}
-.group-head .f-sub,.fold .f-sub{font-family:var(--sans);font-size:var(--fs-xs);font-weight:600;color:var(--forest);margin-inline-start:6px}
+.fold .f-sub{font-family:var(--sans);font-size:var(--fs-xs);font-weight:600;color:var(--forest);margin-inline-start:6px}
 .fold .chevd{width:18px;height:18px;color:var(--ink-2);align-self:center;transition:transform .2s var(--ease)}
 .fold[open] .chevd{transform:rotate(180deg)}
 .fold .f-body{padding-bottom:var(--s4)}
@@ -254,9 +247,6 @@ textarea{min-height:72px;resize:vertical}
 .chip[aria-pressed="true"]{background:var(--forest-wash);color:var(--forest);border-color:var(--forest)}
 .switch{display:flex;align-items:center;gap:var(--s3);font-size:var(--fs-md)}
 .switch input{width:20px;height:20px;accent-color:var(--forest)}
-.daypick{display:flex;gap:6px;flex-wrap:wrap}
-.daypick label{display:flex;align-items:center;gap:5px;font-size:var(--fs-sm);border:1px solid var(--rule);border-radius:999px;padding:5px 10px}
-.daypick input{accent-color:var(--forest)}
 .cmtform{display:flex;gap:var(--s2)}
 .cmtform input{flex:1}
 .calbox{display:flex;flex-direction:column;gap:var(--s3);padding:var(--s4);border-radius:var(--r);background:var(--tint)}
@@ -307,7 +297,6 @@ nav.tabs .brand{display:none}
 .scrim{position:fixed;inset:0;background:rgb(16 22 18 / .36);z-index:30;animation:fade .2s var(--ease)}
 .sheet{position:fixed;inset-inline:0;bottom:0;z-index:31;display:flex;justify-content:center}
 .sheet .panel{background:var(--leaf);width:100%;max-width:640px;max-height:90vh;overflow:auto;border-radius:var(--r-lg) var(--r-lg) 0 0;padding:var(--s5) max(18px,env(safe-area-inset-right,0px)) calc(var(--s5) + env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:var(--s4);animation:rise .28s var(--ease)}
-.sheet .bar{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--s3)}
 .sheet h2{font-family:var(--serif);font-weight:500;font-size:var(--fs-2xl)}
 .toasts{position:fixed;inset-inline:0;bottom:0;z-index:40;pointer-events:none;display:flex;justify-content:center;padding:0 max(8px,env(safe-area-inset-right,0px)) env(safe-area-inset-bottom,0px) max(8px,env(safe-area-inset-left,0px))}
 .toasts.top{bottom:auto;top:0;padding-top:calc(env(safe-area-inset-top,0px) + 8px)}
@@ -431,10 +420,6 @@ input.sw:disabled{opacity:.5}
 .cal-acts{display:flex;gap:6px;flex-wrap:wrap}
 
 /* Setup */
-.packs{display:grid;gap:0}
-.pack{display:grid;grid-template-columns:auto 1fr;gap:var(--s3);align-items:start;padding:var(--s3) 0;border-bottom:1px solid var(--rule)}
-.pack input{width:20px;height:20px;margin-top:2px;accent-color:var(--forest)}
-.pack small{color:var(--ink-2);display:block}
 
 /* Kid view: big, friendly cards with an obvious done button */
 .kid-head{align-items:center}
@@ -468,6 +453,17 @@ input.sw:disabled{opacity:.5}
 .k-check.big{width:64px;height:64px;background:var(--forest);border-color:var(--forest)}
 .k-check.big svg{opacity:1;width:30px;height:30px}
 .kid-rewards{margin-top:var(--s6)}
+
+
+/* Swipe actions, pull to sync, PIN pad */
+.swipe .acts button{min-width:85px}
+.timer{font-size:var(--fs-2xl);font-variant-numeric:tabular-nums}
+.ptr{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 8px);transform:translate(-50%,0);background:var(--ink);color:var(--paper);font-size:var(--fs-sm);font-weight:600;padding:6px 14px;border-radius:999px;opacity:0;pointer-events:none;z-index:45;transition:opacity .2s}
+.pindots{display:flex;gap:14px;margin:var(--s3) 0}
+.pindots i{width:14px;height:14px;border-radius:50%;border:1.6px solid var(--ink-3)}
+.pindots i.on{background:var(--forest);border-color:var(--forest)}
+.pinpad{display:grid;grid-template-columns:repeat(3,72px);gap:12px;justify-content:center}
+.pinpad button{width:72px;height:72px;border-radius:50%;border:1px solid var(--rule);background:var(--paper);font-size:var(--fs-2xl);font-weight:500;color:var(--ink)}
 
 @keyframes rise{from{transform:translateY(14px);opacity:0}to{transform:none;opacity:1}}
 @keyframes fade{from{opacity:0}to{opacity:1}}
@@ -508,20 +504,6 @@ input.sw:disabled{opacity:.5}
   .ptr{left:calc(50% + 110px)}
   h1{font-size:2.4rem}
 }
-
-.swipe .acts button{min-width:85px}
-.row:has(> .check:first-child){grid-template-columns:auto 1fr auto}
-.row:has(> .check:first-child) .check{margin-inline:-8px 0}
-
-.take{border:1px solid var(--rule);background:transparent;border-radius:999px;padding:5px 12px;font-size:var(--fs-sm);font-weight:600;color:var(--forest);white-space:nowrap;min-height:34px}
-.task .main .std{margin-top:2px}
-
-.ptr{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 8px);transform:translate(-50%,0);background:var(--ink);color:var(--paper);font-size:var(--fs-sm);font-weight:600;padding:6px 14px;border-radius:999px;opacity:0;pointer-events:none;z-index:45;transition:opacity .2s}
-.pindots{display:flex;gap:14px;margin:var(--s3) 0}
-.pindots i{width:14px;height:14px;border-radius:50%;border:1.6px solid var(--ink-3)}
-.pindots i.on{background:var(--forest);border-color:var(--forest)}
-.pinpad{display:grid;grid-template-columns:repeat(3,72px);gap:12px;justify-content:center}
-.pinpad button{width:72px;height:72px;border-radius:50%;border:1px solid var(--rule);background:var(--paper);font-size:var(--fs-2xl);font-weight:500;color:var(--ink)}
 
 </style>
 </head>
@@ -1214,12 +1196,6 @@ function endPause(){
  logEvent({kind:"pause",text:`is back. Due dates moved ${shift} day${shift===1?"":"s"}`});render();
 }
 
-/* ---------- Freshness ---------- */
-function freshness(room){
- const ts=tasks().filter(t=>t.room===room);if(!ts.length)return null;
- const v=ts.map(t=>{const total=intervalDays(t),left=daysBetween(today(),t.next);return Math.max(0,Math.min(1,left/total))});
- return v.reduce((a,b)=>a+b,0)/v.length;
-}
 
 /* ---------- Expenses ---------- */
 function balances(){
@@ -1252,10 +1228,10 @@ function planBlock(){
  const ids=ui.plan.ids.filter(id=>D.tasks[id]);const list=ids.map(id=>D.tasks[id]);
  const total=list.reduce((a,t)=>a+(t.mins|0),0);
  const s=timer.running?Math.max(0,Math.round((timer.end-Date.now())/1000)):timer.left;
- if(!list.length)return `<p class="note" style="margin:0">Nothing's due. You're ahead.</p>`;
- return `<p class="note" style="margin:0">${list.length} task${list.length>1?"s":""} · ${total} min, oldest first</p>
- <div class="list">${list.map(t=>`<div class="row" style="grid-template-columns:auto 1fr"><button class="check" data-done="${t.id}" aria-label="Mark ${esc(t.name)} done"><i>${I.check}</i></button><button class="main" data-edit="${t.id}"><span class="name">${esc(t.name)}</span><span class="meta"><span>${t.mins} min</span><span>${esc(t.room)}</span></span></button></div>`).join("")}</div>
- <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="stamp" id="clock" style="font-size:1.4rem">${fmtTime(s)}</span>${timer.running?`<button class="btn small" data-timer="pause">Pause</button>`:`<button class="btn small primary" data-timer="start">${s<total*60?"Resume":"Start timer"}</button>`}<button class="btn small" data-timer="reset">Reset</button><button class="linkish" data-plan="0">Close</button></div>`;
+ if(!list.length)return `<p class="note">Nothing's due. You're ahead.</p>`;
+ return `<p class="note">${list.length} task${list.length>1?"s":""}, about ${fmtMins(total)}, oldest first</p>
+ <div class="list">${list.map(t=>`<div class="row"><button class="main" data-edit="${t.id}"><span class="name">${esc(t.name)}</span><span class="meta"><span>${fmtMins(t.mins)}</span><span>${esc(t.room)}</span></span></button><button class="check" data-done="${t.id}" aria-label="Complete ${esc(t.name)}"><i>${IC.check}</i></button></div>`).join("")}</div>
+ <div class="btn-row"><span class="timer" id="clock" role="timer">${fmtTime(s)}</span>${timer.running?`<button class="btn small" data-timer="pause">Pause</button>`:`<button class="btn small primary" data-timer="start">${s<total*60?"Resume":"Start timer"}</button>`}<button class="btn small" data-timer="reset">Reset</button><button class="linkish" data-plan="0">Close</button></div>`;
 }
 function viewShiftEdit(r){
  const days=r.days||[0,1,2,3,4,5,6];
@@ -1420,12 +1396,9 @@ function renderLayer(){
  }
  if(s&&s.kind==="finish"){
   const t=D.tasks[s.id];
-  h+=`<div class="scrim" data-close="1"></div><div class="sheet" role="dialog" aria-label="Finish task"><div class="panel">
-  <div class="bar"><h2>${esc(t?t.name:"")}</h2><button class="btn small" data-close="1">Close</button></div>
-  ${t&&t.standard?`<p class="std"><b>Done means:</b> ${esc(t.standard)}</p>`:""}
-  ${S.photos?`<label class="field"><span>Add a photo of the finished job</span><input type="file" accept="image/*" capture="environment" id="fin-photo"></label>`:`<p class="note">Photos aren't available in this view, so this one goes through without one.</p>`}
-  ${s.err?`<p class="note err">${esc(s.err)}</p>`:""}
-  <div><button class="btn primary" data-finish="1" ${s.busy?"disabled":""}>${s.busy?"Uploading…":"Complete task"}</button></div></div></div>`;
+  h+=sheetShell(t?t.name:"Finish task",`<h2 class="sheet-title" tabindex="-1">${esc(t?t.name:"")}</h2>`,`${t&&t.standard?`<div class="std-box"><b>Done means</b><p>${esc(t.standard)}</p></div>`:""}
+  ${S.photos?`<label class="field"><span>Add a photo of the finished job</span><input type="file" accept="image/*" capture="environment" id="fin-photo"></label>`:`<p class="note">Photos aren't available here, so this one goes through without one.</p>`}
+  ${s.err?`<p class="note err" role="alert">${esc(s.err)}</p>`:""}`,`<button class="btn primary" data-finish="1" ${s.busy?"disabled":""}>${s.busy?"Uploading…":"Complete task"}</button><button class="btn text" data-close="1">Cancel</button>`,"edit-one");
  }
  if(s&&s.kind==="form")h+=formSheet(s);
  h+=toastHtml();
@@ -1987,25 +1960,23 @@ function toast(msg,undo){showToast(msg,undo,"action")}
 function notify(msg){if(ui.kid)return;if(ui.toast&&ui.toast.undo){if(noticeQ.length<3)noticeQ.push({msg});return}showToast(msg,null,"notice")}
 
 function viewShift(){
- const rs=routines();
- if(!rs.length)return `<button class="linkish" data-tab="today">← Today</button><header class="top" style="margin-top:var(--s4)"><div><span class="eyebrow">Routines</span><h1>Closing shift</h1></div></header>${systemNotices()}<div class="caught"><span class="big">No closing shift yet.</span><span class="muted">It's the short list the household runs before bed, each person with their own part.</span></div>${S.canWrite?`<div style="margin-top:var(--s4)"><button class="btn primary" data-mkclosing="1">Start a closing shift</button></div>`:""}`;
+ const rs=routines(),back=`<button class="back linkish" data-tab="today">${IC.back}Today</button>`;
+ if(!rs.length)return `${back}<header class="top"><div class="ttl"><h1>Closing shift</h1></div></header>${systemNotices()}<div class="empty"><strong>No closing shift yet.</strong>It's the short list the household runs before bed, each person with their own part.</div>${S.canWrite?`<button class="btn primary" data-mkclosing="1">Start a closing shift</button>`:""}`;
  if(!ui.routine||!D.routines[ui.routine])ui.routine=(rs.find(routineRunsTonight)||rs[0]).id;
  const r=D.routines[ui.routine],done=r.items.filter(i=>D.checks[checkId(r.id,i.id)]).length,all=r.items.length,closed=all&&done===all;
  const chips=rs.length>1?subnav("Routines",rs.map(x=>[x.id,esc(x.name)]),r.id,"routine"):"";
  if(ui.editShift)return viewShiftEdit(r);
  const me=myPid(),order=[...r.items].sort((a,b)=>(a.assignee===me?0:1)-(b.assignee===me?0:1));
- return `<button class="linkish" data-tab="today">← Today</button>
- <header class="top" style="margin-top:var(--s4)"><div><span class="eyebrow">${routineRunsTonight(r)?`Tonight · ${t12(r.time)}`:"Not scheduled tonight"}</span><h1>${closed?"Closed for the night":esc(r.name)}</h1></div>${S.canWrite?`<button class="btn small" data-editshift="1">Edit</button>`:""}</header>${systemNotices()}
+ return `${back}<header class="top"><div class="ttl"><h1>${closed?"Closed for the night":esc(r.name)}</h1><span class="date">${routineRunsTonight(r)?`Tonight at ${t12(r.time)}`:"Not scheduled tonight"}</span></div>${S.canWrite?`<button class="btn small" data-editshift="1">Edit</button>`:""}</header>${systemNotices()}
  ${chips}
- <div class="progress"><i style="width:${all?done/all*100:0}%"></i></div>
- <p class="note" style="margin-bottom:var(--s4)">${done} of ${all} done${closed?". Nice work, everyone.":""} · Resets at 4 AM</p>
+ <div class="shift-progress"><span class="meter wide" aria-hidden="true"><i style="width:${all?done/all*100:0}%"></i></span><p class="note">${done} of ${all} done${closed?". Nice work, everyone.":""} · Resets at 4 AM</p></div>
+ <section class="group"><div class="group-head"><h2>Tonight's list</h2><span class="gh-r">${all>1&&S.canWrite?`<button class="linkish" data-arrange="1">Reorder</button>`:""}</span></div>
  <div class="list" data-sort="shift:${r.id}">${order.map(i=>{const c=D.checks[checkId(r.id,i.id)],nc=commentsFor("item:"+r.id+":"+i.id).length,pend=c&&Object.values(D.approvals).some(a=>a.ref===c.id);
-  return `<div class="row task" data-row="${i.id}"><button class="main" data-item="${i.id}"><span class="name" ${c?'style="color:var(--ink-2)"':""}>${esc(i.text)}</span>
-   ${i.standard&&!c?`<span class="std"><b>Done means:</b> ${esc(i.standard)}</span>`:""}
-   <span class="meta">${c?`<span class="checked-by">${esc(pShort(c.who))} · ${clock(c.at)}${pend?" · waiting for OK":""}</span>`:""}${nc?`<span>${nc} comment${nc>1?"s":""}</span>`:""}</span></button>
-   ${multiUser()?(i.assignee?`<span class="who">${av(i.assignee)}<span>${esc(pShort(i.assignee))}</span></span>`:`<span class="who">Anyone</span>`):"<span></span>"}
-   <button class="check ${c?"done":""}" data-tick="${i.id}" aria-label="${c?"Undo":"Complete"} ${esc(i.text)}" aria-pressed="${!!c}"><i>${IC.check}</i></button></div>`}).join("")||`<div class="empty">No items yet. Tap Edit to add some.</div>`}</div>
- <section class="group" style="margin-top:var(--s6)"><div class="calbox"><b>Put it on your calendar</b><p class="note">One repeating event at ${t12(r.time)} with everyone's parts in the notes.</p>${calButtons("routine:"+r.id,routineAsEvent(r))}</div></section>`;
+  return `<div class="row task" data-row="${i.id}"><button class="main" data-item="${i.id}" aria-haspopup="dialog"><span class="name${c?" done-name":""}">${esc(i.text)}</span>
+   ${i.standard&&!c?`<span class="std"><b>Done means</b> ${esc(i.standard)}</span>`:""}
+   <span class="meta">${c?`<span class="checked-by">${IC.tick}${esc(pShort(c.who))} at ${clock(c.at)}${pend?", waiting for an OK":""}</span>`:ownerTag(i.assignee)}${nc?`<span>${nc} comment${nc>1?"s":""}</span>`:""}</span></button>
+   <button class="check ${c?"done":""}" data-tick="${i.id}" aria-label="${c?"Undo":"Complete"} ${esc(i.text)}" aria-pressed="${!!c}" ${S.canWrite?"":"disabled"}><i>${IC.check}</i></button></div>`}).join("")||`<div class="empty"><strong>No items yet.</strong>Tap Edit to add some.</div>`}</div></section>
+ <section class="group"><div class="t-sec"><h3>Put it on your calendar</h3><p class="note">One repeating event at ${t12(r.time)} with everyone's parts in the notes.</p>${calButtons("routine:"+r.id,routineAsEvent(r))}</div></section>`;
 }
 
 /* ---------- Task sheet: read first, edit on request ---------- */
@@ -2175,14 +2146,6 @@ function seasonTasks(){
  const list=tasks().filter(t=>t.months&&t.months.some(m=>s.months.includes(m)));
  const done=list.filter(t=>t.lastDone&&t.lastDone>=s.start),left=list.filter(t=>!(t.lastDone&&t.lastDone>=s.start));
  return{s,list,done,left};
-}
-function seasonBlock(){
- const {s,list,done,left}=seasonTasks();if(!list.length)return"";
- return `<section class="group"><div class="group-head"><h2>${s.name} checklist</h2><span class="stamp">${done.length} of ${list.length} done</span></div>
- <div class="progress fresh" style="margin:var(--s3) 0"><i style="width:${done.length/list.length*100}%"></i></div>
- <div class="list">${left.sort((a,b)=>a.next.localeCompare(b.next)).map(taskRow).join("")}</div>
- ${done.length?`<div class="list" style="opacity:.7">${done.map(t=>`<div class="row"><span class="main"><span class="name" style="color:var(--ink-2)">${esc(t.name)}</span><span class="meta"><span class="checked-by">Done ${nice(t.lastDone)}${t.lastBy?" · "+esc(pShort(t.lastBy)):""}</span></span></span><span></span></div>`).join("")}</div>`:""}
- ${!left.length?`<div class="caught"><span class="big">The ${s.name.toLowerCase()} checklist is done.</span><span class="muted">Everything this season asked of the house is taken care of.</span></div>`:""}</section>`;
 }
 
 /* Milestones: recorded once per house */

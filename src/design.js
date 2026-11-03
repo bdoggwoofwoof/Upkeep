@@ -398,25 +398,23 @@ function toast(msg,undo){showToast(msg,undo,"action")}
 function notify(msg){if(ui.kid)return;if(ui.toast&&ui.toast.undo){if(noticeQ.length<3)noticeQ.push({msg});return}showToast(msg,null,"notice")}
 
 function viewShift(){
- const rs=routines();
- if(!rs.length)return `<button class="linkish" data-tab="today">← Today</button><header class="top" style="margin-top:var(--s4)"><div><span class="eyebrow">Routines</span><h1>Closing shift</h1></div></header>${systemNotices()}<div class="caught"><span class="big">No closing shift yet.</span><span class="muted">It's the short list the household runs before bed, each person with their own part.</span></div>${S.canWrite?`<div style="margin-top:var(--s4)"><button class="btn primary" data-mkclosing="1">Start a closing shift</button></div>`:""}`;
+ const rs=routines(),back=`<button class="back linkish" data-tab="today">${IC.back}Today</button>`;
+ if(!rs.length)return `${back}<header class="top"><div class="ttl"><h1>Closing shift</h1></div></header>${systemNotices()}<div class="empty"><strong>No closing shift yet.</strong>It's the short list the household runs before bed, each person with their own part.</div>${S.canWrite?`<button class="btn primary" data-mkclosing="1">Start a closing shift</button>`:""}`;
  if(!ui.routine||!D.routines[ui.routine])ui.routine=(rs.find(routineRunsTonight)||rs[0]).id;
  const r=D.routines[ui.routine],done=r.items.filter(i=>D.checks[checkId(r.id,i.id)]).length,all=r.items.length,closed=all&&done===all;
  const chips=rs.length>1?subnav("Routines",rs.map(x=>[x.id,esc(x.name)]),r.id,"routine"):"";
  if(ui.editShift)return viewShiftEdit(r);
  const me=myPid(),order=[...r.items].sort((a,b)=>(a.assignee===me?0:1)-(b.assignee===me?0:1));
- return `<button class="linkish" data-tab="today">← Today</button>
- <header class="top" style="margin-top:var(--s4)"><div><span class="eyebrow">${routineRunsTonight(r)?`Tonight · ${t12(r.time)}`:"Not scheduled tonight"}</span><h1>${closed?"Closed for the night":esc(r.name)}</h1></div>${S.canWrite?`<button class="btn small" data-editshift="1">Edit</button>`:""}</header>${systemNotices()}
+ return `${back}<header class="top"><div class="ttl"><h1>${closed?"Closed for the night":esc(r.name)}</h1><span class="date">${routineRunsTonight(r)?`Tonight at ${t12(r.time)}`:"Not scheduled tonight"}</span></div>${S.canWrite?`<button class="btn small" data-editshift="1">Edit</button>`:""}</header>${systemNotices()}
  ${chips}
- <div class="progress"><i style="width:${all?done/all*100:0}%"></i></div>
- <p class="note" style="margin-bottom:var(--s4)">${done} of ${all} done${closed?". Nice work, everyone.":""} · Resets at 4 AM</p>
+ <div class="shift-progress"><span class="meter wide" aria-hidden="true"><i style="width:${all?done/all*100:0}%"></i></span><p class="note">${done} of ${all} done${closed?". Nice work, everyone.":""} · Resets at 4 AM</p></div>
+ <section class="group"><div class="group-head"><h2>Tonight's list</h2><span class="gh-r">${all>1&&S.canWrite?`<button class="linkish" data-arrange="1">Reorder</button>`:""}</span></div>
  <div class="list" data-sort="shift:${r.id}">${order.map(i=>{const c=D.checks[checkId(r.id,i.id)],nc=commentsFor("item:"+r.id+":"+i.id).length,pend=c&&Object.values(D.approvals).some(a=>a.ref===c.id);
-  return `<div class="row task" data-row="${i.id}"><button class="main" data-item="${i.id}"><span class="name" ${c?'style="color:var(--ink-2)"':""}>${esc(i.text)}</span>
-   ${i.standard&&!c?`<span class="std"><b>Done means:</b> ${esc(i.standard)}</span>`:""}
-   <span class="meta">${c?`<span class="checked-by">${esc(pShort(c.who))} · ${clock(c.at)}${pend?" · waiting for OK":""}</span>`:""}${nc?`<span>${nc} comment${nc>1?"s":""}</span>`:""}</span></button>
-   ${multiUser()?(i.assignee?`<span class="who">${av(i.assignee)}<span>${esc(pShort(i.assignee))}</span></span>`:`<span class="who">Anyone</span>`):"<span></span>"}
-   <button class="check ${c?"done":""}" data-tick="${i.id}" aria-label="${c?"Undo":"Complete"} ${esc(i.text)}" aria-pressed="${!!c}"><i>${IC.check}</i></button></div>`}).join("")||`<div class="empty">No items yet. Tap Edit to add some.</div>`}</div>
- <section class="group" style="margin-top:var(--s6)"><div class="calbox"><b>Put it on your calendar</b><p class="note">One repeating event at ${t12(r.time)} with everyone's parts in the notes.</p>${calButtons("routine:"+r.id,routineAsEvent(r))}</div></section>`;
+  return `<div class="row task" data-row="${i.id}"><button class="main" data-item="${i.id}" aria-haspopup="dialog"><span class="name${c?" done-name":""}">${esc(i.text)}</span>
+   ${i.standard&&!c?`<span class="std"><b>Done means</b> ${esc(i.standard)}</span>`:""}
+   <span class="meta">${c?`<span class="checked-by">${IC.tick}${esc(pShort(c.who))} at ${clock(c.at)}${pend?", waiting for an OK":""}</span>`:ownerTag(i.assignee)}${nc?`<span>${nc} comment${nc>1?"s":""}</span>`:""}</span></button>
+   <button class="check ${c?"done":""}" data-tick="${i.id}" aria-label="${c?"Undo":"Complete"} ${esc(i.text)}" aria-pressed="${!!c}" ${S.canWrite?"":"disabled"}><i>${IC.check}</i></button></div>`}).join("")||`<div class="empty"><strong>No items yet.</strong>Tap Edit to add some.</div>`}</div></section>
+ <section class="group"><div class="t-sec"><h3>Put it on your calendar</h3><p class="note">One repeating event at ${t12(r.time)} with everyone's parts in the notes.</p>${calButtons("routine:"+r.id,routineAsEvent(r))}</div></section>`;
 }
 
 /* ---------- Task sheet: read first, edit on request ---------- */

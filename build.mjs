@@ -17,7 +17,6 @@ const html = `<!doctype html>
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <style>${reset}</style>
 ${r('head.html').replace('<meta name="claude:viewport-fit-sides" content="cover">\n', '')}
-${r('extra.css')}
 </style>
 </head>
 <body>
