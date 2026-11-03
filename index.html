@@ -185,6 +185,22 @@ h3.day span{font-weight:500;color:var(--ink-2)}
 .caught-line{color:var(--forest);margin:var(--s2) 0}
 .btn-row{display:flex;gap:var(--s4);align-items:center;flex-wrap:wrap;margin-top:var(--s3)}
 
+/* Lists inside a sub-navigation (Shopping) */
+.subnav .n,.filter .n{display:inline-block;margin-inline-start:2px;font-weight:500;opacity:.85}
+.filters.lists{margin:0 0 var(--s4)}
+.subnav .add{display:inline-flex;align-items:center;gap:4px;color:var(--forest)}
+.subnav .add svg{width:16px;height:16px}
+.add-item{margin:0 0 var(--s3)}
+.row.shop{grid-template-columns:1fr auto}
+.row-acts{display:flex;align-items:center;gap:2px}
+.icon-btn.quiet{margin:0}
+.icon-btn.quiet svg{width:16px;height:16px}
+.chip .tk{width:14px;height:14px;display:none;margin-inline-start:-3px}
+.chip[aria-pressed="true"] .tk{display:block}
+.chip > svg:not(.tk){width:14px;height:14px}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.profile{display:flex;flex-direction:column;gap:var(--s4)}
+
 /* Filters: show a subset of the same list. Outlined, a check when on. */
 .filters{display:flex;flex-wrap:wrap;gap:var(--s2);margin:0}
 .filter{position:relative;display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:5px 14px;border-radius:999px;border:1px solid var(--rule-strong);background:transparent;color:var(--ink-2);font-size:.875rem;font-weight:600;white-space:nowrap}
@@ -203,11 +219,16 @@ h3.day span{font-weight:500;color:var(--ink-2)}
 .banner.quiet{align-items:center;flex-wrap:nowrap}
 
 /* Controls */
-.btn{border:1px solid var(--rule);background:var(--leaf);border-radius:999px;padding:10px 18px;font-weight:600;font-size:.94rem;min-height:44px;color:var(--ink);text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn{position:relative;border:1px solid var(--rule-strong);background:transparent;border-radius:999px;padding:8px 16px;font-weight:600;font-size:.9375rem;min-height:40px;color:var(--ink);text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}
+.btn::after{content:"";position:absolute;inset:-3px -1px}
+.btn:hover{background:var(--tint)}
 .btn.primary{background:var(--forest);border-color:var(--forest);color:var(--forest-ink)}
+.btn.primary:hover{background:color-mix(in srgb,var(--forest) 88%,var(--ink))}
 .btn.danger{color:var(--late)}
 .btn[disabled]{opacity:.5;cursor:default}
-.btn.small{padding:6px 14px;font-size:.86rem;min-height:36px}
+.btn.small{padding:5px 13px;font-size:.875rem;min-height:34px}
+.btn.small::after{inset:-6px -1px}
+.btn svg{width:16px;height:16px;flex:none}
 a.btn{text-decoration:none}
 .field{display:flex;flex-direction:column;gap:6px}
 .field > span{font-size:.82rem;font-weight:600;color:var(--ink-2)}
@@ -217,12 +238,11 @@ textarea{min-height:72px;resize:vertical}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:var(--s3)}
 .toolbar{display:flex;gap:var(--s2);flex-wrap:wrap;margin-bottom:var(--s4)}
 .toolbar input[type=search]{flex:1 1 200px}
-.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:var(--s4);scrollbar-width:none}
-.chip{border:1px solid var(--rule);background:transparent;border-radius:999px;padding:6px 13px;font-size:.86rem;white-space:nowrap;color:var(--ink-2);min-height:34px;display:inline-flex;align-items:center}
-.chip[aria-pressed="true"]{background:var(--forest);color:var(--forest-ink);border-color:var(--forest)}
-.seg{display:inline-flex;background:var(--tint);border-radius:999px;padding:3px;gap:2px;max-width:100%;overflow-x:auto}
-.seg button{border:0;background:transparent;padding:6px 12px;font-size:.84rem;border-radius:999px;color:var(--ink-2);font-weight:600;white-space:nowrap}
-.seg button[aria-pressed="true"]{background:var(--leaf);color:var(--ink);box-shadow:0 1px 2px rgb(0 0 0 / .08)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 var(--s4)}
+.chip{position:relative;border:1px solid var(--rule-strong);background:transparent;border-radius:999px;padding:5px 13px;font-size:.875rem;font-weight:600;white-space:nowrap;color:var(--ink-2);min-height:34px;display:inline-flex;align-items:center;gap:6px}
+.chip::after{content:"";position:absolute;inset:-6px -1px}
+.chip:hover{background:var(--tint)}
+.chip[aria-pressed="true"]{background:var(--forest-wash);color:var(--forest);border-color:var(--forest)}
 .switch{display:flex;align-items:center;gap:var(--s3);font-size:.94rem}
 .switch input{width:20px;height:20px;accent-color:var(--forest)}
 .daypick{display:flex;gap:6px;flex-wrap:wrap}
@@ -243,10 +263,20 @@ textarea{min-height:72px;resize:vertical}
 .badge{position:absolute;top:4px;inset-inline-start:calc(50% + 6px);min-width:17px;height:17px;padding:0 5px;border-radius:99px;background:var(--clay);color:#fff;font-size:.66rem;line-height:17px;font-weight:700}
 
 /* Rooms grid (Home) */
-.rooms{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:var(--s5) var(--s4);margin-bottom:var(--s6)}
-.room{background:none;border:0;padding:0;text-align:start;color:inherit;display:flex;flex-direction:column;gap:4px}
-.room b{font-family:var(--serif);font-weight:500;font-size:1.12rem}
-.room span{font-size:.82rem;color:var(--ink-2)}
+.rooms{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:var(--s5) var(--s4);margin:var(--s2) 0 var(--s6)}
+.room{background:none;border:0;padding:0;text-align:start;color:inherit;display:flex;flex-direction:column;gap:3px;min-height:44px}
+.room b{font-family:var(--serif);font-weight:500;font-size:1.15rem}
+.r-st{display:inline-flex;align-items:center;gap:5px;font-size:.875rem;font-weight:600}
+.r-st svg{width:12px;height:12px;flex:none}
+.r-st.late{color:var(--late)} .r-st.today{color:var(--forest)} .r-st.ok{color:var(--ink-2);font-weight:500} .r-st.ok svg{color:var(--ok);width:14px;height:14px}
+.r-n{font-size:.8125rem;color:var(--ink-2)}
+.back{display:inline-flex;align-items:center;gap:4px;margin:0 0 var(--s3) -4px;min-height:32px}
+.back svg{width:18px;height:18px}
+.lib-tools{display:flex;flex-wrap:wrap;gap:var(--s3) var(--s4);align-items:center;margin:var(--s3) 0 var(--s4)}
+.inline-select{display:flex;align-items:center;gap:var(--s2);font-size:.875rem;font-weight:600;color:var(--ink-2)}
+.inline-select select{width:auto;min-height:36px;padding:6px 10px}
+.added{display:inline-flex;align-items:center;gap:4px;font-size:.875rem;color:var(--ok);font-weight:600}
+.added svg{width:14px;height:14px}
 
 /* Feed and comments */
 .feed{display:flex;flex-direction:column}
@@ -307,6 +337,9 @@ nav.tabs .brand{display:none}
 .repeat .on{color:var(--ink-2)}
 .months{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
 .toggles{display:flex;flex-wrap:wrap;gap:6px}
+.toggles.days{display:grid;grid-template-columns:repeat(7,1fr)}
+.toggles.days span{justify-content:center;padding:0 2px}
+.again{margin-top:var(--s5)}
 .toggles label{position:relative}
 .toggles input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
 .toggles span{display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border:1px solid var(--rule-strong);border-radius:var(--r-sm);font-size:.875rem;font-weight:600;color:var(--ink-2)}
@@ -319,9 +352,25 @@ nav.tabs .brand{display:none}
 .months input:checked + span{background:var(--forest-wash);border-color:var(--forest);color:var(--forest)}
 .months input:focus-visible + span{outline:2px solid var(--forest);outline-offset:2px}
 .linkish.danger{color:var(--late);align-self:flex-start}
+.gh-r{display:inline-flex;align-items:baseline;gap:var(--s4)}
+.sheet-kicker{margin:0 0 2px;font-size:.875rem;font-weight:600;color:var(--ink-2)}
+.row.link .chev{width:18px;height:18px;color:var(--ink-2)}
+
+/* Reordering: drag, or use the arrows (keyboard and touch) */
+.arrange-bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;display:flex;justify-content:space-between;align-items:center;gap:var(--s3);padding:var(--s2) 0;background:var(--paper);font-size:.875rem;color:var(--ink-2)}
+.list.arranging > *{cursor:grab;user-select:none;position:relative}
+.list.arranging > * .row,.list.arranging > .row{background:var(--paper);grid-template-columns:1fr auto}
+.list.arranging .check,.list.arranging .chev,.list.arranging .steps{display:none}
+.list.arranging .main{pointer-events:none}
+.mv{display:flex;gap:2px}
+.mv button{width:44px;height:44px;border:0;border-radius:50%;background:none;color:var(--ink);display:grid;place-items:center}
+.mv button:hover{background:var(--tint)}
+.mv svg{width:20px;height:20px}
+.dragging{z-index:6;box-shadow:0 8px 24px rgb(0 0 0 / .14);background:var(--leaf)}
 @media (min-width:760px){
   .sheet .panel.view{max-width:600px}
   .sheet .panel.edit{max-width:820px}
+  .sheet .panel.edit-one{max-width:560px}
   .edit-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 var(--s6)}
 }
 
@@ -353,7 +402,7 @@ nav.tabs .brand{display:none}
 .check.done i,.row.completing .check i{animation:settle .3s var(--ease)}
 
 @media (max-width:420px){ h1{font-size:1.8rem} .grid2{grid-template-columns:1fr} .grid2.keep{grid-template-columns:1fr 1fr} }
-@media (max-width:360px){ .filters{gap:6px} .filter{padding-inline:11px} }
+@media (max-width:360px){ .filters{gap:6px} .filter{padding-inline:11px} .subnav{gap:0 16px} .subnav button{font-size:.875rem} }
 /* Today: one column on phones in reading order (alerts, tonight, tasks, the rest); two columns from tablet up */
 @media (min-width:760px){
   .wrap{max-width:960px;padding-left:max(32px,env(safe-area-inset-left,0px));padding-right:max(32px,env(safe-area-inset-right,0px))}
@@ -393,13 +442,6 @@ nav.tabs .brand{display:none}
 .task .main .std{margin-top:2px}
 .toast span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 
-.arrange-bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;display:flex;justify-content:space-between;align-items:center;gap:var(--s3);padding:var(--s2) 0;background:var(--paper);font-size:.9rem;color:var(--ink-2)}
-.list.arranging > *{cursor:grab;touch-action:none;user-select:none}
-.list.arranging > * .row{background:var(--paper)}
-.list.arranging > *::after{content:"";position:absolute;inset-inline-end:56px;top:50%;width:16px;height:10px;transform:translateY(-50%);background:linear-gradient(var(--ink-3),var(--ink-3)) 0 0/100% 2px no-repeat,linear-gradient(var(--ink-3),var(--ink-3)) 0 50%/100% 2px no-repeat,linear-gradient(var(--ink-3),var(--ink-3)) 0 100%/100% 2px no-repeat;pointer-events:none}
-.list.arranging > *{position:relative}
-.list.arranging .check,.list.arranging .who,.list.arranging .take{visibility:hidden}
-.dragging{z-index:6;box-shadow:0 8px 24px rgb(0 0 0 / .14);background:var(--leaf)}
 .ptr{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 8px);transform:translate(-50%,0);background:var(--ink);color:var(--paper);font-size:.82rem;font-weight:600;padding:6px 14px;border-radius:999px;opacity:0;pointer-events:none;z-index:45;transition:opacity .2s}
 .pindots{display:flex;gap:14px;margin:var(--s3) 0}
 .pindots i{width:14px;height:14px;border-radius:50%;border:1.6px solid var(--ink-3)}
@@ -724,7 +766,11 @@ const DAYS=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturda
 const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const RR_DAYS=["SU","MO","TU","WE","TH","FR","SA"];
 const CAL_SERVER="Google Calendar";
-const COLORS=["#2D5D4C","#8A4B2D","#3D5A8A","#7A3D72","#8A6B1F","#2F7A7A","#6B4FA0","#A03D4F"];
+/* Person colors: distinct in hue and lightness, all keep white initials above 4.5:1. Names always sit next to them. */
+const COLORS=["#2F5D4E","#9A4A2E","#34588F","#7A3F75","#6B5A16","#1F6B73","#5B4B9A","#A13A55"];
+function nextColor(){const used=new Set(Object.values(D.people).map(p=>p.color));return COLORS.find(c=>!used.has(c))||COLORS[Object.keys(D.people).length%COLORS.length]}
+const OLD_COLORS=["#2D5D4C","#8A4B2D","#3D5A8A","#7A3D72","#8A6B1F","#2F7A7A","#6B4FA0","#A03D4F"];
+function fixColors(){if(!S.canWrite||S.mode!=="db")return;const seen=new Set();people().forEach(p=>{let c=OLD_COLORS.includes(p.color)?COLORS[OLD_COLORS.indexOf(p.color)]:p.color;if(!c||seen.has(c))c=COLORS.find(x=>!seen.has(x))||c;seen.add(c);if(c!==p.color)patch("people",p.id,{color:c})})}
 const CLOSING_STARTER=[
  ["Dishes done, sink empty","Nothing left in the sink or on the counter. Dishwasher loaded and running if it's full."],
  ["Counters and stovetop wiped","No crumbs or sticky spots. Spray, wipe, dry."],
@@ -1136,14 +1182,16 @@ function planBlock(){
  <div class="list">${list.map(t=>`<div class="row" style="grid-template-columns:auto 1fr"><button class="check" data-done="${t.id}" aria-label="Mark ${esc(t.name)} done"><i>${I.check}</i></button><button class="main" data-edit="${t.id}"><span class="name">${esc(t.name)}</span><span class="meta"><span>${t.mins} min</span><span>${esc(t.room)}</span></span></button></div>`).join("")}</div>
  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="stamp" id="clock" style="font-size:1.4rem">${fmtTime(s)}</span>${timer.running?`<button class="btn small" data-timer="pause">Pause</button>`:`<button class="btn small primary" data-timer="start">${s<total*60?"Resume":"Start timer"}</button>`}<button class="btn small" data-timer="reset">Reset</button><button class="linkish" data-plan="0">Close</button></div>`;
 }
-function viewShiftEdit(r,chips){
+function viewShiftEdit(r){
  const days=r.days||[0,1,2,3,4,5,6];
- return `<header class="top"><div><div class="eyebrow">Editing</div><h1>${esc(r.name)}</h1></div><button class="btn small primary" data-doneedit="1">Done</button></header>${chips}
- <div class="calbox" style="margin-bottom:16px"><div class="grid2"><label class="field"><span>Name</span><input type="text" id="r-name" value="${esc(r.name)}"></label><label class="field"><span>Starts at</span><input type="time" id="r-time" value="${esc(r.time||"21:00")}"></label></div>
- <div class="field"><span>Runs on</span><div class="daypick">${DAYS.map((d,i)=>`<label><input type="checkbox" data-rday="${i}" ${days.includes(i)?"checked":""}>${d.slice(0,3)}</label>`).join("")}</div></div></div>
- <div class="list">${r.items.map((i,ix)=>`<div class="row" style="grid-template-columns:1fr auto"><button class="main" data-item="${i.id}"><span class="name">${esc(i.text)}</span><span class="meta"><span class="who">${av(i.assignee)}${esc(pShort(i.assignee))}</span>${i.standard?"<span>Has a standard</span>":""}</span></button><span style="display:flex;gap:4px"><button class="btn small" data-up="${ix}" ${ix?"":"disabled"} aria-label="Move up">↑</button><button class="btn small danger" data-rmitem="${i.id}" aria-label="Remove ${esc(i.text)}">✕</button></span></div>`).join("")}</div>
- <div class="cmtform" style="margin-top:12px"><input type="text" id="r-new" placeholder="Add an item, e.g. Start the dishwasher"><button class="btn primary" data-additem="1">Add</button></div>
- <div style="margin-top:22px">${ui.confirmRmRoutine?`<span class="confirm">Delete this whole routine? <button class="btn small danger" data-rmroutine="2">Delete</button><button class="btn small" data-rmroutine="0">Keep</button></span>`:`<button class="btn danger" data-rmroutine="1">Delete routine</button>`}</div>`;
+ return `<button class="back linkish" data-doneedit="1">${IC.back}Back to the ${esc(r.name.toLowerCase())}</button>
+ <header class="top"><div class="ttl"><h1>Edit routine</h1></div><button class="btn small primary" data-doneedit="1">Done</button></header>
+ <div class="fgroup"><div class="grid2 keep"><label class="field"><span>Name</span><input type="text" id="r-name" value="${esc(r.name)}"></label><label class="field"><span>Starts at</span><input type="time" id="r-time" value="${esc(r.time||"21:00")}"></label></div>
+ <div class="field"><span id="rd-l">Runs on</span><div class="toggles days" role="group" aria-labelledby="rd-l">${DAYS.map((d,i)=>`<label><input type="checkbox" data-rday="${i}" ${days.includes(i)?"checked":""}><span>${d.slice(0,3)}</span></label>`).join("")}</div></div></div>
+ <section class="group"><div class="group-head"><h2>Items</h2>${r.items.length>1?`<button class="linkish" data-arrange="1">Reorder</button>`:""}</div>
+ <div class="list" data-sort="shift:${r.id}">${r.items.map(i=>`<div class="row link" data-row="${i.id}"><button class="main" data-item="${i.id}"><span class="name">${esc(i.text)}</span><span class="meta">${ownerTag(i.assignee)}${i.standard?"<span>Has a standard</span>":""}</span></button>${IC.chev}</div>`).join("")}</div>
+ <div class="cmtform add-item" style="margin-top:12px"><input type="text" id="r-new" placeholder="Add an item, e.g. Start the dishwasher" aria-label="New item"><button class="btn" data-additem="1">Add</button></div></section>
+ <button class="linkish danger" data-rmroutine="1">Delete this routine</button>`;
 }
 function viewFamily(){
  const acts=Object.values(D.activity).sort((a,b)=>b.at-a.at),seen=ME.lastSeen||0,ws=weekStats(),aps=Object.values(D.approvals).sort((a,b)=>a.at-b.at);
@@ -1201,12 +1249,12 @@ function moreLists(){
  const names=[...new Set([...LISTS,...((D.house&&D.house.lists)||[])])];
  const its=Object.values(D.items).filter(i=>i.list===ui.list);
  const open=its.filter(i=>!i.done).sort((a,b)=>a.at-b.at),bought=its.filter(i=>i.done).sort((a,b)=>(b.n||0)-(a.n||0));
- return `<div class="chips">${names.map(n=>`<button class="chip" data-list="${esc(n)}" aria-pressed="${ui.list===n}">${esc(n)} <span class="stamp">${Object.values(D.items).filter(i=>i.list===n&&!i.done).length}</span></button>`).join("")}${S.canWrite?`<button class="chip" data-newlist="1">+ New list</button>`:""}</div>
- ${ui.newList?`<div class="cmtform" style="margin-bottom:12px"><input type="text" id="nl-name" placeholder="List name, e.g. Costco"><button class="btn" data-savelist="1">Create</button></div>`:""}
- ${S.canWrite?`<div class="cmtform" style="margin-bottom:12px"><input type="text" id="li-new" placeholder="Add to ${esc(ui.list)}"><button class="btn primary" data-additem2="1">Add</button></div>`:""}
- <div class="list">${open.map(i=>`<div class="row" style="grid-template-columns:auto 1fr auto"><button class="check" data-buy="${i.id}" aria-label="Got ${esc(i.text)}"><i>${I.check}</i></button><span style="min-width:0"><span class="name">${esc(i.text)}</span><span class="meta"><span class="who">${av(i.who)}${esc(pShort(i.who))}</span></span></span><button class="btn small" data-rmli="${i.id}" aria-label="Remove ${esc(i.text)}">✕</button></div>`).join("")||`<div class="row"><span class="muted">List is empty.</span></div>`}</div>
- ${bought.length?`<div class="eyebrow" style="margin:16px 0 6px">Buy again</div><div class="chips" style="flex-wrap:wrap">${bought.slice(0,24).map(i=>`<button class="chip" data-again="${i.id}">+ ${esc(i.text)}</button>`).join("")}</div>`:""}
- ${ui.list==="Groceries"?`<p class="note">Meal planning lives in Extract, your recipe app.</p>`:""}`;
+ const count=n=>Object.values(D.items).filter(i=>i.list===n&&!i.done).length;
+ return `<div class="filters lists" role="group" aria-label="Lists">${names.map(n=>`<button class="filter" data-list="${esc(n)}" aria-pressed="${ui.list===n}">${IC.tick}${esc(n)}${count(n)?`<span class="n">${count(n)}</span>`:""}</button>`).join("")}${S.canWrite?`<button class="chip" data-newlist="1">${IC.plus}New list</button>`:""}</div>
+ ${ui.newList?`<div class="cmtform" style="margin-bottom:12px"><input type="text" id="nl-name" placeholder="List name, e.g. Costco" aria-label="New list name"><button class="btn" data-savelist="1">Create</button></div>`:""}
+ ${S.canWrite?`<div class="cmtform add-item"><input type="text" id="li-new" placeholder="Add to ${esc(ui.list)}" aria-label="Add an item to ${esc(ui.list)}"><button class="btn primary" data-additem2="1">Add</button></div>`:""}
+ <div class="list">${open.map(i=>`<div class="row shop"><span class="main"><span class="name">${esc(i.text)}</span>${multiUser()?`<span class="meta">${ownerTag(i.who).replace("Up for grabs","")}<span>added it</span></span>`:""}</span><span class="row-acts"><button class="icon-btn quiet" data-rmli="${i.id}" aria-label="Remove ${esc(i.text)}">${IC.x}</button><button class="check" data-buy="${i.id}" aria-label="Got ${esc(i.text)}"><i>${IC.check}</i></button></span></div>`).join("")||`<div class="empty">Nothing on the ${esc(ui.list)} list.</div>`}</div>
+ ${bought.length?`<section class="group again"><div class="group-head"><h2>Buy again</h2></div><div class="chips">${bought.slice(0,24).map(i=>`<button class="chip" data-again="${i.id}">${IC.plus}${esc(i.text)}</button>`).join("")}</div></section>`:""}`;
 }
 function moreMoney(){
  const xs=Object.values(D.expenses).sort((a,b)=>b.date.localeCompare(a.date)),b=balances(),st=settleUp();
@@ -1224,11 +1272,13 @@ function moreKids(){
  <section class="group"><div class="group-head"><h2>Rewards</h2>${S.canWrite?`<button class="btn small" data-form="rewards:new">Add reward</button>`:""}</div><div class="list">${ws.map(w=>`<button class="row main" data-form="rewards:${w.id}" style="grid-template-columns:1fr auto;width:100%"><span class="name">${esc(w.name)}</span><span class="stamp">${w.cost} ★</span></button>`).join("")||`<div class="row"><span class="muted">Ideas: pick the movie (20 ★), stay up 30 minutes late (30 ★), a trip for ice cream (50 ★).</span></div>`}</div></section>
  <section class="group"><div class="group-head"><h2>Balances</h2></div><div class="list">${kids().map(k=>`<div class="row" style="grid-template-columns:auto 1fr auto">${av(k.id)}<span class="name">${esc(pName(k.id))}</span><span style="display:flex;gap:8px;align-items:center"><span class="stamp">${pointsOf(k.id)} ★${h.centsPerPoint?" · "+money(pointsOf(k.id)*h.centsPerPoint):""}</span>${h.centsPerPoint&&pointsOf(k.id)>0&&S.canWrite?`<button class="btn small" data-payout="${k.id}">Paid out</button>`:""}</span></div>`).join("")||`<div class="row"><span class="muted">Add kids on the Family tab.</span></div>`}</div></section>`;
 }
+const PROFILE_GROUPS=[["Outside",["yard","deck","garage","pool","grill","sprinkler"]],["Systems",["central","basement","fireplace","generator","septic","well","softener"]],["Who lives here",["kids","pets","car"]]];
 function profileForm(pr){
- const seg=(k,opts)=>`<div class="seg" role="group">${opts.map(([v,l])=>`<button data-prof="${k}" data-v="${v}" aria-pressed="${pr[k]===v}">${l}</button>`).join("")}</div>`;
- return `<div class="calbox"><div class="field"><span>Type of home</span>${seg("home",[["house","House"],["townhouse","Townhouse"],["apartment","Apartment"]])}</div>
- <div class="field"><span>Own or rent</span>${seg("own",[["own","Own"],["rent","Rent"]])}</div>
- <div class="field"><span>Your home has</span><div class="chips" style="flex-wrap:wrap;margin:0">${PROFILE_Q.map(([k,l])=>`<button class="chip" data-proft="${k}" aria-pressed="${!!pr[k]}">${l}</button>`).join("")}</div></div></div>`;
+ const one=(k,opts,label)=>`<div class="field"><span id="pf-${k}">${label}</span><div class="opts" role="group" aria-labelledby="pf-${k}">${opts.map(([v,l])=>`<button class="chip" data-prof="${k}" data-v="${v}" aria-pressed="${pr[k]===v}">${IC.tick}${l}</button>`).join("")}</div></div>`;
+ const lab=k=>(PROFILE_Q.find(q=>q[0]===k)||[k,k])[1];
+ return `<div class="profile">${one("home",[["house","House"],["townhouse","Townhouse"],["apartment","Apartment"]],"Type of home")}
+ ${one("own",[["own","Own"],["rent","Rent"]],"Own or rent")}
+ ${PROFILE_GROUPS.map(([g,ks])=>`<div class="field"><span id="pg-${g.replace(/ /g,"")}">${g}</span><div class="opts" role="group" aria-labelledby="pg-${g.replace(/ /g,"")}">${ks.map(k=>`<button class="chip" data-proft="${k}" aria-pressed="${!!pr[k]}">${IC.tick}${esc(lab(k))}</button>`).join("")}</div></div>`).join("")}</div>`;
 }
 function viewSetup(){
  const pr=ui.setup||(ui.setup={home:"house",own:"own",closing:true});
@@ -1276,11 +1326,9 @@ function formSheet(s){
   if(d.manual)extra+=`<a class="linkish" href="${esc(d.manual)}" target="_blank" rel="noopener">Open the manual</a>`;
  }
  const photo=f.photo?`<div class="field"><span>Photo of the label or model plate</span>${d.photo?`<img src="${esc(photoUrl(d.photo))}" alt="Photo" style="max-width:220px;border-radius:8px">`:""}<input type="file" accept="image/*" id="g-photo"></div>`:"";
- return `<div class="scrim" data-close="1"></div><div class="sheet" role="dialog" aria-label="${f.title}"><div class="panel">
-  <div class="bar"><h2>${s.id?"Edit":"New"} ${f.title.toLowerCase()}</h2><button class="btn small" data-close="1">Close</button></div>
-  ${f.fields.map(inp).join("")}${photo}${extra}${s.err?`<p class="note err">${esc(s.err)}</p>`:""}
-  ${S.canWrite?`<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><button class="btn primary" data-gsave="1" ${s.busy?"disabled":""}>${s.busy?"Saving…":"Save"}</button>${s.id&&!(s.col==="people"&&s.id===myPid())?(s.confirmDel?`<span class="confirm">Delete? <button class="btn small danger" data-gdel="1">Delete</button><button class="btn small" data-gnodel="1">Keep</button></span>`:`<button class="btn danger" data-gaskdel="1">Delete</button>`):""}</div>`:""}
- </div></div>`;
+ const canDel=s.id&&S.canWrite&&!(s.col==="people"&&s.id===myPid());
+ return sheetShell(f.title,`<h2 class="sheet-title" tabindex="-1">${s.id?esc(d[f.fields[0][0]]||f.title):"New "+f.title.toLowerCase()}</h2>`,`${f.fields.map(inp).join("")}${photo}${extra}${s.err?`<p class="note err" role="alert">${esc(s.err)}</p>`:""}${canDel?`<button class="linkish danger" data-gdel="1">Delete this ${f.title.toLowerCase()}</button>`:""}`,
+  S.canWrite?`<button class="btn primary" data-gsave="1" ${s.busy?"disabled":""}>${s.busy?"Saving…":"Save"}</button><button class="btn text" data-close="1">Cancel</button>`:"","edit-one");
 }
 async function saveForm(){
  const s=ui.sheet,f=FORMS[s.col],d=Object.assign({},s.data);delete d.id;
@@ -1311,7 +1359,7 @@ function openForm(spec){
  if(isNew&&col==="service")data.thing=extra;
  if(isNew&&col==="service")data.date=today();
  if(isNew&&col==="expenses")data.date=today();
- if(isNew&&col==="people")data.role="kid";
+ if(isNew&&col==="people"){data.role="kid";data.color=nextColor()}
  ui.sheet={kind:"form",col,id:isNew?null:id,data};renderLayer();
 }
 function renderLayer(){
@@ -1320,15 +1368,15 @@ function renderLayer(){
  if(s&&s.kind==="item"){
   const r=D.routines[s.rid],i=r&&r.items.find(x=>x.id===s.iid);
   if(i){const ro=!S.canWrite?"disabled":"",c=D.checks[checkId(r.id,i.id)];
-  h+=`<div class="scrim" data-close="1"></div><div class="sheet" role="dialog" aria-label="Shift item"><div class="panel">
-  <div class="bar"><div><div class="eyebrow">${esc(r.name)}</div><h2>${esc(i.text)}</h2></div><button class="btn small" data-close="1">Close</button></div>
-  ${c?`<p class="checked-by">Checked by ${esc(pShort(c.who))} at ${clock(c.at)}</p>`:""}
+  h+=sheetShell(i.text,`<div><p class="sheet-kicker">${esc(r.name)}</p><h2 class="sheet-title" tabindex="-1">${esc(i.text)}</h2></div>`,`
+  ${c?`<p class="checked-by">${IC.tick}Checked by ${esc(pShort(c.who))} at ${clock(c.at)}</p>`:""}
   <label class="field"><span>Item</span><input type="text" id="i-text" value="${esc(i.text)}" ${ro}></label>
   ${multiUser()?`<label class="field"><span>Whose part</span><select id="i-who" ${ro}>${peopleOptions(i.assignee)}</select></label>${rotatePick(i.rotate,"item")}`:""}
-  <label class="field"><span>Done means (the standard)</span><textarea id="i-std" style="min-height:60px" ${ro}>${esc(i.standard||"")}</textarea></label>
+  <label class="field"><span>Done means</span><textarea id="i-std" rows="2" ${ro}>${esc(i.standard||"")}</textarea></label>
   <label class="field"><span>Notes</span><input type="text" id="i-notes" value="${esc(i.notes||"")}" placeholder="Where things go, tips" ${ro}></label>
   ${commentBlock("item:"+r.id+":"+i.id,i.text)}
-  ${S.canWrite?`<div><button class="btn primary" data-saveitem="1">Save</button></div>`:""}</div></div>`}
+  ${S.canWrite?`<button class="linkish danger" data-rmitem="${i.id}">Remove from the ${esc(r.name.toLowerCase())}</button>`:""}`,
+  S.canWrite?`<button class="btn primary" data-saveitem="1">Save</button><button class="btn text" data-close="1">Cancel</button>`:"","edit-one")}
  }
  if(s&&s.kind==="finish"){
   const t=D.tasks[s.id];
@@ -1379,7 +1427,7 @@ function setupHouse(pr){
 /* ---------- Events ---------- */
 document.addEventListener("click",async e=>{
  const b=e.target.closest("button,[data-close]");if(!b)return;const ds=b.dataset;
- if(ds.tab){ui.tab=ds.tab;ui.q="";ui.editShift=false;render();window.scrollTo(0,0);if(ds.tab==="more"&&ui.more==="cal")loadCalendars();return}
+ if(ds.tab){if(ds.tab==="home"&&b.closest("nav.tabs")){ui.homeView="rooms";ui.roomOpen=null}ui.tab=ds.tab;ui.q="";ui.editShift=false;render();window.scrollTo(0,0);if(ds.tab==="more"&&ui.more==="cal")loadCalendars();return}
  if(ds.who){ui.who=ds.who;if(ui.plan)ui.plan.ids=buildPlan(ui.plan.mins);render();return}
  if(ds.done){startDone(ds.done);return}
  if(ds.finish){const s=ui.sheet,file=document.getElementById("fin-photo")?.files?.[0];let photo="";
@@ -1389,7 +1437,7 @@ document.addEventListener("click",async e=>{
  if(ds.nudge){nudge(ds.nudge);return}
  if(ds.toggle){ui.open[ds.toggle]=!ui.open[ds.toggle];render();return}
  if(ds.edit){openTask(ds.edit);return}
- if(ds.new){ui.sheet={kind:"task",isNew:true,draft:newTask({name:"",room:ui.room!=="All"?ui.room:"Other",unit:"week",every:1,mins:15},today())};renderLayer();document.getElementById("f-name")?.focus();return}
+ if(ds.new){ui.sheet={kind:"task",isNew:true,draft:newTask({name:"",room:ds.roomNew||ui.roomOpen||"Other",unit:"week",every:1,mins:15},today())};renderLayer();document.getElementById("f-name")?.focus();return}
  if(ds.room){ui.room=ds.room;render();return}
  if(ds.hv){ui.houseView=ds.hv;ui.q="";render();return}
  if(ds.libroom){ui.libRoom=ds.libroom;render();return}
@@ -1419,9 +1467,9 @@ document.addEventListener("click",async e=>{
  if(ds.editshift){ui.editShift=true;render();return}
  if(ds.doneedit){const r=D.routines[ui.routine];updateRoutine(r,{name:document.getElementById("r-name").value.trim()||r.name,time:document.getElementById("r-time").value||r.time});ui.editShift=false;render();return}
  if(ds.additem){const inp=document.getElementById("r-new"),txt=inp.value.trim();if(!txt)return;const r=D.routines[ui.routine];updateRoutine(r,{items:[...r.items,{id:rid(),text:txt,standard:"",notes:"",assignee:"",rotate:[]}]});setTimeout(()=>document.getElementById("r-new")?.focus(),0);return}
- if(ds.rmitem){const r=D.routines[ui.routine];updateRoutine(r,{items:r.items.filter(x=>x.id!==ds.rmitem)});return}
+ if(ds.rmitem){const r=D.routines[ui.routine],prev=r.items;const it=r.items.find(x=>x.id===ds.rmitem);ui.sheet=null;renderLayer();updateRoutine(r,{items:r.items.filter(x=>x.id!==ds.rmitem)});toast(`Removed “${it?it.text:"item"}”`,()=>updateRoutine(D.routines[r.id]||r,{items:prev}));return}
  if(ds.up){const r=D.routines[ui.routine],ix=+ds.up,it=[...r.items];[it[ix-1],it[ix]]=[it[ix],it[ix-1]];updateRoutine(r,{items:it});return}
- if(ds.rmroutine){if(ds.rmroutine==="1"){ui.confirmRmRoutine=true;render();return}if(ds.rmroutine==="2"){remove("routines",ui.routine);ui.routine=null;ui.editShift=false}ui.confirmRmRoutine=false;render();return}
+ if(ds.rmroutine){const id=ui.routine,copy=Object.assign({},D.routines[id]);delete copy.id;remove("routines",id);ui.routine=null;ui.editShift=false;ui.tab="schedule";render();toast(`Deleted the ${copy.name}`,()=>{put("routines",id,copy);ui.routine=id});return}
  // kids
  if(ds.kidview){ui.kid=kids().length===1?kids()[0].id:"pick";render();window.scrollTo(0,0);return}
  if(ds.kidpick){ui.kid=ds.kidpick;render();return}
@@ -1447,9 +1495,9 @@ document.addEventListener("click",async e=>{
  if(ds.newlist){ui.newList=!ui.newList;render();setTimeout(()=>document.getElementById("nl-name")?.focus(),0);return}
  if(ds.savelist){const n=(document.getElementById("nl-name").value||"").trim().slice(0,30);if(n){putHouse({lists:[...new Set([...((D.house&&D.house.lists)||[]),n])]});ui.list=n}ui.newList=false;render();return}
  if(ds.additem2){const inp=document.getElementById("li-new"),txt=inp.value.trim();if(!txt)return;const ex=Object.values(D.items).find(i=>i.list===ui.list&&i.text.toLowerCase()===txt.toLowerCase());if(ex)patch("items",ex.id,{done:false,who:myPid(),at:Date.now()});else put("items",rid(),{list:ui.list,text:txt,done:false,who:myPid(),at:Date.now(),n:0});setTimeout(()=>document.getElementById("li-new")?.focus(),0);return}
- if(ds.buy){const i=D.items[ds.buy];patch("items",i.id,{done:true,n:(i.n||0)+1,boughtBy:myPid(),boughtAt:Date.now()});return}
+ if(ds.buy){const i=D.items[ds.buy],prev=Object.assign({},i);patch("items",i.id,{done:true,n:(i.n||0)+1,boughtBy:myPid(),boughtAt:Date.now()});toast(`Got ${i.text}`,()=>put("items",i.id,prev));return}
  if(ds.again){patch("items",ds.again,{done:false,who:myPid(),at:Date.now()});return}
- if(ds.rmli){remove("items",ds.rmli);return}
+ if(ds.rmli){const i=Object.assign({},D.items[ds.rmli]);remove("items",ds.rmli);toast(`Removed ${i.text}`,()=>put("items",i.id,i));return}
  if(ds.loadcal){loadCalendars();return}
  if(ds.gocal){ui.sheet=null;ui.tab="more";ui.more="cal";render();loadCalendars();return}
  if(ds.calreset){delete ME.calAdded[ds.calreset];saveMe();return}
@@ -1482,6 +1530,7 @@ document.addEventListener("change",e=>{
  
  if(el.id==="remind"){ME.reminder=+el.value;saveMe();return}
  if(el.id==="deftime"){ME.defaultTime=el.value||"09:00";saveMe();return}
+ if(el.id==="libroom"){ui.libRoom=el.value;render();return}
  if(el.id==="histwho"){ui.histWho=el.value;render();return}
  if(el.id==="kidok"){putHouse({kidApproval:el.checked});return}
  if(el.id==="cpp"){putHouse({centsPerPoint:+el.value});return}
@@ -1516,6 +1565,9 @@ const IC={
  moon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 14.5A7.5 7.5 0 0 1 9.5 5a7.5 7.5 0 1 0 9.5 9.5z"/></svg>',
  alert:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5M12 17.4v.1"/></svg>',
  cloud:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 18h10a4 4 0 0 0 .6-7.96A6 6 0 0 0 6.1 9.2 4.4 4.4 0 0 0 7 18z"/><path d="M4 4l16 16"/></svg>',
+ back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>',
+ up:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>',
+ down:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg>',
  plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
  star:'<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z"/></svg>'
 };
@@ -1568,7 +1620,7 @@ function taskRow(t,o){
 function whoSeg(){if(!multiUser())return"";return `<div class="filters" role="group" aria-label="Show tasks for">${[["all","Everyone"],["mine","Mine"],["open","Up for grabs"]].map(([v,l])=>`<button class="filter" data-who="${v}" aria-pressed="${ui.who===v}">${IC.tick}${l}</button>`).join("")}</div>`}
 function listSection(title,list,o={}){
  if(!list.length)return"";
- return `<section class="group"${o.id?` id="${o.id}"`:""}><div class="group-head"><h2>${title}</h2>${o.stamp!==""?`<span class="stamp">${o.stamp||list.length}</span>`:""}</div><div class="list"${o.sort?` data-sort="${o.sort}"`:""}>${list.map(t=>taskRow(t,o)).join("")}</div></section>`;
+ return `<section class="group"${o.id?` id="${o.id}"`:""}><div class="group-head"><h2>${title}</h2><span class="gh-r">${o.sort&&list.length>1&&S.canWrite?`<button class="linkish" data-arrange="1">Reorder</button>`:""}${o.stamp!==""?`<span class="stamp">${o.stamp||list.length}</span>`:""}</span></div><div class="list"${o.sort?` data-sort="${o.sort}"`:""}>${list.map(t=>taskRow(t,o)).join("")}</div></section>`;
 }
 
 /* ---------- Notices: errors, things waiting on you, household reminders ---------- */
@@ -1714,36 +1766,49 @@ function viewSchedule(){
  }
  return `<header class="top"><div class="ttl"><h1>Schedule</h1><span class="date">${tasks().length} recurring tasks</span></div></header>${nav}${whoSeg()?`<div class="filter-row">${whoSeg()}</div>`:""}${body}`;
 }
+/* ---------- Home: rooms first, then records; each record type is its own page ---------- */
+function roomStatus(r){
+ const ts=tasks().filter(t=>t.room===r),late=ts.filter(t=>status(t)==="late").length,due=ts.filter(t=>status(t)==="today").length,soon=ts.filter(t=>status(t)==="soon").length;
+ if(late)return `<span class="r-st late">${IC.tri}${late} late${due?` · ${due} due today`:""}</span>`;
+ if(due)return `<span class="r-st today">${IC.dot}${due} due today</span>`;
+ return `<span class="r-st ok">${IC.tick}Nothing due</span>`;
+}
 function viewHome(){
- const seg=`<div class="seg" role="group" aria-label="Section">${[["rooms","Rooms"],["library","Library"],["things","Appliances"],["pros","Contractors"],["info","Home info"]].map(([v,l])=>`<button data-hv2="${v}" aria-pressed="${ui.homeView===v}">${l}</button>`).join("")}</div>`;
+ const v=ui.homeView==="rooms"?"":ui.homeView;
+ const back=`<button class="back linkish" data-hv2="rooms">${IC.back}Home</button>`;
+ const newBtn=room=>S.canWrite?`<button class="btn small" data-new="1"${room?` data-room-new="${esc(room)}"`:""}>${IC.plus}New task</button>`:"";
+ if(!v&&ui.roomOpen){
+  const r=ui.roomOpen,ts=tasks().filter(t=>t.room===r).sort((a,b)=>a.next.localeCompare(b.next));
+  return `${back}<header class="top"><div class="ttl"><h1>${esc(r)}</h1><span class="date">${ts.length} task${ts.length===1?"":"s"}</span></div>${newBtn(r)}</header><p class="summary">${roomStatus(r)}</p><div class="list">${ts.map(t=>taskRow(t)).join("")||`<div class="empty">No tasks here yet.</div>`}</div>`;
+ }
+ if(!v){
+  const rooms=ROOMS.filter(r=>tasks().some(t=>t.room===r));
+  const tags=tagsOf(D.house&&D.house.profile),have=new Set(tasks().map(t=>t.lib)),fit=LIB.filter(l=>libFits(l,tags)&&!have.has(l.lib)).length;
+  const rec=[["library","Task library",fit?`${fit} suggested for your home`:`${LIB.length} tasks to choose from`],["things","Appliances",`${Object.keys(D.things).length} saved`],["pros","Contractors",`${Object.keys(D.pros).length} saved`],["info","Home info",`${Object.keys(D.info).length} saved`]];
+  return `<header class="top"><div class="ttl"><h1>Home</h1><span class="date">${tasks().length} tasks across ${rooms.length} rooms</span></div>${newBtn("")}</header>
+  <div class="rooms">${rooms.map(r=>{const n=tasks().filter(t=>t.room===r).length;return `<button class="room" data-roomopen="${esc(r)}"><b>${esc(r)}</b>${roomStatus(r)}<span class="r-n">${n} task${n>1?"s":""}</span></button>`}).join("")||`<div class="empty">No tasks yet. Add some from the task library.</div>`}</div>
+  <section class="group"><div class="group-head"><h2>Records</h2></div><div class="list">${rec.map(([k,l,m])=>`<button class="row link" data-hv2="${k}"><span class="main"><span class="name">${l}</span><span class="meta"><span>${m}</span></span></span>${IC.chev}</button>`).join("")}</div></section>`;
+ }
+ const titles={library:"Task library",things:"Appliances",pros:"Contractors",info:"Home info"};
  let body="";
- if(ui.homeView==="rooms"){
-  if(ui.roomOpen){
-   const r=ui.roomOpen,ts=tasks().filter(t=>t.room===r).sort((a,b)=>a.next.localeCompare(b.next)),f=freshness(r);
-   body=`<button class="linkish" data-roomopen="">← All rooms</button><section class="group" style="margin-top:var(--s4)"><div class="group-head"><h2>${esc(r)}</h2><span class="stamp">${f==null?"":Math.round(f*100)+"% fresh"}</span></div><div class="list">${ts.map(taskRow).join("")||`<div class="empty">No tasks here yet.</div>`}</div></section>${S.canWrite?`<button class="btn" data-new="1">New task</button>`:""}`;
-  }else{
-   const rooms=ROOMS.filter(r=>tasks().some(t=>t.room===r));
-   body=`<p class="lede" style="margin-top:0">How each part of the house is doing. The bar empties as tasks come due.</p><div class="rooms">${rooms.map(r=>{const ts=tasks().filter(t=>t.room===r),f=freshness(r),due=ts.filter(t=>status(t)==="late"||status(t)==="today").length;
-    return `<button class="room" data-roomopen="${esc(r)}"><b>${esc(r)}</b><span>${ts.length} task${ts.length>1?"s":""}${due?` · ${due} due`:""}</span><span class="progress fresh" style="margin:2px 0 0"><i style="width:${Math.round((f||0)*100)}%"></i></span></button>`}).join("")}</div>${S.canWrite?`<button class="btn" data-new="1">New task</button>`:""}`;
-  }
- }else if(ui.homeView==="library"){
+ if(v==="library"){
   const tags=tagsOf(D.house&&D.house.profile),have=new Set(tasks().map(t=>t.lib));
   const fitOnly=ui.libFit!==false;
   let items=LIB.filter(l=>(ui.libRoom==="All"||l.room===ui.libRoom)&&(!ui.q||l.name.toLowerCase().includes(ui.q.toLowerCase())));
   if(fitOnly)items=items.filter(l=>libFits(l,tags)&&!have.has(l.lib));
   const rooms=["All",...ROOMS.filter(r=>LIB.some(l=>l.room===r))];
-  body=`<div class="toolbar"><input type="search" id="q" placeholder="Search the maintenance library" value="${esc(ui.q)}"><div class="seg"><button data-libfit="1" aria-pressed="${fitOnly}">Suggested for you</button><button data-libfit="0" aria-pressed="${!fitOnly}">Everything</button></div></div>
-  <div class="chips">${rooms.map(r=>`<button class="chip" data-libroom="${esc(r)}" aria-pressed="${ui.libRoom===r}">${esc(r)}</button>`).join("")}</div>
-  ${fitOnly&&items.length&&S.canWrite?`<p class="note" style="margin-bottom:var(--s3)">${items.length} tasks fit your home and aren't added yet. <button class="linkish" data-addall="1">Add all</button></p>`:""}
-  <div class="list">${items.map(l=>`<div class="row"><div class="main"><span class="name">${esc(l.name)}</span><span class="meta"><span>${esc(l.room)}</span><span>${freqText(l)}</span><span>${l.mins} min</span>${l.steps.length?`<span>${l.steps.length}-step checklist</span>`:""}</span></div>${have.has(l.lib)?`<span class="pill">Added</span>`:`<button class="btn small" data-add="${l.lib}">Add</button>`}</div>`).join("")||`<div class="empty">${fitOnly?"Everything that fits your home is already added.":"Nothing matches."}</div>`}</div>`;
- }else body={things:moreThings,pros:morePros,info:moreInfo}[ui.homeView]();
- return `<header class="top"><div><span class="eyebrow">Maintenance and records</span><h1>Home</h1></div></header>${seg}<div style="height:var(--s5)"></div>${body}`;
+  body=`<input type="search" id="q" placeholder="Search, e.g. gutters or dryer vent" value="${esc(ui.q)}" aria-label="Search the task library">
+  <div class="lib-tools"><div class="filters" role="group" aria-label="Show"><button class="filter" data-libfit="1" aria-pressed="${fitOnly}">${IC.tick}Suggested</button><button class="filter" data-libfit="0" aria-pressed="${!fitOnly}">${IC.tick}Everything</button></div>
+  <label class="inline-select"><span>Room</span><select id="libroom">${rooms.map(r=>`<option value="${esc(r)}" ${ui.libRoom===r?"selected":""}>${r==="All"?"All rooms":esc(r)}</option>`).join("")}</select></label></div>
+  ${fitOnly&&items.length&&S.canWrite?`<p class="summary">${items.length} task${items.length===1?"":"s"} fit your home and aren't added yet. <button class="linkish" data-addall="1">Add all ${items.length}</button></p>`:""}
+  <div class="list">${items.map(l=>`<div class="row"><div class="main"><span class="name">${esc(l.name)}</span><span class="meta"><span>${esc(l.room)}</span><span>${freqText(l)}</span><span>${fmtMins(l.mins)}</span>${l.steps.length?`<span>${l.steps.length} steps</span>`:""}</span></div>${have.has(l.lib)?`<span class="added">${IC.tick}Added</span>`:S.canWrite?`<button class="btn small" data-add="${l.lib}" aria-label="Add ${esc(l.name)}">Add</button>`:""}</div>`).join("")||`<div class="empty">${fitOnly?"Everything that fits your home is already added.":"Nothing matches."}</div>`}</div>`;
+ }else body={things:moreThings,pros:morePros,info:moreInfo}[v]();
+ return `${back}<header class="top"><div class="ttl"><h1>${titles[v]}</h1></div></header>${body}`;
 }
 function viewMore2(){
- const tabs=[["lists","Shopping"],["money","Shared costs"],["cal","Calendar"],["settings","Settings"]];
+ const tabs=[["lists","Shopping"],["money","Costs"],["cal","Calendar"],["settings","Settings"]];
  const body={lists:moreLists,money:moreMoney,cal:moreCal,settings:moreSettings}[ui.more]();
- return `<header class="top"><div><span class="eyebrow">Upkeep</span><h1>${tabs.find(t=>t[0]===ui.more)[1]}</h1></div></header>${banners()}
- <div class="seg" role="group" style="margin-bottom:var(--s5)">${tabs.map(([k,l])=>`<button data-more="${k}" aria-pressed="${ui.more===k}">${l}</button>`).join("")}</div>${body}`;
+ return `<header class="top"><div class="ttl"><h1>${{lists:"Shopping",money:"Shared costs",cal:"Calendar",settings:"Settings"}[ui.more]}</h1></div></header>${banners()}${subnav("More",tabs,ui.more,"more")}${body}`;
 }
 
 /* ---------- Interaction: completion moment, swipe, haptics, kid chime ---------- */
@@ -1781,7 +1846,7 @@ document.addEventListener("click",e=>{
  if(ds.claim&&b.closest(".acts")){e.stopImmediatePropagation();closeSwipe();claim(ds.claim);return}
  if(ds.jump){e.stopImmediatePropagation();jumpTo(ds.jump);return}
  if(ds.sv){e.stopImmediatePropagation();ui.schedView=ds.sv;render();return}
- if(ds.hv2){e.stopImmediatePropagation();ui.homeView=ds.hv2;ui.q="";ui.roomOpen=null;render();return}
+ if(ds.hv2){e.stopImmediatePropagation();ui.homeView=ds.hv2;ui.q="";ui.roomOpen=null;render();window.scrollTo(0,0);if(ds.hv2!=="rooms")document.querySelector("h1")?.setAttribute("tabindex","-1"),document.querySelector("h1")?.focus({preventScroll:true});return}
  if(ds.roomopen!=null){e.stopImmediatePropagation();ui.roomOpen=ds.roomopen||null;render();window.scrollTo(0,0);return}
  if(ds.libfit){e.stopImmediatePropagation();ui.libFit=ds.libfit==="1";render();return}
  if(ds.openroutine){e.stopImmediatePropagation();ui.routine=ds.openroutine;ui.tab="shift";ui.editShift=false;render();window.scrollTo(0,0);return}
@@ -1821,12 +1886,12 @@ function viewShift(){
  if(!rs.length)return `<button class="linkish" data-tab="today">← Today</button><header class="top" style="margin-top:var(--s4)"><div><span class="eyebrow">Routines</span><h1>Closing shift</h1></div></header>${banners()}<div class="caught"><span class="big">No closing shift yet.</span><span class="muted">It's the short list the household runs before bed, each person with their own part.</span></div>${S.canWrite?`<div style="margin-top:var(--s4)"><button class="btn primary" data-mkclosing="1">Start a closing shift</button></div>`:""}`;
  if(!ui.routine||!D.routines[ui.routine])ui.routine=(rs.find(routineRunsTonight)||rs[0]).id;
  const r=D.routines[ui.routine],done=r.items.filter(i=>D.checks[checkId(r.id,i.id)]).length,all=r.items.length,closed=all&&done===all;
- const chips=`<div class="chips">${rs.map(x=>`<button class="chip" data-routine="${x.id}" aria-pressed="${x.id===r.id}">${esc(x.name)}</button>`).join("")}${S.canWrite?`<button class="chip" data-newroutine="1">New routine</button>`:""}</div>`;
- if(ui.editShift)return viewShiftEdit(r,chips);
+ const chips=rs.length>1?subnav("Routines",rs.map(x=>[x.id,esc(x.name)]),r.id,"routine"):"";
+ if(ui.editShift)return viewShiftEdit(r);
  const me=myPid(),order=[...r.items].sort((a,b)=>(a.assignee===me?0:1)-(b.assignee===me?0:1));
  return `<button class="linkish" data-tab="today">← Today</button>
  <header class="top" style="margin-top:var(--s4)"><div><span class="eyebrow">${routineRunsTonight(r)?`Tonight · ${t12(r.time)}`:"Not scheduled tonight"}</span><h1>${closed?"Closed for the night":esc(r.name)}</h1></div>${S.canWrite?`<button class="btn small" data-editshift="1">Edit</button>`:""}</header>${banners()}
- ${rs.length>1?chips:""}
+ ${chips}
  <div class="progress"><i style="width:${all?done/all*100:0}%"></i></div>
  <p class="note" style="margin-bottom:var(--s4)">${done} of ${all} done${closed?". Nice work, everyone.":""} · Resets at 4 AM</p>
  <div class="list" data-sort="shift:${r.id}">${order.map(i=>{const c=D.checks[checkId(r.id,i.id)],nc=commentsFor("item:"+r.id+":"+i.id).length,pend=c&&Object.values(D.approvals).some(a=>a.ref===c.id);
@@ -1970,7 +2035,7 @@ document.addEventListener("click",e=>{
  if(ds.create){createHouse((document.getElementById("w-name").value||"").trim().slice(0,30));return}
  if(ds.joinlink){const v=document.getElementById("w-link").value;const m=/join=([a-z0-9]{10})\.([A-Za-z0-9_-]{10,})/.exec(v);if(!m){S.note="That doesn't look like an Upkeep invite link.";render();return}joinHouse(m[1],m[2]);return}
  if(ds.iam){ME.pid=ds.iam;saveMe();return}
- if(ds.iamnew){const n=(document.getElementById("w-me").value||"").trim().slice(0,30);if(!n)return;const pid=rid();ME.pid=pid;ls.set("upkeep-me",ME);put("people",pid,{name:n,role:"adult",color:COLORS[Object.keys(D.people).length%COLORS.length],joined:today()});logEvent({kind:"join",text:"joined the house"});return}
+ if(ds.iamnew){const n=(document.getElementById("w-me").value||"").trim().slice(0,30);if(!n)return;const pid=rid();ME.pid=pid;ls.set("upkeep-me",ME);put("people",pid,{name:n,role:"adult",color:nextColor(),joined:today()});logEvent({kind:"join",text:"joined the house"});return}
  if(ds.switchme){ME.pid="";saveMe();return}
  if(ds.leave){if(ds.leave==="1"){ui.confirmLeave=true;render()}else if(ds.leave==="2"){ui.confirmLeave=false;leaveHouse()}else{ui.confirmLeave=false;render()}return}
  if(ds.invite){shareInvite();return}
@@ -2148,7 +2213,9 @@ function tasksCsv(){
 const arr={timer:null,row:null,x:0,y:0,drag:null};
 function startArrange(list){
  ui.arranging=list.dataset.sort;list.classList.add("arranging");
- list.insertAdjacentHTML("beforebegin",`<div class="arrange-bar"><span>Drag to reorder</span><button class="btn small primary" data-arrdone="1">Done</button></div>`);
+ list.insertAdjacentHTML("beforebegin",`<div class="arrange-bar" role="status"><span>Drag, or use the arrows, to change the order</span><button class="btn small primary" data-arrdone="1">Done</button></div>`);
+ [...list.children].forEach(el=>{const host=el.matches(".row")?el:el.querySelector(".row");if(host&&!host.querySelector(".mv")){const nm=(host.querySelector(".name")||host).textContent.trim();host.insertAdjacentHTML("beforeend",`<span class="mv"><button data-mv="-1" aria-label="Move ${esc(nm)} up">${IC.up}</button><button data-mv="1" aria-label="Move ${esc(nm)} down">${IC.down}</button></span>`)}});
+ list.querySelector(".mv button")?.focus({preventScroll:true});
  haptic(12);
 }
 function finishArrange(){
@@ -2175,7 +2242,7 @@ document.addEventListener("pointermove",e=>{
 document.addEventListener("pointerup",()=>{clearTimeout(arr.timer);arr.timer=null;arr.row=null;if(arr.drag){arr.drag.el.style.transform="";arr.drag.el.classList.remove("dragging");arr.drag=null}});
 document.addEventListener("pointerdown",e=>{
  const list=e.target.closest(".list.arranging");if(!list)return;
- const item=e.target.closest(".list.arranging > *");if(!item)return;
+ const item=e.target.closest(".list.arranging > *");if(!item||e.target.closest(".mv"))return;
  e.preventDefault();arr.drag={el:item,list,y:e.clientY};item.classList.add("dragging");
 });
 
@@ -2205,6 +2272,8 @@ document.addEventListener("click",async e=>{
  if(ds.revoke!=null){e.stopImmediatePropagation();const id=ds.revoke;ui.confirmRevoke=null;if(!id){render();return}try{await houseAction({revoke:id});toast("Phone removed")}catch(err){toast("Couldn't remove that phone. Check your connection.")}render();return}
  if(ds.season){e.stopImmediatePropagation();ui.tab="schedule";ui.schedView="seasonal";render();window.scrollTo(0,0);return}
  if(ds.arrdone){e.stopImmediatePropagation();finishArrange();return}
+ if(ds.arrange){e.stopImmediatePropagation();const list=b.closest("section")?.querySelector(".list[data-sort]");if(list)startArrange(list);return}
+ if(ds.mv){e.stopImmediatePropagation();e.preventDefault();const item=b.closest(".list.arranging > *");if(!item)return;if(ds.mv==="-1"&&item.previousElementSibling)item.previousElementSibling.before(item);else if(ds.mv==="1"&&item.nextElementSibling)item.nextElementSibling.after(item);b.focus();return}
  if(ds.prepdismiss){e.stopImmediatePropagation();const p=Object.assign({},(D.house&&D.house.prep)||{},{[ds.prepdismiss]:"dismissed"});putHouse({prep:p});return}
  if(ds.placefind){e.stopImmediatePropagation();const q=document.getElementById("place-q").value.trim();if(!q)return;try{ui.places=await findPlace(q)}catch(err){ui.places=null;toast("Couldn't look up towns right now.")}render();return}
  if(ds.placepick!=null){e.stopImmediatePropagation();const p=ui.places[+ds.placepick];ui.places=null;putHouse({place:p});await loadForecast(true);render();return}
@@ -2233,7 +2302,7 @@ document.addEventListener("change",async e=>{
 /* Hooks: run after every render */
 function render(){
  renderBase();
- if(S.mode==="db"){checkMilestones();if(ME.kidDevice&&!ui.kid&&!ui.kidBooted&&kids().length){ui.kidBooted=true;ui.kid=kids().length===1?kids()[0].id:"pick";renderBase()}}
+ if(S.mode==="db"){checkMilestones();if(!ui.colorsFixed&&Object.keys(D.people).length>1){ui.colorsFixed=true;fixColors()}if(ME.kidDevice&&!ui.kid&&!ui.kidBooted&&kids().length){ui.kidBooted=true;ui.kid=kids().length===1?kids()[0].id:"pick";renderBase()}}
  if(ui.arranging){const l=document.querySelector(`.list[data-sort="${ui.arranging}"]`);if(l&&!l.classList.contains("arranging"))startArrange(l)}
 }
 setInterval(()=>{if(D.house&&D.house.place)loadForecast().then(c=>{if(c&&ui.tab==="today")render()})},30*60e3);

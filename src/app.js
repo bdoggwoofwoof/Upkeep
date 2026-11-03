@@ -5,7 +5,11 @@ const DAYS=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturda
 const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const RR_DAYS=["SU","MO","TU","WE","TH","FR","SA"];
 const CAL_SERVER="Google Calendar";
-const COLORS=["#2D5D4C","#8A4B2D","#3D5A8A","#7A3D72","#8A6B1F","#2F7A7A","#6B4FA0","#A03D4F"];
+/* Person colors: distinct in hue and lightness, all keep white initials above 4.5:1. Names always sit next to them. */
+const COLORS=["#2F5D4E","#9A4A2E","#34588F","#7A3F75","#6B5A16","#1F6B73","#5B4B9A","#A13A55"];
+function nextColor(){const used=new Set(Object.values(D.people).map(p=>p.color));return COLORS.find(c=>!used.has(c))||COLORS[Object.keys(D.people).length%COLORS.length]}
+const OLD_COLORS=["#2D5D4C","#8A4B2D","#3D5A8A","#7A3D72","#8A6B1F","#2F7A7A","#6B4FA0","#A03D4F"];
+function fixColors(){if(!S.canWrite||S.mode!=="db")return;const seen=new Set();people().forEach(p=>{let c=OLD_COLORS.includes(p.color)?COLORS[OLD_COLORS.indexOf(p.color)]:p.color;if(!c||seen.has(c))c=COLORS.find(x=>!seen.has(x))||c;seen.add(c);if(c!==p.color)patch("people",p.id,{color:c})})}
 const CLOSING_STARTER=[
  ["Dishes done, sink empty","Nothing left in the sink or on the counter. Dishwasher loaded and running if it's full."],
  ["Counters and stovetop wiped","No crumbs or sticky spots. Spray, wipe, dry."],
@@ -417,14 +421,16 @@ function planBlock(){
  <div class="list">${list.map(t=>`<div class="row" style="grid-template-columns:auto 1fr"><button class="check" data-done="${t.id}" aria-label="Mark ${esc(t.name)} done"><i>${I.check}</i></button><button class="main" data-edit="${t.id}"><span class="name">${esc(t.name)}</span><span class="meta"><span>${t.mins} min</span><span>${esc(t.room)}</span></span></button></div>`).join("")}</div>
  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="stamp" id="clock" style="font-size:1.4rem">${fmtTime(s)}</span>${timer.running?`<button class="btn small" data-timer="pause">Pause</button>`:`<button class="btn small primary" data-timer="start">${s<total*60?"Resume":"Start timer"}</button>`}<button class="btn small" data-timer="reset">Reset</button><button class="linkish" data-plan="0">Close</button></div>`;
 }
-function viewShiftEdit(r,chips){
+function viewShiftEdit(r){
  const days=r.days||[0,1,2,3,4,5,6];
- return `<header class="top"><div><div class="eyebrow">Editing</div><h1>${esc(r.name)}</h1></div><button class="btn small primary" data-doneedit="1">Done</button></header>${chips}
- <div class="calbox" style="margin-bottom:16px"><div class="grid2"><label class="field"><span>Name</span><input type="text" id="r-name" value="${esc(r.name)}"></label><label class="field"><span>Starts at</span><input type="time" id="r-time" value="${esc(r.time||"21:00")}"></label></div>
- <div class="field"><span>Runs on</span><div class="daypick">${DAYS.map((d,i)=>`<label><input type="checkbox" data-rday="${i}" ${days.includes(i)?"checked":""}>${d.slice(0,3)}</label>`).join("")}</div></div></div>
- <div class="list">${r.items.map((i,ix)=>`<div class="row" style="grid-template-columns:1fr auto"><button class="main" data-item="${i.id}"><span class="name">${esc(i.text)}</span><span class="meta"><span class="who">${av(i.assignee)}${esc(pShort(i.assignee))}</span>${i.standard?"<span>Has a standard</span>":""}</span></button><span style="display:flex;gap:4px"><button class="btn small" data-up="${ix}" ${ix?"":"disabled"} aria-label="Move up">↑</button><button class="btn small danger" data-rmitem="${i.id}" aria-label="Remove ${esc(i.text)}">✕</button></span></div>`).join("")}</div>
- <div class="cmtform" style="margin-top:12px"><input type="text" id="r-new" placeholder="Add an item, e.g. Start the dishwasher"><button class="btn primary" data-additem="1">Add</button></div>
- <div style="margin-top:22px">${ui.confirmRmRoutine?`<span class="confirm">Delete this whole routine? <button class="btn small danger" data-rmroutine="2">Delete</button><button class="btn small" data-rmroutine="0">Keep</button></span>`:`<button class="btn danger" data-rmroutine="1">Delete routine</button>`}</div>`;
+ return `<button class="back linkish" data-doneedit="1">${IC.back}Back to the ${esc(r.name.toLowerCase())}</button>
+ <header class="top"><div class="ttl"><h1>Edit routine</h1></div><button class="btn small primary" data-doneedit="1">Done</button></header>
+ <div class="fgroup"><div class="grid2 keep"><label class="field"><span>Name</span><input type="text" id="r-name" value="${esc(r.name)}"></label><label class="field"><span>Starts at</span><input type="time" id="r-time" value="${esc(r.time||"21:00")}"></label></div>
+ <div class="field"><span id="rd-l">Runs on</span><div class="toggles days" role="group" aria-labelledby="rd-l">${DAYS.map((d,i)=>`<label><input type="checkbox" data-rday="${i}" ${days.includes(i)?"checked":""}><span>${d.slice(0,3)}</span></label>`).join("")}</div></div></div>
+ <section class="group"><div class="group-head"><h2>Items</h2>${r.items.length>1?`<button class="linkish" data-arrange="1">Reorder</button>`:""}</div>
+ <div class="list" data-sort="shift:${r.id}">${r.items.map(i=>`<div class="row link" data-row="${i.id}"><button class="main" data-item="${i.id}"><span class="name">${esc(i.text)}</span><span class="meta">${ownerTag(i.assignee)}${i.standard?"<span>Has a standard</span>":""}</span></button>${IC.chev}</div>`).join("")}</div>
+ <div class="cmtform add-item" style="margin-top:12px"><input type="text" id="r-new" placeholder="Add an item, e.g. Start the dishwasher" aria-label="New item"><button class="btn" data-additem="1">Add</button></div></section>
+ <button class="linkish danger" data-rmroutine="1">Delete this routine</button>`;
 }
 function viewFamily(){
  const acts=Object.values(D.activity).sort((a,b)=>b.at-a.at),seen=ME.lastSeen||0,ws=weekStats(),aps=Object.values(D.approvals).sort((a,b)=>a.at-b.at);
@@ -482,12 +488,12 @@ function moreLists(){
  const names=[...new Set([...LISTS,...((D.house&&D.house.lists)||[])])];
  const its=Object.values(D.items).filter(i=>i.list===ui.list);
  const open=its.filter(i=>!i.done).sort((a,b)=>a.at-b.at),bought=its.filter(i=>i.done).sort((a,b)=>(b.n||0)-(a.n||0));
- return `<div class="chips">${names.map(n=>`<button class="chip" data-list="${esc(n)}" aria-pressed="${ui.list===n}">${esc(n)} <span class="stamp">${Object.values(D.items).filter(i=>i.list===n&&!i.done).length}</span></button>`).join("")}${S.canWrite?`<button class="chip" data-newlist="1">+ New list</button>`:""}</div>
- ${ui.newList?`<div class="cmtform" style="margin-bottom:12px"><input type="text" id="nl-name" placeholder="List name, e.g. Costco"><button class="btn" data-savelist="1">Create</button></div>`:""}
- ${S.canWrite?`<div class="cmtform" style="margin-bottom:12px"><input type="text" id="li-new" placeholder="Add to ${esc(ui.list)}"><button class="btn primary" data-additem2="1">Add</button></div>`:""}
- <div class="list">${open.map(i=>`<div class="row" style="grid-template-columns:auto 1fr auto"><button class="check" data-buy="${i.id}" aria-label="Got ${esc(i.text)}"><i>${I.check}</i></button><span style="min-width:0"><span class="name">${esc(i.text)}</span><span class="meta"><span class="who">${av(i.who)}${esc(pShort(i.who))}</span></span></span><button class="btn small" data-rmli="${i.id}" aria-label="Remove ${esc(i.text)}">✕</button></div>`).join("")||`<div class="row"><span class="muted">List is empty.</span></div>`}</div>
- ${bought.length?`<div class="eyebrow" style="margin:16px 0 6px">Buy again</div><div class="chips" style="flex-wrap:wrap">${bought.slice(0,24).map(i=>`<button class="chip" data-again="${i.id}">+ ${esc(i.text)}</button>`).join("")}</div>`:""}
- ${ui.list==="Groceries"?`<p class="note">Meal planning lives in Extract, your recipe app.</p>`:""}`;
+ const count=n=>Object.values(D.items).filter(i=>i.list===n&&!i.done).length;
+ return `<div class="filters lists" role="group" aria-label="Lists">${names.map(n=>`<button class="filter" data-list="${esc(n)}" aria-pressed="${ui.list===n}">${IC.tick}${esc(n)}${count(n)?`<span class="n">${count(n)}</span>`:""}</button>`).join("")}${S.canWrite?`<button class="chip" data-newlist="1">${IC.plus}New list</button>`:""}</div>
+ ${ui.newList?`<div class="cmtform" style="margin-bottom:12px"><input type="text" id="nl-name" placeholder="List name, e.g. Costco" aria-label="New list name"><button class="btn" data-savelist="1">Create</button></div>`:""}
+ ${S.canWrite?`<div class="cmtform add-item"><input type="text" id="li-new" placeholder="Add to ${esc(ui.list)}" aria-label="Add an item to ${esc(ui.list)}"><button class="btn primary" data-additem2="1">Add</button></div>`:""}
+ <div class="list">${open.map(i=>`<div class="row shop"><span class="main"><span class="name">${esc(i.text)}</span>${multiUser()?`<span class="meta">${ownerTag(i.who).replace("Up for grabs","")}<span>added it</span></span>`:""}</span><span class="row-acts"><button class="icon-btn quiet" data-rmli="${i.id}" aria-label="Remove ${esc(i.text)}">${IC.x}</button><button class="check" data-buy="${i.id}" aria-label="Got ${esc(i.text)}"><i>${IC.check}</i></button></span></div>`).join("")||`<div class="empty">Nothing on the ${esc(ui.list)} list.</div>`}</div>
+ ${bought.length?`<section class="group again"><div class="group-head"><h2>Buy again</h2></div><div class="chips">${bought.slice(0,24).map(i=>`<button class="chip" data-again="${i.id}">${IC.plus}${esc(i.text)}</button>`).join("")}</div></section>`:""}`;
 }
 function moreMoney(){
  const xs=Object.values(D.expenses).sort((a,b)=>b.date.localeCompare(a.date)),b=balances(),st=settleUp();
@@ -505,11 +511,13 @@ function moreKids(){
  <section class="group"><div class="group-head"><h2>Rewards</h2>${S.canWrite?`<button class="btn small" data-form="rewards:new">Add reward</button>`:""}</div><div class="list">${ws.map(w=>`<button class="row main" data-form="rewards:${w.id}" style="grid-template-columns:1fr auto;width:100%"><span class="name">${esc(w.name)}</span><span class="stamp">${w.cost} ★</span></button>`).join("")||`<div class="row"><span class="muted">Ideas: pick the movie (20 ★), stay up 30 minutes late (30 ★), a trip for ice cream (50 ★).</span></div>`}</div></section>
  <section class="group"><div class="group-head"><h2>Balances</h2></div><div class="list">${kids().map(k=>`<div class="row" style="grid-template-columns:auto 1fr auto">${av(k.id)}<span class="name">${esc(pName(k.id))}</span><span style="display:flex;gap:8px;align-items:center"><span class="stamp">${pointsOf(k.id)} ★${h.centsPerPoint?" · "+money(pointsOf(k.id)*h.centsPerPoint):""}</span>${h.centsPerPoint&&pointsOf(k.id)>0&&S.canWrite?`<button class="btn small" data-payout="${k.id}">Paid out</button>`:""}</span></div>`).join("")||`<div class="row"><span class="muted">Add kids on the Family tab.</span></div>`}</div></section>`;
 }
+const PROFILE_GROUPS=[["Outside",["yard","deck","garage","pool","grill","sprinkler"]],["Systems",["central","basement","fireplace","generator","septic","well","softener"]],["Who lives here",["kids","pets","car"]]];
 function profileForm(pr){
- const seg=(k,opts)=>`<div class="seg" role="group">${opts.map(([v,l])=>`<button data-prof="${k}" data-v="${v}" aria-pressed="${pr[k]===v}">${l}</button>`).join("")}</div>`;
- return `<div class="calbox"><div class="field"><span>Type of home</span>${seg("home",[["house","House"],["townhouse","Townhouse"],["apartment","Apartment"]])}</div>
- <div class="field"><span>Own or rent</span>${seg("own",[["own","Own"],["rent","Rent"]])}</div>
- <div class="field"><span>Your home has</span><div class="chips" style="flex-wrap:wrap;margin:0">${PROFILE_Q.map(([k,l])=>`<button class="chip" data-proft="${k}" aria-pressed="${!!pr[k]}">${l}</button>`).join("")}</div></div></div>`;
+ const one=(k,opts,label)=>`<div class="field"><span id="pf-${k}">${label}</span><div class="opts" role="group" aria-labelledby="pf-${k}">${opts.map(([v,l])=>`<button class="chip" data-prof="${k}" data-v="${v}" aria-pressed="${pr[k]===v}">${IC.tick}${l}</button>`).join("")}</div></div>`;
+ const lab=k=>(PROFILE_Q.find(q=>q[0]===k)||[k,k])[1];
+ return `<div class="profile">${one("home",[["house","House"],["townhouse","Townhouse"],["apartment","Apartment"]],"Type of home")}
+ ${one("own",[["own","Own"],["rent","Rent"]],"Own or rent")}
+ ${PROFILE_GROUPS.map(([g,ks])=>`<div class="field"><span id="pg-${g.replace(/ /g,"")}">${g}</span><div class="opts" role="group" aria-labelledby="pg-${g.replace(/ /g,"")}">${ks.map(k=>`<button class="chip" data-proft="${k}" aria-pressed="${!!pr[k]}">${IC.tick}${esc(lab(k))}</button>`).join("")}</div></div>`).join("")}</div>`;
 }
 function viewSetup(){
  const pr=ui.setup||(ui.setup={home:"house",own:"own",closing:true});
@@ -557,11 +565,9 @@ function formSheet(s){
   if(d.manual)extra+=`<a class="linkish" href="${esc(d.manual)}" target="_blank" rel="noopener">Open the manual</a>`;
  }
  const photo=f.photo?`<div class="field"><span>Photo of the label or model plate</span>${d.photo?`<img src="${esc(photoUrl(d.photo))}" alt="Photo" style="max-width:220px;border-radius:8px">`:""}<input type="file" accept="image/*" id="g-photo"></div>`:"";
- return `<div class="scrim" data-close="1"></div><div class="sheet" role="dialog" aria-label="${f.title}"><div class="panel">
-  <div class="bar"><h2>${s.id?"Edit":"New"} ${f.title.toLowerCase()}</h2><button class="btn small" data-close="1">Close</button></div>
-  ${f.fields.map(inp).join("")}${photo}${extra}${s.err?`<p class="note err">${esc(s.err)}</p>`:""}
-  ${S.canWrite?`<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><button class="btn primary" data-gsave="1" ${s.busy?"disabled":""}>${s.busy?"Saving…":"Save"}</button>${s.id&&!(s.col==="people"&&s.id===myPid())?(s.confirmDel?`<span class="confirm">Delete? <button class="btn small danger" data-gdel="1">Delete</button><button class="btn small" data-gnodel="1">Keep</button></span>`:`<button class="btn danger" data-gaskdel="1">Delete</button>`):""}</div>`:""}
- </div></div>`;
+ const canDel=s.id&&S.canWrite&&!(s.col==="people"&&s.id===myPid());
+ return sheetShell(f.title,`<h2 class="sheet-title" tabindex="-1">${s.id?esc(d[f.fields[0][0]]||f.title):"New "+f.title.toLowerCase()}</h2>`,`${f.fields.map(inp).join("")}${photo}${extra}${s.err?`<p class="note err" role="alert">${esc(s.err)}</p>`:""}${canDel?`<button class="linkish danger" data-gdel="1">Delete this ${f.title.toLowerCase()}</button>`:""}`,
+  S.canWrite?`<button class="btn primary" data-gsave="1" ${s.busy?"disabled":""}>${s.busy?"Saving…":"Save"}</button><button class="btn text" data-close="1">Cancel</button>`:"","edit-one");
 }
 async function saveForm(){
  const s=ui.sheet,f=FORMS[s.col],d=Object.assign({},s.data);delete d.id;
@@ -592,7 +598,7 @@ function openForm(spec){
  if(isNew&&col==="service")data.thing=extra;
  if(isNew&&col==="service")data.date=today();
  if(isNew&&col==="expenses")data.date=today();
- if(isNew&&col==="people")data.role="kid";
+ if(isNew&&col==="people"){data.role="kid";data.color=nextColor()}
  ui.sheet={kind:"form",col,id:isNew?null:id,data};renderLayer();
 }
 function renderLayer(){
@@ -601,15 +607,15 @@ function renderLayer(){
  if(s&&s.kind==="item"){
   const r=D.routines[s.rid],i=r&&r.items.find(x=>x.id===s.iid);
   if(i){const ro=!S.canWrite?"disabled":"",c=D.checks[checkId(r.id,i.id)];
-  h+=`<div class="scrim" data-close="1"></div><div class="sheet" role="dialog" aria-label="Shift item"><div class="panel">
-  <div class="bar"><div><div class="eyebrow">${esc(r.name)}</div><h2>${esc(i.text)}</h2></div><button class="btn small" data-close="1">Close</button></div>
-  ${c?`<p class="checked-by">Checked by ${esc(pShort(c.who))} at ${clock(c.at)}</p>`:""}
+  h+=sheetShell(i.text,`<div><p class="sheet-kicker">${esc(r.name)}</p><h2 class="sheet-title" tabindex="-1">${esc(i.text)}</h2></div>`,`
+  ${c?`<p class="checked-by">${IC.tick}Checked by ${esc(pShort(c.who))} at ${clock(c.at)}</p>`:""}
   <label class="field"><span>Item</span><input type="text" id="i-text" value="${esc(i.text)}" ${ro}></label>
   ${multiUser()?`<label class="field"><span>Whose part</span><select id="i-who" ${ro}>${peopleOptions(i.assignee)}</select></label>${rotatePick(i.rotate,"item")}`:""}
-  <label class="field"><span>Done means (the standard)</span><textarea id="i-std" style="min-height:60px" ${ro}>${esc(i.standard||"")}</textarea></label>
+  <label class="field"><span>Done means</span><textarea id="i-std" rows="2" ${ro}>${esc(i.standard||"")}</textarea></label>
   <label class="field"><span>Notes</span><input type="text" id="i-notes" value="${esc(i.notes||"")}" placeholder="Where things go, tips" ${ro}></label>
   ${commentBlock("item:"+r.id+":"+i.id,i.text)}
-  ${S.canWrite?`<div><button class="btn primary" data-saveitem="1">Save</button></div>`:""}</div></div>`}
+  ${S.canWrite?`<button class="linkish danger" data-rmitem="${i.id}">Remove from the ${esc(r.name.toLowerCase())}</button>`:""}`,
+  S.canWrite?`<button class="btn primary" data-saveitem="1">Save</button><button class="btn text" data-close="1">Cancel</button>`:"","edit-one")}
  }
  if(s&&s.kind==="finish"){
   const t=D.tasks[s.id];
@@ -660,7 +666,7 @@ function setupHouse(pr){
 /* ---------- Events ---------- */
 document.addEventListener("click",async e=>{
  const b=e.target.closest("button,[data-close]");if(!b)return;const ds=b.dataset;
- if(ds.tab){ui.tab=ds.tab;ui.q="";ui.editShift=false;render();window.scrollTo(0,0);if(ds.tab==="more"&&ui.more==="cal")loadCalendars();return}
+ if(ds.tab){if(ds.tab==="home"&&b.closest("nav.tabs")){ui.homeView="rooms";ui.roomOpen=null}ui.tab=ds.tab;ui.q="";ui.editShift=false;render();window.scrollTo(0,0);if(ds.tab==="more"&&ui.more==="cal")loadCalendars();return}
  if(ds.who){ui.who=ds.who;if(ui.plan)ui.plan.ids=buildPlan(ui.plan.mins);render();return}
  if(ds.done){startDone(ds.done);return}
  if(ds.finish){const s=ui.sheet,file=document.getElementById("fin-photo")?.files?.[0];let photo="";
@@ -670,7 +676,7 @@ document.addEventListener("click",async e=>{
  if(ds.nudge){nudge(ds.nudge);return}
  if(ds.toggle){ui.open[ds.toggle]=!ui.open[ds.toggle];render();return}
  if(ds.edit){openTask(ds.edit);return}
- if(ds.new){ui.sheet={kind:"task",isNew:true,draft:newTask({name:"",room:ui.room!=="All"?ui.room:"Other",unit:"week",every:1,mins:15},today())};renderLayer();document.getElementById("f-name")?.focus();return}
+ if(ds.new){ui.sheet={kind:"task",isNew:true,draft:newTask({name:"",room:ds.roomNew||ui.roomOpen||"Other",unit:"week",every:1,mins:15},today())};renderLayer();document.getElementById("f-name")?.focus();return}
  if(ds.room){ui.room=ds.room;render();return}
  if(ds.hv){ui.houseView=ds.hv;ui.q="";render();return}
  if(ds.libroom){ui.libRoom=ds.libroom;render();return}
@@ -700,9 +706,9 @@ document.addEventListener("click",async e=>{
  if(ds.editshift){ui.editShift=true;render();return}
  if(ds.doneedit){const r=D.routines[ui.routine];updateRoutine(r,{name:document.getElementById("r-name").value.trim()||r.name,time:document.getElementById("r-time").value||r.time});ui.editShift=false;render();return}
  if(ds.additem){const inp=document.getElementById("r-new"),txt=inp.value.trim();if(!txt)return;const r=D.routines[ui.routine];updateRoutine(r,{items:[...r.items,{id:rid(),text:txt,standard:"",notes:"",assignee:"",rotate:[]}]});setTimeout(()=>document.getElementById("r-new")?.focus(),0);return}
- if(ds.rmitem){const r=D.routines[ui.routine];updateRoutine(r,{items:r.items.filter(x=>x.id!==ds.rmitem)});return}
+ if(ds.rmitem){const r=D.routines[ui.routine],prev=r.items;const it=r.items.find(x=>x.id===ds.rmitem);ui.sheet=null;renderLayer();updateRoutine(r,{items:r.items.filter(x=>x.id!==ds.rmitem)});toast(`Removed “${it?it.text:"item"}”`,()=>updateRoutine(D.routines[r.id]||r,{items:prev}));return}
  if(ds.up){const r=D.routines[ui.routine],ix=+ds.up,it=[...r.items];[it[ix-1],it[ix]]=[it[ix],it[ix-1]];updateRoutine(r,{items:it});return}
- if(ds.rmroutine){if(ds.rmroutine==="1"){ui.confirmRmRoutine=true;render();return}if(ds.rmroutine==="2"){remove("routines",ui.routine);ui.routine=null;ui.editShift=false}ui.confirmRmRoutine=false;render();return}
+ if(ds.rmroutine){const id=ui.routine,copy=Object.assign({},D.routines[id]);delete copy.id;remove("routines",id);ui.routine=null;ui.editShift=false;ui.tab="schedule";render();toast(`Deleted the ${copy.name}`,()=>{put("routines",id,copy);ui.routine=id});return}
  // kids
  if(ds.kidview){ui.kid=kids().length===1?kids()[0].id:"pick";render();window.scrollTo(0,0);return}
  if(ds.kidpick){ui.kid=ds.kidpick;render();return}
@@ -728,9 +734,9 @@ document.addEventListener("click",async e=>{
  if(ds.newlist){ui.newList=!ui.newList;render();setTimeout(()=>document.getElementById("nl-name")?.focus(),0);return}
  if(ds.savelist){const n=(document.getElementById("nl-name").value||"").trim().slice(0,30);if(n){putHouse({lists:[...new Set([...((D.house&&D.house.lists)||[]),n])]});ui.list=n}ui.newList=false;render();return}
  if(ds.additem2){const inp=document.getElementById("li-new"),txt=inp.value.trim();if(!txt)return;const ex=Object.values(D.items).find(i=>i.list===ui.list&&i.text.toLowerCase()===txt.toLowerCase());if(ex)patch("items",ex.id,{done:false,who:myPid(),at:Date.now()});else put("items",rid(),{list:ui.list,text:txt,done:false,who:myPid(),at:Date.now(),n:0});setTimeout(()=>document.getElementById("li-new")?.focus(),0);return}
- if(ds.buy){const i=D.items[ds.buy];patch("items",i.id,{done:true,n:(i.n||0)+1,boughtBy:myPid(),boughtAt:Date.now()});return}
+ if(ds.buy){const i=D.items[ds.buy],prev=Object.assign({},i);patch("items",i.id,{done:true,n:(i.n||0)+1,boughtBy:myPid(),boughtAt:Date.now()});toast(`Got ${i.text}`,()=>put("items",i.id,prev));return}
  if(ds.again){patch("items",ds.again,{done:false,who:myPid(),at:Date.now()});return}
- if(ds.rmli){remove("items",ds.rmli);return}
+ if(ds.rmli){const i=Object.assign({},D.items[ds.rmli]);remove("items",ds.rmli);toast(`Removed ${i.text}`,()=>put("items",i.id,i));return}
  if(ds.loadcal){loadCalendars();return}
  if(ds.gocal){ui.sheet=null;ui.tab="more";ui.more="cal";render();loadCalendars();return}
  if(ds.calreset){delete ME.calAdded[ds.calreset];saveMe();return}
@@ -763,6 +769,7 @@ document.addEventListener("change",e=>{
  
  if(el.id==="remind"){ME.reminder=+el.value;saveMe();return}
  if(el.id==="deftime"){ME.defaultTime=el.value||"09:00";saveMe();return}
+ if(el.id==="libroom"){ui.libRoom=el.value;render();return}
  if(el.id==="histwho"){ui.histWho=el.value;render();return}
  if(el.id==="kidok"){putHouse({kidApproval:el.checked});return}
  if(el.id==="cpp"){putHouse({centsPerPoint:+el.value});return}

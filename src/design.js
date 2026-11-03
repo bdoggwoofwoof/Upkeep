@@ -16,6 +16,9 @@ const IC={
  moon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 14.5A7.5 7.5 0 0 1 9.5 5a7.5 7.5 0 1 0 9.5 9.5z"/></svg>',
  alert:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5M12 17.4v.1"/></svg>',
  cloud:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 18h10a4 4 0 0 0 .6-7.96A6 6 0 0 0 6.1 9.2 4.4 4.4 0 0 0 7 18z"/><path d="M4 4l16 16"/></svg>',
+ back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>',
+ up:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>',
+ down:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg>',
  plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
  star:'<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z"/></svg>'
 };
@@ -68,7 +71,7 @@ function taskRow(t,o){
 function whoSeg(){if(!multiUser())return"";return `<div class="filters" role="group" aria-label="Show tasks for">${[["all","Everyone"],["mine","Mine"],["open","Up for grabs"]].map(([v,l])=>`<button class="filter" data-who="${v}" aria-pressed="${ui.who===v}">${IC.tick}${l}</button>`).join("")}</div>`}
 function listSection(title,list,o={}){
  if(!list.length)return"";
- return `<section class="group"${o.id?` id="${o.id}"`:""}><div class="group-head"><h2>${title}</h2>${o.stamp!==""?`<span class="stamp">${o.stamp||list.length}</span>`:""}</div><div class="list"${o.sort?` data-sort="${o.sort}"`:""}>${list.map(t=>taskRow(t,o)).join("")}</div></section>`;
+ return `<section class="group"${o.id?` id="${o.id}"`:""}><div class="group-head"><h2>${title}</h2><span class="gh-r">${o.sort&&list.length>1&&S.canWrite?`<button class="linkish" data-arrange="1">Reorder</button>`:""}${o.stamp!==""?`<span class="stamp">${o.stamp||list.length}</span>`:""}</span></div><div class="list"${o.sort?` data-sort="${o.sort}"`:""}>${list.map(t=>taskRow(t,o)).join("")}</div></section>`;
 }
 
 /* ---------- Notices: errors, things waiting on you, household reminders ---------- */
@@ -214,36 +217,49 @@ function viewSchedule(){
  }
  return `<header class="top"><div class="ttl"><h1>Schedule</h1><span class="date">${tasks().length} recurring tasks</span></div></header>${nav}${whoSeg()?`<div class="filter-row">${whoSeg()}</div>`:""}${body}`;
 }
+/* ---------- Home: rooms first, then records; each record type is its own page ---------- */
+function roomStatus(r){
+ const ts=tasks().filter(t=>t.room===r),late=ts.filter(t=>status(t)==="late").length,due=ts.filter(t=>status(t)==="today").length,soon=ts.filter(t=>status(t)==="soon").length;
+ if(late)return `<span class="r-st late">${IC.tri}${late} late${due?` · ${due} due today`:""}</span>`;
+ if(due)return `<span class="r-st today">${IC.dot}${due} due today</span>`;
+ return `<span class="r-st ok">${IC.tick}Nothing due</span>`;
+}
 function viewHome(){
- const seg=`<div class="seg" role="group" aria-label="Section">${[["rooms","Rooms"],["library","Library"],["things","Appliances"],["pros","Contractors"],["info","Home info"]].map(([v,l])=>`<button data-hv2="${v}" aria-pressed="${ui.homeView===v}">${l}</button>`).join("")}</div>`;
+ const v=ui.homeView==="rooms"?"":ui.homeView;
+ const back=`<button class="back linkish" data-hv2="rooms">${IC.back}Home</button>`;
+ const newBtn=room=>S.canWrite?`<button class="btn small" data-new="1"${room?` data-room-new="${esc(room)}"`:""}>${IC.plus}New task</button>`:"";
+ if(!v&&ui.roomOpen){
+  const r=ui.roomOpen,ts=tasks().filter(t=>t.room===r).sort((a,b)=>a.next.localeCompare(b.next));
+  return `${back}<header class="top"><div class="ttl"><h1>${esc(r)}</h1><span class="date">${ts.length} task${ts.length===1?"":"s"}</span></div>${newBtn(r)}</header><p class="summary">${roomStatus(r)}</p><div class="list">${ts.map(t=>taskRow(t)).join("")||`<div class="empty">No tasks here yet.</div>`}</div>`;
+ }
+ if(!v){
+  const rooms=ROOMS.filter(r=>tasks().some(t=>t.room===r));
+  const tags=tagsOf(D.house&&D.house.profile),have=new Set(tasks().map(t=>t.lib)),fit=LIB.filter(l=>libFits(l,tags)&&!have.has(l.lib)).length;
+  const rec=[["library","Task library",fit?`${fit} suggested for your home`:`${LIB.length} tasks to choose from`],["things","Appliances",`${Object.keys(D.things).length} saved`],["pros","Contractors",`${Object.keys(D.pros).length} saved`],["info","Home info",`${Object.keys(D.info).length} saved`]];
+  return `<header class="top"><div class="ttl"><h1>Home</h1><span class="date">${tasks().length} tasks across ${rooms.length} rooms</span></div>${newBtn("")}</header>
+  <div class="rooms">${rooms.map(r=>{const n=tasks().filter(t=>t.room===r).length;return `<button class="room" data-roomopen="${esc(r)}"><b>${esc(r)}</b>${roomStatus(r)}<span class="r-n">${n} task${n>1?"s":""}</span></button>`}).join("")||`<div class="empty">No tasks yet. Add some from the task library.</div>`}</div>
+  <section class="group"><div class="group-head"><h2>Records</h2></div><div class="list">${rec.map(([k,l,m])=>`<button class="row link" data-hv2="${k}"><span class="main"><span class="name">${l}</span><span class="meta"><span>${m}</span></span></span>${IC.chev}</button>`).join("")}</div></section>`;
+ }
+ const titles={library:"Task library",things:"Appliances",pros:"Contractors",info:"Home info"};
  let body="";
- if(ui.homeView==="rooms"){
-  if(ui.roomOpen){
-   const r=ui.roomOpen,ts=tasks().filter(t=>t.room===r).sort((a,b)=>a.next.localeCompare(b.next)),f=freshness(r);
-   body=`<button class="linkish" data-roomopen="">← All rooms</button><section class="group" style="margin-top:var(--s4)"><div class="group-head"><h2>${esc(r)}</h2><span class="stamp">${f==null?"":Math.round(f*100)+"% fresh"}</span></div><div class="list">${ts.map(taskRow).join("")||`<div class="empty">No tasks here yet.</div>`}</div></section>${S.canWrite?`<button class="btn" data-new="1">New task</button>`:""}`;
-  }else{
-   const rooms=ROOMS.filter(r=>tasks().some(t=>t.room===r));
-   body=`<p class="lede" style="margin-top:0">How each part of the house is doing. The bar empties as tasks come due.</p><div class="rooms">${rooms.map(r=>{const ts=tasks().filter(t=>t.room===r),f=freshness(r),due=ts.filter(t=>status(t)==="late"||status(t)==="today").length;
-    return `<button class="room" data-roomopen="${esc(r)}"><b>${esc(r)}</b><span>${ts.length} task${ts.length>1?"s":""}${due?` · ${due} due`:""}</span><span class="progress fresh" style="margin:2px 0 0"><i style="width:${Math.round((f||0)*100)}%"></i></span></button>`}).join("")}</div>${S.canWrite?`<button class="btn" data-new="1">New task</button>`:""}`;
-  }
- }else if(ui.homeView==="library"){
+ if(v==="library"){
   const tags=tagsOf(D.house&&D.house.profile),have=new Set(tasks().map(t=>t.lib));
   const fitOnly=ui.libFit!==false;
   let items=LIB.filter(l=>(ui.libRoom==="All"||l.room===ui.libRoom)&&(!ui.q||l.name.toLowerCase().includes(ui.q.toLowerCase())));
   if(fitOnly)items=items.filter(l=>libFits(l,tags)&&!have.has(l.lib));
   const rooms=["All",...ROOMS.filter(r=>LIB.some(l=>l.room===r))];
-  body=`<div class="toolbar"><input type="search" id="q" placeholder="Search the maintenance library" value="${esc(ui.q)}"><div class="seg"><button data-libfit="1" aria-pressed="${fitOnly}">Suggested for you</button><button data-libfit="0" aria-pressed="${!fitOnly}">Everything</button></div></div>
-  <div class="chips">${rooms.map(r=>`<button class="chip" data-libroom="${esc(r)}" aria-pressed="${ui.libRoom===r}">${esc(r)}</button>`).join("")}</div>
-  ${fitOnly&&items.length&&S.canWrite?`<p class="note" style="margin-bottom:var(--s3)">${items.length} tasks fit your home and aren't added yet. <button class="linkish" data-addall="1">Add all</button></p>`:""}
-  <div class="list">${items.map(l=>`<div class="row"><div class="main"><span class="name">${esc(l.name)}</span><span class="meta"><span>${esc(l.room)}</span><span>${freqText(l)}</span><span>${l.mins} min</span>${l.steps.length?`<span>${l.steps.length}-step checklist</span>`:""}</span></div>${have.has(l.lib)?`<span class="pill">Added</span>`:`<button class="btn small" data-add="${l.lib}">Add</button>`}</div>`).join("")||`<div class="empty">${fitOnly?"Everything that fits your home is already added.":"Nothing matches."}</div>`}</div>`;
- }else body={things:moreThings,pros:morePros,info:moreInfo}[ui.homeView]();
- return `<header class="top"><div><span class="eyebrow">Maintenance and records</span><h1>Home</h1></div></header>${seg}<div style="height:var(--s5)"></div>${body}`;
+  body=`<input type="search" id="q" placeholder="Search, e.g. gutters or dryer vent" value="${esc(ui.q)}" aria-label="Search the task library">
+  <div class="lib-tools"><div class="filters" role="group" aria-label="Show"><button class="filter" data-libfit="1" aria-pressed="${fitOnly}">${IC.tick}Suggested</button><button class="filter" data-libfit="0" aria-pressed="${!fitOnly}">${IC.tick}Everything</button></div>
+  <label class="inline-select"><span>Room</span><select id="libroom">${rooms.map(r=>`<option value="${esc(r)}" ${ui.libRoom===r?"selected":""}>${r==="All"?"All rooms":esc(r)}</option>`).join("")}</select></label></div>
+  ${fitOnly&&items.length&&S.canWrite?`<p class="summary">${items.length} task${items.length===1?"":"s"} fit your home and aren't added yet. <button class="linkish" data-addall="1">Add all ${items.length}</button></p>`:""}
+  <div class="list">${items.map(l=>`<div class="row"><div class="main"><span class="name">${esc(l.name)}</span><span class="meta"><span>${esc(l.room)}</span><span>${freqText(l)}</span><span>${fmtMins(l.mins)}</span>${l.steps.length?`<span>${l.steps.length} steps</span>`:""}</span></div>${have.has(l.lib)?`<span class="added">${IC.tick}Added</span>`:S.canWrite?`<button class="btn small" data-add="${l.lib}" aria-label="Add ${esc(l.name)}">Add</button>`:""}</div>`).join("")||`<div class="empty">${fitOnly?"Everything that fits your home is already added.":"Nothing matches."}</div>`}</div>`;
+ }else body={things:moreThings,pros:morePros,info:moreInfo}[v]();
+ return `${back}<header class="top"><div class="ttl"><h1>${titles[v]}</h1></div></header>${body}`;
 }
 function viewMore2(){
- const tabs=[["lists","Shopping"],["money","Shared costs"],["cal","Calendar"],["settings","Settings"]];
+ const tabs=[["lists","Shopping"],["money","Costs"],["cal","Calendar"],["settings","Settings"]];
  const body={lists:moreLists,money:moreMoney,cal:moreCal,settings:moreSettings}[ui.more]();
- return `<header class="top"><div><span class="eyebrow">Upkeep</span><h1>${tabs.find(t=>t[0]===ui.more)[1]}</h1></div></header>${banners()}
- <div class="seg" role="group" style="margin-bottom:var(--s5)">${tabs.map(([k,l])=>`<button data-more="${k}" aria-pressed="${ui.more===k}">${l}</button>`).join("")}</div>${body}`;
+ return `<header class="top"><div class="ttl"><h1>${{lists:"Shopping",money:"Shared costs",cal:"Calendar",settings:"Settings"}[ui.more]}</h1></div></header>${banners()}${subnav("More",tabs,ui.more,"more")}${body}`;
 }
 
 /* ---------- Interaction: completion moment, swipe, haptics, kid chime ---------- */
@@ -281,7 +297,7 @@ document.addEventListener("click",e=>{
  if(ds.claim&&b.closest(".acts")){e.stopImmediatePropagation();closeSwipe();claim(ds.claim);return}
  if(ds.jump){e.stopImmediatePropagation();jumpTo(ds.jump);return}
  if(ds.sv){e.stopImmediatePropagation();ui.schedView=ds.sv;render();return}
- if(ds.hv2){e.stopImmediatePropagation();ui.homeView=ds.hv2;ui.q="";ui.roomOpen=null;render();return}
+ if(ds.hv2){e.stopImmediatePropagation();ui.homeView=ds.hv2;ui.q="";ui.roomOpen=null;render();window.scrollTo(0,0);if(ds.hv2!=="rooms")document.querySelector("h1")?.setAttribute("tabindex","-1"),document.querySelector("h1")?.focus({preventScroll:true});return}
  if(ds.roomopen!=null){e.stopImmediatePropagation();ui.roomOpen=ds.roomopen||null;render();window.scrollTo(0,0);return}
  if(ds.libfit){e.stopImmediatePropagation();ui.libFit=ds.libfit==="1";render();return}
  if(ds.openroutine){e.stopImmediatePropagation();ui.routine=ds.openroutine;ui.tab="shift";ui.editShift=false;render();window.scrollTo(0,0);return}
@@ -321,12 +337,12 @@ function viewShift(){
  if(!rs.length)return `<button class="linkish" data-tab="today">← Today</button><header class="top" style="margin-top:var(--s4)"><div><span class="eyebrow">Routines</span><h1>Closing shift</h1></div></header>${banners()}<div class="caught"><span class="big">No closing shift yet.</span><span class="muted">It's the short list the household runs before bed, each person with their own part.</span></div>${S.canWrite?`<div style="margin-top:var(--s4)"><button class="btn primary" data-mkclosing="1">Start a closing shift</button></div>`:""}`;
  if(!ui.routine||!D.routines[ui.routine])ui.routine=(rs.find(routineRunsTonight)||rs[0]).id;
  const r=D.routines[ui.routine],done=r.items.filter(i=>D.checks[checkId(r.id,i.id)]).length,all=r.items.length,closed=all&&done===all;
- const chips=`<div class="chips">${rs.map(x=>`<button class="chip" data-routine="${x.id}" aria-pressed="${x.id===r.id}">${esc(x.name)}</button>`).join("")}${S.canWrite?`<button class="chip" data-newroutine="1">New routine</button>`:""}</div>`;
- if(ui.editShift)return viewShiftEdit(r,chips);
+ const chips=rs.length>1?subnav("Routines",rs.map(x=>[x.id,esc(x.name)]),r.id,"routine"):"";
+ if(ui.editShift)return viewShiftEdit(r);
  const me=myPid(),order=[...r.items].sort((a,b)=>(a.assignee===me?0:1)-(b.assignee===me?0:1));
  return `<button class="linkish" data-tab="today">← Today</button>
  <header class="top" style="margin-top:var(--s4)"><div><span class="eyebrow">${routineRunsTonight(r)?`Tonight · ${t12(r.time)}`:"Not scheduled tonight"}</span><h1>${closed?"Closed for the night":esc(r.name)}</h1></div>${S.canWrite?`<button class="btn small" data-editshift="1">Edit</button>`:""}</header>${banners()}
- ${rs.length>1?chips:""}
+ ${chips}
  <div class="progress"><i style="width:${all?done/all*100:0}%"></i></div>
  <p class="note" style="margin-bottom:var(--s4)">${done} of ${all} done${closed?". Nice work, everyone.":""} · Resets at 4 AM</p>
  <div class="list" data-sort="shift:${r.id}">${order.map(i=>{const c=D.checks[checkId(r.id,i.id)],nc=commentsFor("item:"+r.id+":"+i.id).length,pend=c&&Object.values(D.approvals).some(a=>a.ref===c.id);

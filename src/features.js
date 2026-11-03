@@ -161,7 +161,9 @@ function tasksCsv(){
 const arr={timer:null,row:null,x:0,y:0,drag:null};
 function startArrange(list){
  ui.arranging=list.dataset.sort;list.classList.add("arranging");
- list.insertAdjacentHTML("beforebegin",`<div class="arrange-bar"><span>Drag to reorder</span><button class="btn small primary" data-arrdone="1">Done</button></div>`);
+ list.insertAdjacentHTML("beforebegin",`<div class="arrange-bar" role="status"><span>Drag, or use the arrows, to change the order</span><button class="btn small primary" data-arrdone="1">Done</button></div>`);
+ [...list.children].forEach(el=>{const host=el.matches(".row")?el:el.querySelector(".row");if(host&&!host.querySelector(".mv")){const nm=(host.querySelector(".name")||host).textContent.trim();host.insertAdjacentHTML("beforeend",`<span class="mv"><button data-mv="-1" aria-label="Move ${esc(nm)} up">${IC.up}</button><button data-mv="1" aria-label="Move ${esc(nm)} down">${IC.down}</button></span>`)}});
+ list.querySelector(".mv button")?.focus({preventScroll:true});
  haptic(12);
 }
 function finishArrange(){
@@ -188,7 +190,7 @@ document.addEventListener("pointermove",e=>{
 document.addEventListener("pointerup",()=>{clearTimeout(arr.timer);arr.timer=null;arr.row=null;if(arr.drag){arr.drag.el.style.transform="";arr.drag.el.classList.remove("dragging");arr.drag=null}});
 document.addEventListener("pointerdown",e=>{
  const list=e.target.closest(".list.arranging");if(!list)return;
- const item=e.target.closest(".list.arranging > *");if(!item)return;
+ const item=e.target.closest(".list.arranging > *");if(!item||e.target.closest(".mv"))return;
  e.preventDefault();arr.drag={el:item,list,y:e.clientY};item.classList.add("dragging");
 });
 
@@ -218,6 +220,8 @@ document.addEventListener("click",async e=>{
  if(ds.revoke!=null){e.stopImmediatePropagation();const id=ds.revoke;ui.confirmRevoke=null;if(!id){render();return}try{await houseAction({revoke:id});toast("Phone removed")}catch(err){toast("Couldn't remove that phone. Check your connection.")}render();return}
  if(ds.season){e.stopImmediatePropagation();ui.tab="schedule";ui.schedView="seasonal";render();window.scrollTo(0,0);return}
  if(ds.arrdone){e.stopImmediatePropagation();finishArrange();return}
+ if(ds.arrange){e.stopImmediatePropagation();const list=b.closest("section")?.querySelector(".list[data-sort]");if(list)startArrange(list);return}
+ if(ds.mv){e.stopImmediatePropagation();e.preventDefault();const item=b.closest(".list.arranging > *");if(!item)return;if(ds.mv==="-1"&&item.previousElementSibling)item.previousElementSibling.before(item);else if(ds.mv==="1"&&item.nextElementSibling)item.nextElementSibling.after(item);b.focus();return}
  if(ds.prepdismiss){e.stopImmediatePropagation();const p=Object.assign({},(D.house&&D.house.prep)||{},{[ds.prepdismiss]:"dismissed"});putHouse({prep:p});return}
  if(ds.placefind){e.stopImmediatePropagation();const q=document.getElementById("place-q").value.trim();if(!q)return;try{ui.places=await findPlace(q)}catch(err){ui.places=null;toast("Couldn't look up towns right now.")}render();return}
  if(ds.placepick!=null){e.stopImmediatePropagation();const p=ui.places[+ds.placepick];ui.places=null;putHouse({place:p});await loadForecast(true);render();return}
@@ -246,7 +250,7 @@ document.addEventListener("change",async e=>{
 /* Hooks: run after every render */
 function render(){
  renderBase();
- if(S.mode==="db"){checkMilestones();if(ME.kidDevice&&!ui.kid&&!ui.kidBooted&&kids().length){ui.kidBooted=true;ui.kid=kids().length===1?kids()[0].id:"pick";renderBase()}}
+ if(S.mode==="db"){checkMilestones();if(!ui.colorsFixed&&Object.keys(D.people).length>1){ui.colorsFixed=true;fixColors()}if(ME.kidDevice&&!ui.kid&&!ui.kidBooted&&kids().length){ui.kidBooted=true;ui.kid=kids().length===1?kids()[0].id:"pick";renderBase()}}
  if(ui.arranging){const l=document.querySelector(`.list[data-sort="${ui.arranging}"]`);if(l&&!l.classList.contains("arranging"))startArrange(l)}
 }
 setInterval(()=>{if(D.house&&D.house.place)loadForecast().then(c=>{if(c&&ui.tab==="today")render()})},30*60e3);

@@ -53,7 +53,7 @@ document.addEventListener("click",e=>{
  if(ds.create){createHouse((document.getElementById("w-name").value||"").trim().slice(0,30));return}
  if(ds.joinlink){const v=document.getElementById("w-link").value;const m=/join=([a-z0-9]{10})\.([A-Za-z0-9_-]{10,})/.exec(v);if(!m){S.note="That doesn't look like an Upkeep invite link.";render();return}joinHouse(m[1],m[2]);return}
  if(ds.iam){ME.pid=ds.iam;saveMe();return}
- if(ds.iamnew){const n=(document.getElementById("w-me").value||"").trim().slice(0,30);if(!n)return;const pid=rid();ME.pid=pid;ls.set("upkeep-me",ME);put("people",pid,{name:n,role:"adult",color:COLORS[Object.keys(D.people).length%COLORS.length],joined:today()});logEvent({kind:"join",text:"joined the house"});return}
+ if(ds.iamnew){const n=(document.getElementById("w-me").value||"").trim().slice(0,30);if(!n)return;const pid=rid();ME.pid=pid;ls.set("upkeep-me",ME);put("people",pid,{name:n,role:"adult",color:nextColor(),joined:today()});logEvent({kind:"join",text:"joined the house"});return}
  if(ds.switchme){ME.pid="";saveMe();return}
  if(ds.leave){if(ds.leave==="1"){ui.confirmLeave=true;render()}else if(ds.leave==="2"){ui.confirmLeave=false;leaveHouse()}else{ui.confirmLeave=false;render()}return}
  if(ds.invite){shareInvite();return}
