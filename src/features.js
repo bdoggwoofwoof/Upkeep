@@ -10,17 +10,6 @@ function inviteBlock(){
  ${devs.length?`<section class="group" style="margin-top:var(--s5)"><div class="group-head"><h2>Phones in this house</h2><span class="stamp">${devs.length}</span></div><div class="list">${devs.map(d=>`<div class="row"><span class="main"><span class="name">${esc(d.label)}</span><span class="meta"><span>Joined ${new Date(d.at).toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"})}</span></span></span>${d.id===S.deviceId?`<span class="pill">This phone</span>`:ui.confirmRevoke===d.id?`<span class="confirm"><button class="btn small danger" data-revoke="${d.id}">Remove</button><button class="btn small" data-revoke="">Keep</button></span>`:`<button class="linkish" data-askrevoke="${d.id}">Remove</button>`}</div>`).join("")}</div><p class="note" style="padding-top:var(--s2)">Removing a phone signs it out of the house. Its person and history stay.</p></section>`:""}`;
 }
 
-/* Time of day on Today */
-function todaySections(list){
- if(!list.length)return"";
- const anyTimed=list.some(t=>t.timeSet);
- const ordered=[...list].sort((a,b)=>(a.ord??999)-(b.ord??999)||(a.time||"").localeCompare(b.time||"")||a.name.localeCompare(b.name));
- const sectionHtml=(title,l,key)=>l.length?`<section class="group"><div class="group-head"><h2>${title}</h2><span class="stamp">${l.length}</span></div><div class="list" data-sort="${key}">${l.map(taskRow).join("")}</div></section>`:"";
- if(!anyTimed)return sectionHtml("Today",ordered,"today");
- const slot=t=>!t.timeSet?"any":+t.time.slice(0,2)<12?"am":+t.time.slice(0,2)<17?"pm":"eve";
- return sectionHtml("Morning",ordered.filter(t=>slot(t)==="am"),"today")+sectionHtml("Afternoon",ordered.filter(t=>slot(t)==="pm"),"today")+sectionHtml("Evening",ordered.filter(t=>slot(t)==="eve"),"today")+sectionHtml("Anytime today",ordered.filter(t=>slot(t)==="any"),"today");
-}
-
 /* Seasons */
 const SEASONS=[["Winter",[12,1,2]],["Spring",[3,4,5]],["Summer",[6,7,8]],["Fall",[9,10,11]]];
 function seasonNow(){
@@ -35,11 +24,6 @@ function seasonTasks(){
  const list=tasks().filter(t=>t.months&&t.months.some(m=>s.months.includes(m)));
  const done=list.filter(t=>t.lastDone&&t.lastDone>=s.start),left=list.filter(t=>!(t.lastDone&&t.lastDone>=s.start));
  return{s,list,done,left};
-}
-function seasonCard(){
- const {s,list,done}=seasonTasks();if(!list.length)return"";
- const all=list.length,n=done.length,fin=n===all;
- return `<button class="tonight ${fin?"closed":""}" data-season="1" style="background:${fin?"var(--forest-wash)":"transparent"};border:1px solid var(--rule)"><span style="min-width:0"><span class="eyebrow">${fin?"Season complete":"Through "+nice(s.end)}</span><span class="t-title" style="display:block">${s.name} checklist</span><span class="t-meta">${n} of ${all} done</span><span class="progress fresh"><i style="width:${n/all*100}%"></i></span></span><span class="linkish">Open</span></button>`;
 }
 function seasonBlock(){
  const {s,list,done,left}=seasonTasks();if(!list.length)return"";
@@ -107,25 +91,16 @@ function wxAlert(){
  const d=c.daily,dayName=i=>i===0?"tonight":i===1?"tomorrow night":new Date(d.time[i]+"T12:00").toLocaleDateString(undefined,{weekday:"long"})+" night";
  const dayName2=i=>i===0?"today":i===1?"tomorrow":new Date(d.time[i]+"T12:00").toLocaleDateString(undefined,{weekday:"long"});
  for(let i=0;i<d.time.length;i++){
-  if((d.snowfall_sum[i]||0)>=2)return{kind:"snow",key:"snow-"+d.time[i],title:`About ${Math.round(d.snowfall_sum[i])}" of snow ${dayName2(i)}`};
-  if((d.wind_gusts_10m_max[i]||0)>=45)return{kind:"storm",key:"storm-"+d.time[i],title:`Gusts to ${Math.round(d.wind_gusts_10m_max[i])} mph ${dayName2(i)}`};
-  if((d.precipitation_sum[i]||0)>=2)return{kind:"storm",key:"storm-"+d.time[i],title:`About ${d.precipitation_sum[i].toFixed(1)}" of rain ${dayName2(i)}`};
-  if((d.temperature_2m_min[i]??99)<=25)return{kind:"freeze",key:"freeze-"+d.time[i],title:`Hard freeze ${dayName(i)} · low of ${Math.round(d.temperature_2m_min[i])}°F`};
-  if((d.temperature_2m_max[i]??0)>=95)return{kind:"heat",key:"heat-"+d.time[i],title:`Heat ${dayName2(i)} · high of ${Math.round(d.temperature_2m_max[i])}°F`};
+  const base={day:i};
+  if((d.snowfall_sum[i]||0)>=2)return Object.assign(base,{kind:"snow",key:"snow-"+d.time[i],title:`About ${Math.round(d.snowfall_sum[i])}" of snow ${dayName2(i)}`});
+  if((d.wind_gusts_10m_max[i]||0)>=45)return Object.assign(base,{kind:"storm",key:"storm-"+d.time[i],title:`Gusts up to ${Math.round(d.wind_gusts_10m_max[i])} mph ${dayName2(i)}`});
+  if((d.precipitation_sum[i]||0)>=2)return Object.assign(base,{kind:"storm",key:"storm-"+d.time[i],title:`About ${d.precipitation_sum[i].toFixed(1)}" of rain ${dayName2(i)}`});
+  if((d.temperature_2m_min[i]??99)<=25)return Object.assign(base,{kind:"freeze",key:"freeze-"+d.time[i],title:`Hard freeze ${dayName(i)}, low of ${Math.round(d.temperature_2m_min[i])}°F`});
+  if((d.temperature_2m_max[i]??0)>=95)return Object.assign(base,{kind:"heat",key:"heat-"+d.time[i],title:`Heat ${dayName2(i)}, high of ${Math.round(d.temperature_2m_max[i])}°F`});
  }
  return null;
 }
-function prepCard(){
- const a=wxAlert();if(!a)return"";
- const st=(D.house&&D.house.prep&&D.house.prep[a.key])||[];if(st==="dismissed")return"";
- const items=PREP[a.kind],done=Array.isArray(st)?st:[];
- if(!ME.alerted||!ME.alerted[a.key]){ME.alerted=Object.assign({},ME.alerted||{},{[a.key]:1});ls.set("upkeep-me",ME);setTimeout(()=>liveNotice({id:a.key,actor:"",who:"",text:"",at:Date.now(),_wx:a.title}),50)}
- return `<section class="group" style="background:var(--tint);border-radius:var(--r);padding:var(--s4)"><span class="eyebrow">Get the house ready</span><div style="font-family:var(--serif);font-size:1.25rem;margin:4px 0 var(--s3)">${esc(a.title)}</div>
- <div class="steps">${items.map((x,i)=>`<label><input type="checkbox" data-prep="${a.key}" data-i="${i}" ${done.includes(i)?"checked":""}><span>${esc(x)}</span></label>`).join("")}</div>
- <div style="margin-top:var(--s3);display:flex;gap:var(--s3)"><span class="note">${done.length} of ${items.length} done</span><button class="linkish" data-prepdismiss="${a.key}">Not needed</button></div></section>`;
-}
 function liveNotice(a){
- if(a._wx){toast(a._wx+". There's a short prep list on Today.");if(ME.notify&&document.hidden&&"Notification" in window&&Notification.permission==="granted"){try{navigator.serviceWorker?.ready.then(r=>r.showNotification("Upkeep",{body:a._wx,icon:"/icon-192.png",tag:a.id}))}catch(e){}}return}
  const text=`${pName(a.actor||a.who)} ${a.text}`;toast(text);
  if(ME.notify&&document.hidden&&"Notification" in window&&Notification.permission==="granted"){try{navigator.serviceWorker?.ready.then(r=>r.showNotification("Upkeep",{body:text,icon:"/icon-192.png",tag:a.id})).catch(()=>{})}catch(e){}}
 }

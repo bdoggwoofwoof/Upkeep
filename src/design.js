@@ -9,6 +9,13 @@ const IC={
  dot:'<svg viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4" fill="currentColor"/></svg>',
  tri:'<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1.5 11 10.5H1z" fill="currentColor"/></svg>',
  ring:'<svg viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>',
+ tick:'<svg class="tk" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+ chev:'<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>',
+ x:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+ moon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 14.5A7.5 7.5 0 0 1 9.5 5a7.5 7.5 0 1 0 9.5 9.5z"/></svg>',
+ alert:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5M12 17.4v.1"/></svg>',
+ cloud:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 18h10a4 4 0 0 0 .6-7.96A6 6 0 0 0 6.1 9.2 4.4 4.4 0 0 0 7 18z"/><path d="M4 4l16 16"/></svg>',
+ plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
  star:'<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z"/></svg>'
 };
 ui.tab=ui.tab==="family"?"household":ui.tab==="house"?"home":ui.tab;ui.homeView=ui.homeView||"rooms";ui.schedView=ui.schedView||"upcoming";if(!["lists","money","cal","settings"].includes(ui.more))ui.more="lists";
@@ -29,63 +36,116 @@ function renderTabs(){
  const t=[["today","Today",IC.today],["schedule","Schedule",IC.sched],["household","Household",IC.people],["home","Home",IC.home],["more","More",IC.more]];
  tabsEl.querySelector(".in").innerHTML=`<div class="brand">Upkeep</div>`+t.map(([id,l,ic])=>`<button data-tab="${id}" ${cur===id?'aria-current="page"':""}>${ic}<span>${l}</span>${id==="household"&&u?`<span class="badge" aria-label="${u} new">${u}</span>`:""}</button>`).join("");
 }
+/* ---------- Task rows ---------- */
+const fmtMins=m=>{m=Math.round(m||0);if(m<60)return m+" min";const h=Math.floor(m/60),r=m%60;return h+" hr"+(r?" "+r+" min":"")};
 function dueLabel(t){
  const st=status(t),d=daysBetween(today(),t.next);
  if(st==="late")return `<span class="due late">${IC.tri}${-d===1?"1 day late":-d+" days late"}</span>`;
  if(st==="today")return `<span class="due today">${IC.dot}Today</span>`;
- if(st==="soon")return `<span class="due soon">${IC.ring}${nice(t.next)}</span>`;
+ if(st==="soon")return `<span class="due soon">${IC.ring}${d===1?"Tomorrow":nice(t.next)}</span>`;
  return `<span class="due later">${nice(t.next)}</span>`;
 }
-function taskRow(t){
+function ownerTag(pid){
+ if(!multiUser())return"";
+ return pid?`<span class="who">${av(pid,18)}<span>${esc(pShort(pid))}</span></span>`:`<span class="who open"><span class="av-open" aria-hidden="true"></span><span>Up for grabs</span></span>`;
+}
+/* o.due: false hides the due label when the section already says when (Today, a dated group). Late is always shown. */
+function taskRow(t,o){
+ o=o&&typeof o==="object"?o:{};
  const open=ui.open[t.id],nc=commentsFor("task:"+t.id).length,st=status(t);
- const steps=(t.steps||[]).length?`<div class="steps"><button class="linkish" data-toggle="${t.id}">${open?"Hide":"Show"} checklist · ${(t.stepsDone||[]).length} of ${t.steps.length}</button>${open?t.steps.map((s,i)=>`<label><input type="checkbox" data-step="${t.id}" data-i="${i}" ${(t.stepsDone||[]).includes(i)?"checked":""}><span>${esc(s)}</span></label>`).join(""):""}</div>`:"";
- return `<div class="swipe" data-sw="${t.id}"><div class="acts" aria-hidden="true"><button class="a-tom" data-tomorrow="${t.id}" tabindex="-1">Tomorrow</button><button class="a-skip" data-skip="${t.id}" tabindex="-1">Skip</button></div>
+ const showDue=st==="late"||o.due!==false;
+ const steps=(t.steps||[]).length?`<div class="steps"><button class="linkish" data-toggle="${t.id}" aria-expanded="${!!open}">${open?"Hide":"Show"} checklist · ${(t.stepsDone||[]).length} of ${t.steps.length}</button>${open?t.steps.map((s,i)=>`<label><input type="checkbox" data-step="${t.id}" data-i="${i}" ${(t.stepsDone||[]).includes(i)?"checked":""}><span>${esc(s)}</span></label>`).join(""):""}</div>`:"";
+ const meta=[t.timeSet&&st!=="later"?`<span class="time">${t12(t.time)}</span>`:"",showDue?dueLabel(t):"",ownerTag(t.assignee),`<span>${esc(t.room)}</span>`,`<span>${fmtMins(t.mins)}</span>`,t.photoProof?"<span>Photo</span>":"",nc?`<span>${nc} comment${nc>1?"s":""}</span>`:""].join("");
+ const acts=S.canWrite?`${!t.assignee&&multiUser()&&st!=="later"?`<button class="a-take" data-claim="${t.id}" tabindex="-1">Take it</button>`:""}<button class="a-tom" data-tomorrow="${t.id}" tabindex="-1">Tomorrow</button><button class="a-skip" data-skip="${t.id}" tabindex="-1">Skip</button>`:"";
+ return `<div class="swipe" data-sw="${t.id}"><div class="acts" aria-hidden="true">${acts}</div>
  <div class="row task" data-row="${t.id}">
-  <button class="main" data-edit="${t.id}"><span class="name">${esc(t.name)}</span>
-   <span class="meta">${dueLabel(t)}<span>${esc(t.room)}</span><span>${t.mins} min</span>${t.photoProof?"<span>Photo</span>":""}${nc?`<span>${nc} comment${nc>1?"s":""}</span>`:""}</span>
-   ${t.standard&&open?`<span class="std"><b>Done means:</b> ${esc(t.standard)}</span>`:""}</button>
-  ${!multiUser()?"<span></span>":t.assignee?`<span class="who">${av(t.assignee)}<span>${esc(pShort(t.assignee))}</span></span>`:st!=="later"&&S.canWrite?`<button class="take" data-claim="${t.id}">Take it</button>`:`<span class="who">Anyone</span>`}
-  <button class="check" data-done="${t.id}" aria-label="Complete ${esc(t.name)}"><i>${IC.check}</i></button>
+  <button class="main" data-edit="${t.id}" aria-haspopup="dialog"><span class="name">${esc(t.name)}</span><span class="meta">${meta}</span></button>
+  <button class="check" data-done="${t.id}" aria-label="Complete ${esc(t.name)}" ${S.canWrite?"":"disabled"}><i>${IC.check}</i></button>
   ${steps}
  </div></div>`;
 }
-function greeting(){const h=new Date().getHours();return h<5?"Good evening":h<12?"Good morning":h<17?"Good afternoon":"Good evening"}
-function whoSeg(){if(!multiUser())return"";return `<div class="seg" role="group" aria-label="Show">${[["all","Everyone"],["mine","Mine"],["open","Up for grabs"]].map(([v,l])=>`<button data-who="${v}" aria-pressed="${ui.who===v}">${l}</button>`).join("")}</div>`}
-function banners(){
+function whoSeg(){if(!multiUser())return"";return `<div class="filters" role="group" aria-label="Show tasks for">${[["all","Everyone"],["mine","Mine"],["open","Up for grabs"]].map(([v,l])=>`<button class="filter" data-who="${v}" aria-pressed="${ui.who===v}">${IC.tick}${l}</button>`).join("")}</div>`}
+function listSection(title,list,o={}){
+ if(!list.length)return"";
+ return `<section class="group"${o.id?` id="${o.id}"`:""}><div class="group-head"><h2>${title}</h2>${o.stamp!==""?`<span class="stamp">${o.stamp||list.length}</span>`:""}</div><div class="list"${o.sort?` data-sort="${o.sort}"`:""}>${list.map(t=>taskRow(t,o)).join("")}</div></section>`;
+}
+
+/* ---------- Notices: errors, things waiting on you, household reminders ---------- */
+function systemNotices(){
  let h="";
- if(S.note)h+=`<div class="banner">${esc(S.note)}</div>`;
+ if(S.note)h+=`<div class="notice ${/^Offline/.test(S.note)?"offline":"err"}" role="${/^Offline/.test(S.note)?"status":"alert"}">${/^Offline/.test(S.note)?IC.cloud:IC.alert}<span>${esc(S.note)}${S.ops.length?` ${S.ops.length} change${S.ops.length>1?"s":""} waiting.`:""}</span></div>`;
+ else if(S.ops.length>3&&Date.now()-(S.lastFlush||Date.now())>20e3)h+=`<div class="notice offline" role="status">${IC.cloud}<span>Syncing ${S.ops.length} changes…</span></div>`;
+ return h;
+}
+function actionNotices(){
+ let h="";
  if(paused())h+=`<div class="banner">Away mode is on since ${nice(D.house.pause.from)}, so nothing is overdue. <button class="linkish" data-unpause="1">I'm back</button></div>`;
- nudgesForMe().slice(0,3).forEach(a=>{const t=D.tasks[a.ref.slice(5)];h+=`<div class="banner">${esc(actorName(a))} asked about <button class="linkish" data-edit="${esc(a.ref.slice(5))}">${esc(t?t.name:"a task")}</button></div>`});
  const aps=!isKid(myPid())?Object.keys(D.approvals).length:0;
  if(aps)h+=`<div class="banner">${aps} kid check-off${aps>1?"s":""} waiting for your OK. <button class="linkish" data-tab="household">Review</button></div>`;
- Object.values(D.things).filter(x=>x.warranty&&daysBetween(today(),x.warranty)>=0&&daysBetween(today(),x.warranty)<=60).forEach(x=>h+=`<div class="banner">Warranty on the ${esc(x.name)} ends ${nice(x.warranty)}.</div>`);
- return h?`<div style="margin-bottom:var(--s5)">${h}</div>`:"";
+ nudgesForMe().slice(0,3).forEach(a=>{const t=D.tasks[a.ref.slice(5)];h+=`<div class="banner">${esc(actorName(a))} asked about <button class="linkish" data-edit="${esc(a.ref.slice(5))}">${esc(t?t.name:"a task")}</button></div>`});
+ return h;
 }
-function tonightCard(){
+function houseNotices(){
+ const gone=ME.dismissed||{};
+ return Object.values(D.things).filter(x=>x.warranty&&daysBetween(today(),x.warranty)>=0&&daysBetween(today(),x.warranty)<=60&&!gone["warranty:"+x.id+":"+x.warranty]).map(x=>`<div class="banner quiet"><span>The ${esc(x.name)} warranty ends ${nice(x.warranty)}.</span><button class="x" data-dismiss="${esc("warranty:"+x.id+":"+x.warranty)}" aria-label="Dismiss the ${esc(x.name)} warranty reminder">${IC.x}</button></div>`).join("");
+}
+/* Kept for screens that still call it: only errors and things waiting on you, never household reminders. */
+function banners(){const h=systemNotices()+actionNotices();return h?`<div class="notices">${h}</div>`:""}
+
+/* ---------- Today: alerts, tonight, tasks, coming up, the rest ---------- */
+function prepAlert(){
+ const a=wxAlert();if(!a)return"";
+ const st=(D.house&&D.house.prep&&D.house.prep[a.key])||[];if(st==="dismissed")return"";
+ const items=PREP[a.kind],done=Array.isArray(st)?st:[];
+ if(!ME.alerted||!ME.alerted[a.key]){ME.alerted=Object.assign({},ME.alerted||{},{[a.key]:1});ls.set("upkeep-me",ME);if(ME.notify&&document.hidden&&"Notification" in window&&Notification.permission==="granted"){try{navigator.serviceWorker?.ready.then(r=>r.showNotification("Upkeep",{body:a.title,icon:"/icon-192.png",tag:a.key}))}catch(e){}}}
+ const open=ui.prepOpen&&a.key in ui.prepOpen?ui.prepOpen[a.key]:a.day<=1;
+ const fin=done.length===items.length;
+ return `<section class="callout alert" aria-labelledby="wx-t"><div class="c-body"><span class="c-kicker">${IC.alert}Get the house ready</span><h2 class="c-title" id="wx-t">${esc(a.title)}</h2>
+ <span class="c-meta">${fin?"Every prep step is done.":`${done.length} of ${items.length} prep steps done`}</span>
+ ${open?`<div class="steps">${items.map((x,i)=>`<label><input type="checkbox" data-prep="${a.key}" data-i="${i}" ${done.includes(i)?"checked":""}><span>${esc(x)}</span></label>`).join("")}</div>`:""}
+ <div class="c-acts"><button class="linkish" data-prepopen="${a.key}" aria-expanded="${open}">${open?"Hide the prep list":"Show the prep list"}</button><button class="linkish quiet" data-prepdismiss="${a.key}">Not needed</button></div></div></section>`;
+}
+function tonightStrip(){
  const r=routines().find(routineRunsTonight);if(!r)return"";
  const done=r.items.filter(i=>D.checks[checkId(r.id,i.id)]).length,all=r.items.length,closed=all&&done===all;
  const mine=r.items.filter(i=>i.assignee===myPid()&&!D.checks[checkId(r.id,i.id)]).length;
- const h=new Date().getHours();
- return `<button class="tonight ${closed?"closed":""}" data-tab="shift"><span style="min-width:0"><span class="eyebrow">${closed?"Done for tonight":"Tonight · "+t12(r.time)}</span><span class="t-title" style="display:block">${closed?"The house is closed for the night":h>=17?"Ready for tonight?":esc(r.name)}</span><span class="t-meta">${done} of ${all} done${mine?` · ${mine} on you`:""}</span><span class="progress"><i style="width:${all?done/all*100:0}%"></i></span></span><span class="linkish">Open</span></button>`;
+ if(closed)return `<button class="callout shift closed" data-openroutine="${r.id}"><span class="c-body"><span class="c-kicker">${IC.moon}Tonight</span><span class="c-title">The house is closed for the night</span><span class="c-meta">${all} of ${all} done</span></span>${IC.chev}</button>`;
+ return `<button class="callout shift" data-openroutine="${r.id}" aria-label="Open the ${esc(r.name)}, ${done} of ${all} done"><span class="c-body"><span class="c-kicker">${IC.moon}Tonight · ${t12(r.time)}</span><span class="c-title">${esc(r.name)}</span><span class="c-meta">${done} of ${all} done${mine?` · ${mine} ${mine>1?"are":"is"} yours`:""}</span><span class="meter" aria-hidden="true"><i style="width:${all?done/all*100:0}%"></i></span></span>${IC.chev}</button>`;
+}
+function seasonRow(){
+ const {s,list,done}=seasonTasks();if(!list.length)return"";
+ const fin=done.length===list.length;
+ return `<button class="callout quiet" data-season="1"><span class="c-body"><span class="c-title">${s.name} checklist</span><span class="c-meta">${fin?"All done for the season":`${done.length} of ${list.length} done · through ${nice(s.end)}`}</span><span class="meter" aria-hidden="true"><i style="width:${done.length/list.length*100}%"></i></span></span>${IC.chev}</button>`;
+}
+function todayTasks(list){
+ if(!list.length)return"";
+ const ordered=[...list].sort((a,b)=>(a.ord??999)-(b.ord??999)||(a.timeSet&&b.timeSet?(a.time||"").localeCompare(b.time||""):(b.timeSet?1:0)-(a.timeSet?1:0))||a.name.localeCompare(b.name));
+ const o={due:false,sort:"today"};
+ if(!list.some(t=>t.timeSet))return listSection("Due today",ordered,o);
+ const slot=t=>!t.timeSet?"any":+t.time.slice(0,2)<12?"am":+t.time.slice(0,2)<17?"pm":"eve";
+ return listSection("Morning",ordered.filter(t=>slot(t)==="am"),o)+listSection("Afternoon",ordered.filter(t=>slot(t)==="pm"),o)+listSection("Evening",ordered.filter(t=>slot(t)==="eve"),o)+listSection("Anytime today",ordered.filter(t=>slot(t)==="any"),o);
 }
 function viewToday(){
  const ts=tasks().filter(passWho).sort((a,b)=>a.next.localeCompare(b.next)||a.name.localeCompare(b.name));
  const late=ts.filter(t=>status(t)==="late"),tod=ts.filter(t=>status(t)==="today"),soon=ts.filter(t=>status(t)==="soon");
- const doneToday=credited().filter(a=>(a.kind==="task")&&ymd(new Date(a.at))===today()).length;
+ const doneToday=credited().filter(a=>a.kind==="task"&&ymd(new Date(a.at))===today()).length;
  const todo=[...late,...tod],mins=todo.reduce((a,t)=>a+(t.mins|0),0);
  const byWho={};todo.forEach(t=>{byWho[t.assignee||""]=(byWho[t.assignee||""]||0)+1});
- const split=multiUser()?Object.entries(byWho).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([p,n])=>p?`${esc(pShort(p))} ${p===myPid()?"have":"has"} ${n}`:`${n} up for grabs`).join(" · "):"";
- const me=myPid(),name=me?pName(me):"";
- const sect=(title,list,note)=>list.length?`<section class="group"><div class="group-head"><h2>${title}</h2><span class="stamp">${note||list.length}</span></div><div class="list">${list.map(taskRow).join("")}</div></section>`:"";
+ const me=myPid();
+ const split=multiUser()&&ui.who==="all"?Object.entries(byWho).sort((a,b)=>(b[0]===me)-(a[0]===me)||b[1]-a[1]).map(([p,n])=>p?`${p===me?"you have":esc(pName(p))} ${n}`:`${n} up for grabs`).join(", "):"";
  const nextUp=ts.filter(t=>status(t)!=="late"&&status(t)!=="today")[0];
- const caught=!todo.length?`<div class="caught"><span class="big">You're all caught up.</span><span class="muted">${doneToday?`${doneToday} task${doneToday>1?"s":""} completed today. `:""}${nextUp?`Next up: ${esc(nextUp.name)}, ${nice(nextUp.next).toLowerCase()}.`:"Nothing else is scheduled."}</span></div>`:"";
- const plan=`<section class="group"><div class="group-head"><h2>Have a few minutes?</h2></div><div class="chips" style="margin-top:var(--s3)">${[10,20,30,60].map(m=>`<button class="chip" data-plan="${m}" aria-pressed="${ui.plan&&ui.plan.mins===m}">${m<60?m+" min":"1 hour"}</button>`).join("")}${kids().length?`<button class="chip" data-kidview="1">Kid view</button>`:""}</div>${ui.plan?`<div class="calbox">${planBlock()}</div>`:""}</section>`;
- const coming=soon.length?`<section class="group"><div class="group-head"><h2>Coming up</h2><button class="linkish" data-tab="schedule">Schedule</button></div><div class="list">${soon.slice(0,6).map(taskRow).join("")}</div>${soon.length>6?`<p class="note" style="padding-top:var(--s3)">${soon.length-6} more this week</p>`:""}</section>`:"";
- return `<header class="top"><div><span class="eyebrow">${new Date().toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"})}</span><h1>${greeting()}${name?", "+esc(name):""}</h1></div>${whoSeg()}</header>
- ${todo.length?`<p class="summary"><b>${todo.length} to do today</b>, about ${mins} min${late.length?`, ${late.length} carried over`:""}.</p>${split?`<p class="summary" style="margin-top:-16px">${split}</p>`:""}`:""}
- ${banners()}
- <div class="today-grid"><div>${caught}${sect("Needs attention",late)}${todaySections(tod)}${todo.length?"":coming}</div>
- <div>${prepCard()}${tonightCard()}${seasonCard()}${todo.length?coming:""}${plan}</div></div>`;
+ const summary=todo.length?`<p class="summary"><b>${todo.length} to do</b>, about ${fmtMins(mins)}${late.length?`, ${late.length} carried over`:""}.${split?` <span>${split.charAt(0).toUpperCase()+split.slice(1)}.</span>`:""}</p>`:"";
+ const caught=!todo.length?`<div class="caught"><span class="big">${ui.who==="mine"?"Nothing on you today.":ui.who==="open"?"Nothing up for grabs today.":"You're all caught up."}</span><span class="muted">${doneToday?`${doneToday} task${doneToday>1?"s":""} done today. `:""}${nextUp?`Next up: ${esc(nextUp.name)}, ${(daysBetween(today(),nextUp.next)===1?"tomorrow":nice(nextUp.next))}.`:"Nothing else is scheduled."}</span></div>`:"";
+ const top=prepAlert()+tonightStrip();
+ const coming=soon.length?`<section class="group"><div class="group-head"><h2>Coming up</h2><button class="linkish" data-tab="schedule">See the schedule</button></div><div class="list">${soon.slice(0,4).map(t=>taskRow(t)).join("")}</div>${soon.length>4?`<p class="more-note">${soon.length-4} more in the next 7 days</p>`:""}</section>`:"";
+ const plan=`<section class="group"><div class="group-head"><h2>Have a few minutes?</h2></div><div class="chips">${[10,20,30,60].map(m=>`<button class="chip" data-plan="${m}" aria-pressed="${!!(ui.plan&&ui.plan.mins===m)}">${m<60?m+" min":"1 hour"}</button>`).join("")}</div>${ui.plan?`<div class="calbox">${planBlock()}</div>`:""}</section>`;
+ const notes=houseNotices();
+ const extra=`${seasonRow()}${coming}${plan}${notes?`<section class="group"><div class="group-head"><h2>Reminders</h2></div><div class="notices">${notes}</div></section>`:""}${kids().length?`<p class="foot-link"><button class="linkish" data-kidview="1">Open Kid view</button></p>`:""}`;
+ return `<header class="top today-head"><div class="ttl"><h1>Today</h1><span class="date">${new Date().toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"})}</span></div>${whoSeg()}</header>
+ ${summary}${systemNotices()}${actionNotices()?`<div class="notices">${actionNotices()}</div>`:""}
+ <div class="today-grid">${top?`<div class="t-top">${top}</div>`:""}
+ <div class="t-main">${caught}${listSection("Needs attention",late,{stamp:""})}${todayTasks(tod)}</div>
+ <div class="t-side">${extra}</div></div>`;
 }
 function viewSchedule(){
  const seg=`<div class="seg" role="group" aria-label="View">${[["upcoming","Upcoming"],["seasonal","Seasonal"],["routines","Routines"]].map(([v,l])=>`<button data-sv="${v}" aria-pressed="${ui.schedView===v}">${l}</button>`).join("")}</div>`;
@@ -104,11 +164,6 @@ function viewSchedule(){
   <div style="display:flex;gap:var(--s2);margin-top:var(--s4)">${routines().length?"":`<button class="btn primary" data-mkclosing="1">Start a closing shift</button>`}<button class="btn" data-newroutine="1">New routine</button></div>`;
  }
  return `<header class="top"><div><span class="eyebrow">${tasks().length} recurring tasks</span><h1>Schedule</h1></div>${ui.schedView==="routines"?"":whoSeg()}</header>${seg}<div style="height:var(--s5)"></div>${body}`;
-}
-function viewHousehold(){
- const html=viewFamily().replace("<h1>Family</h1>","<h1>Household</h1>");
- const ws=Object.values(D.rewards);
- return html+`<section class="group"><div class="group-head"><h2>Kids, stars and rewards</h2></div><div style="height:var(--s3)"></div>${moreKids()}</section>`;
 }
 function viewHome(){
  const seg=`<div class="seg" role="group" aria-label="Section">${[["rooms","Rooms"],["library","Library"],["things","Appliances"],["pros","Contractors"],["info","Home info"]].map(([v,l])=>`<button data-hv2="${v}" aria-pressed="${ui.homeView===v}">${l}</button>`).join("")}</div>`;
@@ -168,12 +223,16 @@ document.addEventListener("click",e=>{
  if(ds.kiddone){haptic(10);chime();setTimeout(()=>{const s=document.querySelector(".kidstars");if(s){s.classList.remove("pop");void s.offsetWidth;s.classList.add("pop")}},80);return}
  if(ds.tomorrow){e.stopImmediatePropagation();if(ui.sheet)ui.sheet=null;moveTomorrow(ds.tomorrow);return}
  if(ds.skip){e.stopImmediatePropagation();if(ui.sheet)ui.sheet=null;skipOnce(ds.skip);return}
+ if(ds.prepopen){e.stopImmediatePropagation();const a=wxAlert();ui.prepOpen=Object.assign({},ui.prepOpen||{},{[ds.prepopen]:!(ui.prepOpen&&ds.prepopen in ui.prepOpen?ui.prepOpen[ds.prepopen]:a&&a.day<=1)});render();return}
+ if(ds.dismiss){e.stopImmediatePropagation();ME.dismissed=Object.assign({},ME.dismissed||{},{[ds.dismiss]:Date.now()});saveMe();return}
+ if(ds.claim&&b.closest(".acts")){e.stopImmediatePropagation();closeSwipe();claim(ds.claim);return}
  if(ds.sv){e.stopImmediatePropagation();ui.schedView=ds.sv;render();return}
  if(ds.hv2){e.stopImmediatePropagation();ui.homeView=ds.hv2;ui.q="";ui.roomOpen=null;render();return}
  if(ds.roomopen!=null){e.stopImmediatePropagation();ui.roomOpen=ds.roomopen||null;render();window.scrollTo(0,0);return}
  if(ds.libfit){e.stopImmediatePropagation();ui.libFit=ds.libfit==="1";render();return}
  if(ds.openroutine){e.stopImmediatePropagation();ui.routine=ds.openroutine;ui.tab="shift";ui.editShift=false;render();window.scrollTo(0,0);return}
 },true);
+const actsWidth=row=>{const a=row.parentNode&&row.parentNode.querySelector(".acts");return a?a.offsetWidth:170};
 const swipeState={el:null,x:0,y:0,dx:0,open:null,blockClick:false,moved:false};
 function closeSwipe(){if(swipeState.open){swipeState.open.style.transform="";swipeState.open=null}}
 document.addEventListener("pointerdown",e=>{
@@ -186,13 +245,13 @@ document.addEventListener("pointermove",e=>{
  if(!s.moved&&Math.abs(dy)>Math.abs(dx))return;
  if(Math.abs(dx)>8){s.moved=true}
  if(!s.moved)return;
- const base=s.open===s.el?-170:0;s.dx=Math.min(0,Math.max(-190,base+dx));
+ const w=actsWidth(s.el),base=s.open===s.el?-w:0;s.dx=Math.min(0,Math.max(-(w+20),base+dx));
  s.el.style.transition="none";s.el.style.transform=`translateX(${s.dx}px)`;
 });
 document.addEventListener("pointerup",()=>{
  const s=swipeState;if(!s.el)return;s.el.style.transition="";
  if(s.moved){s.blockClick=true;setTimeout(()=>s.blockClick=false,350);
-  if(s.dx<-70){s.el.style.transform="translateX(-170px)";s.open=s.el;haptic(6)}else{s.el.style.transform="";if(s.open===s.el)s.open=null}}
+  if(s.dx<-70){s.el.style.transform=`translateX(-${actsWidth(s.el)}px)`;s.open=s.el;haptic(6)}else{s.el.style.transform="";if(s.open===s.el)s.open=null}}
  s.el=null;
 });
 document.addEventListener("pointercancel",()=>{if(swipeState.el){swipeState.el.style.transform="";swipeState.el=null}});

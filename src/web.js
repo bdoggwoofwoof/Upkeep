@@ -3,12 +3,6 @@ function myPid(){return ME.pid&&D.people[ME.pid]?ME.pid:""}
 function resolveNames(){}
 function loadCalendars(){}
 function actorName(a){return pShort(a.actor||a.who)}
-function liveNotice(a){
- const text=`${pName(a.actor||a.who)} ${a.text}`;toast(text);
- if(ME.notify&&document.hidden&&"Notification" in window&&Notification.permission==="granted"){
-  try{navigator.serviceWorker?.ready.then(r=>r.showNotification("Upkeep",{body:text,icon:"/icon-192.png",tag:a.id})).catch(()=>new Notification("Upkeep",{body:text}))}catch(e){}
- }
-}
 function copyText(text,okMsg){
  const done=()=>toast(okMsg||"Copied");
  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(text).then(done,()=>{fallbackCopy(text);done()});else{fallbackCopy(text);done()}
@@ -53,17 +47,6 @@ function saveChart(){
  const u=URL.createObjectURL(blob),w=window.open(u,"_blank");
  if(!w){const a=document.createElement("a");a.href=u;a.download=`upkeep-week-${today()}.html`;document.body.appendChild(a);a.click();a.remove()}
  setTimeout(()=>URL.revokeObjectURL(u),60000);
-}
-function moreSettings(){
- const pr=(D.house&&D.house.profile)||{};
- const canNotify="Notification" in window;
- return `<section class="group"><div class="calbox"><b>Away mode</b><p class="note" style="margin:0">Going on a trip? Turn this on and nothing goes overdue. When you're back, every due date moves forward by the days you were gone.</p>${paused()?`<button class="btn primary" data-unpause="1">I'm back</button>`:`<button class="btn" data-pause="1">Turn on Away mode</button>`}</div></section>
- <section class="group"><div class="calbox"><b>Notifications on this device</b><p class="note" style="margin:0">Get a notice when someone finishes a task, checks a shift item, comments or nudges you, while Upkeep is open or in the background. On iPhone, add Upkeep to your Home Screen first (Share → Add to Home Screen).</p>${canNotify?`<label class="switch"><input type="checkbox" id="notify" ${ME.notify&&Notification.permission==="granted"?"checked":""}><span>Show notifications</span></label>${Notification.permission==="denied"?`<p class="note err">Notifications are blocked for Upkeep in this browser's settings.</p>`:""}`:`<p class="note">This browser doesn't support notifications.</p>`}</div></section>
- <section class="group"><div class="group-head"><h2>Your home</h2></div>${profileForm(pr)}<p class="note">Changing this updates the Suggested list under House. It doesn't remove tasks you already have.</p></section>
- <section class="group"><div class="calbox"><b>This phone</b><p class="note" style="margin:0">Signed in as ${esc(pName(myPid()))}. ${S.ops.length?`${S.ops.length} change${S.ops.length>1?"s":""} waiting to sync.`:"Everything is synced."}</p><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn small" data-switchme="1">I'm someone else</button>${ui.confirmLeave?`<span class="confirm">Leave this house on this phone? <button class="btn small danger" data-leave="2">Leave</button><button class="btn small" data-leave="0">Stay</button></span>`:`<button class="btn small danger" data-leave="1">Leave this house</button>`}</div></div></section>`;
-}
-function inviteBlock(){
- return `<div class="calbox" style="margin-top:12px"><b>Invite family</b><p class="note" style="margin:0">Send this link to adults in your house. They open it, pick their name and they're in. Anyone with the link can see and change your house, so share it only with family. Kids don't need it; use Kid view on any family phone.</p><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn primary small" data-invite="1">Share invite link</button><button class="btn small" data-copy="${esc(inviteLink())}">Copy link</button></div></div>`;
 }
 document.addEventListener("click",e=>{
  const b=e.target.closest("button");if(!b)return;const ds=b.dataset;

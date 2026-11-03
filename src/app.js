@@ -137,7 +137,7 @@ async function flush(){
  S.flushing=true;const batch=S.ops.slice(0,250);
  try{
   const res=await api("POST",{h:ME.house,k:authKey(),ops:batch});loadMeta(res);
-  S.ops=S.ops.slice(batch.length);ls.set("upkeep-ops",S.ops);
+  S.ops=S.ops.slice(batch.length);ls.set("upkeep-ops",S.ops);S.lastFlush=Date.now();
   loadDocs(res.docs,res.v);if(S.note.startsWith("Offline"))S.note="";render();
  }catch(e){
   if(e.code==="not_found"){S.note="This phone no longer has access to the house. Ask someone in the house for a new invite link.";}
@@ -205,18 +205,12 @@ async function houseAction(body){const res=await api("POST",Object.assign({h:ME.
 
 /* ---------- People ---------- */
 const names={},asked=new Set();
-async function resolveNames(){
- if(!S.user||!S.user.profiles)return;
- const ids=Object.values(D.people).map(p=>p.uid).filter(u=>u&&u!=="local"&&!asked.has(u));if(!ids.length)return;ids.forEach(u=>asked.add(u));
- try{const ps=await S.user.profiles(ids);ids.forEach(u=>{names[u]=(ps&&ps[u]&&ps[u].name)||""});render()}catch(e){}
-}
 const people=()=>Object.values(D.people).sort((a,b)=>(a.role==="kid")-(b.role==="kid")||(a.joined||"").localeCompare(b.joined||""));
 const kids=()=>people().filter(p=>p.role==="kid");
 const adults=()=>people().filter(p=>p.role!=="kid");
-function myPid(){const p=Object.values(D.people).find(p=>p.uid===S.uid);return p?p.id:""}
 function pName(pid){if(!pid)return"Anyone";const p=D.people[pid];if(!p)return"Someone";return p.name||(p.uid&&names[p.uid]?names[p.uid].split(" ")[0]:"")||"Someone"}
 function pShort(pid){return pid&&pid===myPid()?"You":pName(pid)}
-function av(pid,size){const p=D.people[pid];const n=pid?pName(pid):"?";const c=p&&p.color?p.color:"var(--muted)";return `<span class="av" style="background:${c};color:#fff;${size?`width:${size}px;height:${size}px;font-size:${size/2.4}px`:""}" aria-hidden="true">${esc(pid?n.charAt(0).toUpperCase():"·")}</span>`}
+function av(pid,size){const p=D.people[pid];const n=pid?pName(pid):"?";const c=p&&p.color?p.color:"var(--muted)";return `<span class="av" style="background:${c};color:#fff;${size?`width:${size}px;height:${size}px;font-size:${size<30?Math.round(size*.56):size/2.4}px`:""}" aria-hidden="true">${esc(pid?n.charAt(0).toUpperCase():"·")}</span>`}
 function peopleOptions(sel){return `<option value="">Anyone (up for grabs)</option>`+people().map(p=>`<option value="${p.id}" ${p.id===sel?"selected":""}>${esc(pName(p.id))}${p.role==="kid"?" (kid)":""}</option>`).join("")}
 const isKid=pid=>D.people[pid]&&D.people[pid].role==="kid";
 const multiUser=()=>S.mode==="db"||people().length>1;
@@ -325,8 +319,6 @@ function decide(ap,ok){
 const commentsFor=ref=>Object.values(D.comments).filter(c=>c.ref===ref).sort((a,b)=>a.at-b.at);
 function addComment(ref,text,label){text=text.trim();if(!text||!S.canWrite)return;put("comments",rid(),{ref,text,by:S.uid,who:myPid(),at:Date.now()});logEvent({kind:"comment",text:`commented on “${label}”: ${text.length>60?text.slice(0,57)+"…":text}`,ref})}
 let toastTimer=null;
-function toast(msg,undo){ui.toast={msg,undo};clearTimeout(toastTimer);toastTimer=setTimeout(()=>{ui.toast=null;renderLayer()},5500);renderLayer()}
-function liveNotice(a){const actor=Object.values(D.people).find(p=>p.uid===a.by);toast(`${actor?pName(actor.id):"Someone"} ${a.text}`)}
 const unread=()=>Object.values(D.activity).filter(a=>a.by!==S.uid&&a.at>(ME.lastSeen||0)).length;
 
 /* ---------- Calendar ---------- */
@@ -372,11 +364,6 @@ function chartHtml(){
  ${r?`<h1 style="margin-top:22px">${esc(r.name)} · ${t12(r.time)}</h1><table class="s"><tr><th>Item</th><th>Who</th><th>Done means</th>${days.map(d=>`<th>${parse(d).toLocaleDateString(undefined,{weekday:"short"})}</th>`).join("")}</tr>${r.items.map(i=>`<tr><td>${esc(i.text)}</td><td>${esc(pName(i.assignee))}</td><td>${esc(i.standard||"")}</td>${days.map(()=>"<td></td>").join("")}</tr>`).join("")}</table>`:""}
  </body></html>`;
 }
-async function saveChart(){
- if(!S.downloads){toast("Saving files isn't available in this view.");return}
- try{await S.downloads.save({filename:`upkeep-week-${today()}.html`,data:chartHtml()});toast("Saved. Open it and print from your browser.")}
- catch(e){if(e&&e.code!=="declined")toast(e&&e.code==="rate_limited"?"One save at a time. Try again in a moment.":"Couldn't save the chart here.")}
-}
 
 /* ---------- Pause ---------- */
 function startPause(){putHouse({pause:{from:today(),by:S.uid}});logEvent({kind:"pause",text:"turned on Away mode"})}
@@ -419,62 +406,8 @@ const I={
  star:'<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z"/></svg>'
 };
 const app=document.getElementById("app"),tabsEl=document.getElementById("tabs"),layer=document.getElementById("layer");
-function render(){
- if(S.mode==="loading")return;if(S.mode==="welcome"){tabsEl.hidden=true;app.innerHTML=viewWelcome();renderLayer();return}
- if(!myPid()&&Object.keys(D.people).length){tabsEl.hidden=true;app.innerHTML=viewWhoAmI();renderLayer();return}
- const empty=!(D.house&&D.house.setupDone)&&!tasks().length;
- if(empty){tabsEl.hidden=true;app.innerHTML=S.canWrite?viewSetup():`<header class="top"><div><div class="eyebrow">Upkeep</div><h1>This house isn't set up yet</h1></div></header><div class="empty">Ask the person who shared it with you to finish setting it up.</div>`;renderLayer();return}
- if(ui.kid){tabsEl.hidden=true;app.innerHTML=viewKid();renderLayer();return}
- tabsEl.hidden=false;renderTabs();
- app.innerHTML=({today:viewToday,shift:viewShift,house:viewHouse,family:viewFamily,more:viewMore}[ui.tab])();
- renderLayer();
-}
-function renderTabs(){
- const u=unread(),ap=Object.keys(D.approvals).length;
- const t=[["today","Today",I.today],["shift","Shift",I.moon],["house","House",I.house],["family","Family",I.people],["more","More",I.more]];
- tabsEl.querySelector(".in").innerHTML=t.map(([id,l,ic])=>`<button data-tab="${id}" ${ui.tab===id?'aria-current="page"':""}>${ic}<span>${l}</span>${id==="family"&&(u+ap)?`<span class="badge">${u+ap}</span>`:""}</button>`).join("");
-}
 const note=()=>(S.note?`<div class="banner">${esc(S.note)}</div>`:"")+(paused()?`<div class="banner">Away mode is on since ${nice(D.house.pause.from)}. Nothing shows as overdue. <button class="linkish" data-unpause="1">I'm back</button></div>`:"");
-function whoFilter(){if(!multiUser())return"";return `<div class="seg" role="group" aria-label="Show">${[["all","Everyone"],["mine","Mine"],["open","Up for grabs"]].map(([v,l])=>`<button data-who="${v}" aria-pressed="${ui.who===v}">${l}</button>`).join("")}</div>`}
 const passWho=t=>ui.who==="all"||(ui.who==="mine"&&t.assignee===myPid())||(ui.who==="open"&&!t.assignee);
-function taskRow(t,o={}){
- const st=status(t),open=ui.open[t.id],nc=commentsFor("task:"+t.id).length;
- const pill=st==="late"?`<span class="pill late">${-daysBetween(today(),t.next)}d late</span>`:st==="today"?`<span class="pill today">Today</span>`:st==="soon"?`<span class="pill soon">${nice(t.next)}</span>`:`<span class="stamp muted">${nice(t.next)}</span>`;
- const steps=(t.steps||[]).length?`<div class="steps" style="padding-top:0"><button class="linkish" data-toggle="${t.id}">${open?"Hide":"Show"} checklist (${(t.stepsDone||[]).length}/${t.steps.length})</button></div>`+(open?`<div class="steps">${t.steps.map((s,i)=>`<label><input type="checkbox" data-step="${t.id}" data-i="${i}" ${(t.stepsDone||[]).includes(i)?"checked":""} ${S.canWrite?"":"disabled"}><span>${esc(s)}</span></label>`).join("")}</div>`:""):"";
- const extra=[];
- if(multiUser()&&!t.assignee&&S.canWrite&&st!=="later")extra.push(`<button class="linkish" data-claim="${t.id}">I'll take it</button>`);
- return `<div class="row">
-  <button class="check" data-done="${t.id}" aria-label="Mark ${esc(t.name)} done" ${S.canWrite?"":"disabled"}><i>${I.check}</i></button>
-  <button class="main" data-edit="${t.id}"><span class="name">${esc(t.name)}</span>
-   <span class="meta">${multiUser()?`<span class="who">${av(t.assignee)}${esc(pShort(t.assignee))}</span>`:""}<span>${esc(t.room)}</span><span>${freqText(t)}</span><span>${t.mins} min</span>${t.photoProof?"<span>Photo</span>":""}${t.rotate&&t.rotate.length>1?"<span>Rotates</span>":""}${nc?`<span>${nc} comment${nc>1?"s":""}</span>`:""}</span>
-   ${t.standard?`<span class="std"><b>Done means:</b> ${esc(t.standard)}</span>`:""}</button>
-  <div>${pill}</div>${steps}${extra.length?`<div class="steps" style="padding-top:0">${extra.join("")}</div>`:""}</div>`;
-}
-function shiftCard(){
- const r=routines().find(routineRunsTonight);if(!r)return"";
- const done=r.items.filter(i=>D.checks[checkId(r.id,i.id)]).length,mine=r.items.filter(i=>i.assignee===myPid()&&!D.checks[checkId(r.id,i.id)]).length;
- return `<section class="group"><div class="list"><button class="row main" data-tab="shift" style="grid-template-columns:1fr auto;width:100%"><span style="min-width:0"><span class="eyebrow">Tonight · ${t12(r.time)}</span><span class="name" style="font-family:var(--display);font-weight:400;font-size:1.15rem">${esc(r.name)}</span><span class="meta"><span>${done} of ${r.items.length} done</span>${mine?`<span>${mine} on you</span>`:""}</span><span class="progress"><i style="width:${r.items.length?done/r.items.length*100:0}%"></i></span></span><span class="linkish">Open</span></button></div></section>`;
-}
-function viewToday(){
- const ts=tasks().filter(passWho).sort((a,b)=>a.next.localeCompare(b.next)||a.name.localeCompare(b.name));
- const late=ts.filter(t=>status(t)==="late"),tod=ts.filter(t=>status(t)==="today"),soon=ts.filter(t=>status(t)==="soon");
- const doneToday=credited().filter(a=>a.kind==="task"&&ymd(new Date(a.at))===today()).length;
- const mins=[...late,...tod].reduce((a,t)=>a+(t.mins|0),0);
- const g=(title,list,em)=>`<section class="group"><div class="group-head"><h2>${title}</h2><span class="stamp muted">${list.length}</span></div>${list.length?`<div class="list">${list.map(t=>taskRow(t)).join("")}</div>`:`<div class="empty">${em}</div>`}</section>`;
- const nudges=nudgesForMe();
- const warr=Object.values(D.things).filter(x=>x.warranty&&daysBetween(today(),x.warranty)>=0&&daysBetween(today(),x.warranty)<=60);
- const myApprovals=S.isOwner||!isKid(myPid())?Object.values(D.approvals):[];
- return `<header class="top"><div><div class="eyebrow">${new Date().toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"})}</div><h1>Today at home</h1></div>${whoFilter()}</header>${note()}
- ${nudges.map(a=>`<div class="banner">${esc(actorName(a))} nudged you about <button class="linkish" data-edit="${esc(a.ref.slice(5))}">${esc((D.tasks[a.ref.slice(5)]||{}).name||"a task")}</button></div>`).join("")}
- ${myApprovals.length?`<div class="banner">${myApprovals.length} kid check-off${myApprovals.length>1?"s":""} waiting for your OK. <button class="linkish" data-tab="family">Review</button></div>`:""}
- ${warr.map(x=>`<div class="banner">Warranty on ${esc(x.name)} ends ${nice(x.warranty)}.</div>`).join("")}
- <div class="meter"><div class="${late.length?"is-late":""}"><b>${late.length}</b><span>overdue</span></div><div><b>${tod.length}</b><span>due today · ${mins} min</span></div><div><b>${doneToday}</b><span>done today</span></div></div>
- <section class="group"><div class="calbox"><b>How much time do you have?</b><div class="chips" style="margin:0">${[10,20,30,45,60,90].map(m=>`<button class="chip" data-plan="${m}" aria-pressed="${ui.plan&&ui.plan.mins===m}">${m<60?m+" min":m/60+" hr"+(m>60?"s":"")}</button>`).join("")}${kids().length?`<button class="chip" data-kidview="1">Kid view</button>`:""}</div>${ui.plan?planBlock():""}</div></section>
- ${shiftCard()}
- ${late.length?g("Catch up",late,""):""}
- ${g("Due today",tod,"<strong>You're all caught up.</strong>")}
- ${g("Coming up this week",soon,"Nothing else this week.")}`;
-}
 function planBlock(){
  const ids=ui.plan.ids.filter(id=>D.tasks[id]);const list=ids.map(id=>D.tasks[id]);
  const total=list.reduce((a,t)=>a+(t.mins|0),0);
@@ -484,23 +417,6 @@ function planBlock(){
  <div class="list">${list.map(t=>`<div class="row" style="grid-template-columns:auto 1fr"><button class="check" data-done="${t.id}" aria-label="Mark ${esc(t.name)} done"><i>${I.check}</i></button><button class="main" data-edit="${t.id}"><span class="name">${esc(t.name)}</span><span class="meta"><span>${t.mins} min</span><span>${esc(t.room)}</span></span></button></div>`).join("")}</div>
  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="stamp" id="clock" style="font-size:1.4rem">${fmtTime(s)}</span>${timer.running?`<button class="btn small" data-timer="pause">Pause</button>`:`<button class="btn small primary" data-timer="start">${s<total*60?"Resume":"Start timer"}</button>`}<button class="btn small" data-timer="reset">Reset</button><button class="linkish" data-plan="0">Close</button></div>`;
 }
-function viewShift(){
- const rs=routines();
- if(!rs.length)return `<header class="top"><div><div class="eyebrow">Routines</div><h1>Closing shift</h1></div></header>${note()}<div class="empty"><strong>No shift yet.</strong> A closing shift is the short list everyone runs before bed, each with their own part. ${S.canWrite?`<div style="margin-top:12px"><button class="btn primary" data-mkclosing="1">Start a closing shift</button></div>`:""}</div>`;
- if(!ui.routine||!D.routines[ui.routine])ui.routine=(rs.find(routineRunsTonight)||rs[0]).id;
- const r=D.routines[ui.routine],done=r.items.filter(i=>D.checks[checkId(r.id,i.id)]).length;
- const chips=`<div class="chips">${rs.map(x=>`<button class="chip" data-routine="${x.id}" aria-pressed="${x.id===r.id}">${esc(x.name)}</button>`).join("")}${S.canWrite?`<button class="chip" data-newroutine="1">+ New routine</button>`:""}</div>`;
- if(ui.editShift)return viewShiftEdit(r,chips);
- const me=myPid(),order=[...r.items].sort((a,b)=>(a.assignee===me?0:1)-(b.assignee===me?0:1));
- return `<header class="top"><div><div class="eyebrow">${routineRunsTonight(r)?`Tonight · ${t12(r.time)}`:"Not scheduled tonight"}</div><h1>${esc(r.name)}</h1></div>${S.canWrite?`<button class="btn small" data-editshift="1">Edit</button>`:""}</header>${note()}${chips}
- <div class="progress" style="margin-top:0"><i style="width:${r.items.length?done/r.items.length*100:0}%"></i></div>
- <p class="note" style="margin:0 0 14px">${done} of ${r.items.length} done${done===r.items.length&&r.items.length?" · the house is closed for the night":""}. Resets at 4 AM.</p>
- <div class="list">${order.map(i=>{const c=D.checks[checkId(r.id,i.id)],nc=commentsFor("item:"+r.id+":"+i.id).length;
-  return `<div class="row"><button class="check ${c?"done":""}" data-tick="${i.id}" aria-label="${c?"Uncheck":"Check"} ${esc(i.text)}" ${S.canWrite?"":"disabled"}><i>${I.check}</i></button>
-  <button class="main" data-item="${i.id}"><span class="name">${esc(i.text)}</span><span class="meta"><span class="who">${av(i.assignee)}${esc(pShort(i.assignee))}</span>${i.rotate&&i.rotate.length>1?"<span>Rotates</span>":""}${nc?`<span>${nc} comment${nc>1?"s":""}</span>`:""}</span>${i.standard?`<span class="std"><b>Done means:</b> ${esc(i.standard)}</span>`:""}</button>
-  <div>${c?`<span class="checked-by">${esc(pShort(c.who))} · ${clock(c.at)}${c.pending||Object.values(D.approvals).some(a=>a.ref===c.id)?" · needs OK":""}</span>`:""}</div></div>`}).join("")||`<div class="row"><span class="muted">No items yet. Tap Edit to add some.</span></div>`}</div>
- <section class="group" style="margin-top:22px"><div class="calbox"><b>Put it on my calendar</b><p class="note" style="margin:0">One repeating event at ${t12(r.time)} with everyone's parts in the notes.</p>${calButtons("routine:"+r.id,routineAsEvent(r))}</div></section>`;
-}
 function viewShiftEdit(r,chips){
  const days=r.days||[0,1,2,3,4,5,6];
  return `<header class="top"><div><div class="eyebrow">Editing</div><h1>${esc(r.name)}</h1></div><button class="btn small primary" data-doneedit="1">Done</button></header>${chips}
@@ -509,35 +425,6 @@ function viewShiftEdit(r,chips){
  <div class="list">${r.items.map((i,ix)=>`<div class="row" style="grid-template-columns:1fr auto"><button class="main" data-item="${i.id}"><span class="name">${esc(i.text)}</span><span class="meta"><span class="who">${av(i.assignee)}${esc(pShort(i.assignee))}</span>${i.standard?"<span>Has a standard</span>":""}</span></button><span style="display:flex;gap:4px"><button class="btn small" data-up="${ix}" ${ix?"":"disabled"} aria-label="Move up">↑</button><button class="btn small danger" data-rmitem="${i.id}" aria-label="Remove ${esc(i.text)}">✕</button></span></div>`).join("")}</div>
  <div class="cmtform" style="margin-top:12px"><input type="text" id="r-new" placeholder="Add an item, e.g. Start the dishwasher"><button class="btn primary" data-additem="1">Add</button></div>
  <div style="margin-top:22px">${ui.confirmRmRoutine?`<span class="confirm">Delete this whole routine? <button class="btn small danger" data-rmroutine="2">Delete</button><button class="btn small" data-rmroutine="0">Keep</button></span>`:`<button class="btn danger" data-rmroutine="1">Delete routine</button>`}</div>`;
-}
-function viewHouse(){
- const seg=`<div class="seg" role="group" aria-label="View">${[["mine","My tasks"],["fit","Suggested"],["lib","Full library"]].map(([v,l])=>`<button data-hv="${v}" aria-pressed="${ui.houseView===v}">${l}</button>`).join("")}</div>`;
- if(ui.houseView!=="mine")return viewLibrary(seg);
- const rooms=["All",...ROOMS.filter(r=>tasks().some(t=>t.room===r))];
- const ts=tasks().filter(t=>passWho(t)&&(ui.room==="All"||t.room===ui.room)&&(!ui.q||t.name.toLowerCase().includes(ui.q.toLowerCase())));
- const by={};ts.forEach(t=>(by[t.room]=by[t.room]||[]).push(t));
- const weekMins=tasks().reduce((a,t)=>a+(t.mins|0)*7/intervalDays(t),0);
- return `<header class="top"><div><div class="eyebrow">${tasks().length} tasks · about ${Math.round(weekMins/6)/10} hrs a week</div><h1>The house</h1></div>${seg}</header>${note()}
- <div class="toolbar"><input type="search" id="q" placeholder="Search tasks" value="${esc(ui.q)}">${S.canWrite?`<button class="btn primary" data-new="1">New task</button>`:""}</div>
- ${multiUser()?`<div style="margin-bottom:10px">${whoFilter()}</div>`:""}
- <div class="chips">${rooms.map(r=>`<button class="chip" data-room="${esc(r)}" aria-pressed="${ui.room===r}">${esc(r)}</button>`).join("")}</div>
- ${Object.keys(by).length?ROOMS.filter(r=>by[r]).map(r=>{const f=freshness(r);return `<section class="group"><div class="group-head"><h2>${esc(r)}</h2><span class="stamp muted">${f==null?"":Math.round(f*100)+"% fresh"}</span></div>${f==null?"":`<div class="progress fresh" style="margin:0 0 8px"><i style="width:${Math.round(f*100)}%;background:${f<.25?"var(--late)":f<.5?"var(--soon)":"var(--accent)"}"></i></div>`}<div class="list">${by[r].sort((a,b)=>a.next.localeCompare(b.next)).map(t=>taskRow(t)).join("")}</div></section>`}).join(""):`<div class="empty"><strong>No tasks match.</strong> Try Everyone, or add some from Suggested.</div>`}`;
-}
-function viewLibrary(seg){
- const tags=tagsOf(D.house&&D.house.profile),have=new Set(tasks().map(t=>t.lib));
- let items=LIB.filter(l=>(ui.libRoom==="All"||l.room===ui.libRoom)&&(!ui.q||l.name.toLowerCase().includes(ui.q.toLowerCase())));
- if(ui.houseView==="fit")items=items.filter(l=>libFits(l,tags)&&!have.has(l.lib));
- const rooms=["All",...ROOMS.filter(r=>LIB.some(l=>l.room===r))];
- return `<header class="top"><div><div class="eyebrow">${ui.houseView==="fit"?items.length+" that fit your home and aren't added yet":LIB.length+" tasks to choose from"}</div><h1>Library</h1></div>${seg}</header>${note()}
- <div class="toolbar"><input type="search" id="q" placeholder="Search: filter, gutters, sheets…" value="${esc(ui.q)}">${ui.houseView==="fit"&&items.length&&S.canWrite?`<button class="btn primary" data-addall="1">Add all ${items.length}</button>`:""}</div>
- <div class="chips">${rooms.map(r=>`<button class="chip" data-libroom="${esc(r)}" aria-pressed="${ui.libRoom===r}">${esc(r)}</button>`).join("")}</div>
- <div class="list">${items.map(l=>`<div class="row" style="grid-template-columns:1fr auto"><div class="main"><span class="name">${esc(l.name)}</span><span class="meta"><span>${esc(l.room)}</span><span>${freqText(l)}</span><span>${l.mins} min</span>${l.steps.length?`<span>${l.steps.length}-step checklist</span>`:""}</span></div>${have.has(l.lib)?`<span class="pill cal">Added</span>`:S.canWrite?`<button class="btn small" data-add="${l.lib}">Add</button>`:""}</div>`).join("")||`<div class="row"><span class="muted">${ui.houseView==="fit"?"Everything that fits your home is already added.":"Nothing matches. Make it yourself under My tasks → New task."}</span></div>`}</div>`;
-}
-function calButtons(key,ev){
- const a=ME.calAdded[key];
- if(a)return `<p class="note" style="margin:0">${a.unconfirmed?"This may not have saved. Check your calendar.":`On your ${esc(a.cal||"")} calendar since ${nice(a.added)}. Edits here don't change that event.`}</p><button class="linkish" data-calreset="${esc(key)}" style="text-align:left">It's not on my calendar anymore</button>`;
- const name=ui.cal.list&&ME.calendarId?(ui.cal.list.find(c=>c.id===ME.calendarId)||{}).name:"";
- return `<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">${name?`<button class="btn primary small" data-addcal="${esc(key)}" ${ui.calBusy===key?"disabled":""}>${ui.calBusy===key?"Adding…":"Add to "+esc(name)}</button>`:`<button class="btn small" data-gocal="1">Set up calendar</button>`}<a class="linkish" href="${esc(gcalLink(ev))}" target="_blank" rel="noopener">Open in Google Calendar</a></div>${ui.calMsg&&ui.calMsg.key===key?`<p class="note err">${esc(ui.calMsg.msg)}</p>`:""}`;
 }
 function viewFamily(){
  const acts=Object.values(D.activity).sort((a,b)=>b.at-a.at),seen=ME.lastSeen||0,ws=weekStats(),aps=Object.values(D.approvals).sort((a,b)=>a.at-b.at);
@@ -573,12 +460,6 @@ function viewKid(){
  </div>
  ${pend.length?`<p class="note">${pend.length} waiting for a grown-up's OK.</p>`:""}
  ${rewards.length?`<section class="group"><h2 style="margin:20px 0 10px">Rewards</h2><div class="list">${rewards.map(w=>`<div class="row" style="grid-template-columns:1fr auto"><span><span class="name">${esc(w.name)}</span><span class="meta"><span>${w.cost} ★</span></span></span><button class="btn small ${pts>=w.cost?"primary":""}" data-redeem="${w.id}" ${pts>=w.cost?"":"disabled"}>${pts>=w.cost?"Ask for it":(w.cost-pts)+" more ★"}</button></div>`).join("")}</div></section>`:""}`;
-}
-function viewMore(){
- const tabs=[["home","Home info"],["things","Appliances"],["pros","Contractors"],["lists","Shopping"],["money","Expenses"],["kids","Kids & rewards"],["cal","Calendar"],["settings","Settings"]];
- const body={home:moreInfo,things:moreThings,pros:morePros,lists:moreLists,money:moreMoney,kids:moreKids,cal:moreCal,settings:moreSettings}[ui.more]();
- return `<header class="top"><div><div class="eyebrow">Upkeep</div><h1>${esc(tabs.find(t=>t[0]===ui.more)[1])}</h1></div></header>${note()}
- <div class="chips">${tabs.map(([k,l])=>`<button class="chip" data-more="${k}" aria-pressed="${ui.more===k}">${l}</button>`).join("")}</div>${body}`;
 }
 function moreInfo(){
  const rows=Object.values(D.info).sort((a,b)=>(a.order||0)-(b.order||0));const have=new Set(rows.map(r=>r.label));
@@ -623,20 +504,6 @@ function moreKids(){
   <p class="note" style="margin:0">Stars: 1 for a quick job, up to 5 for a long one. Shift items are 1 star.</p></div>
  <section class="group"><div class="group-head"><h2>Rewards</h2>${S.canWrite?`<button class="btn small" data-form="rewards:new">Add reward</button>`:""}</div><div class="list">${ws.map(w=>`<button class="row main" data-form="rewards:${w.id}" style="grid-template-columns:1fr auto;width:100%"><span class="name">${esc(w.name)}</span><span class="stamp">${w.cost} ★</span></button>`).join("")||`<div class="row"><span class="muted">Ideas: pick the movie (20 ★), stay up 30 minutes late (30 ★), a trip for ice cream (50 ★).</span></div>`}</div></section>
  <section class="group"><div class="group-head"><h2>Balances</h2></div><div class="list">${kids().map(k=>`<div class="row" style="grid-template-columns:auto 1fr auto">${av(k.id)}<span class="name">${esc(pName(k.id))}</span><span style="display:flex;gap:8px;align-items:center"><span class="stamp">${pointsOf(k.id)} ★${h.centsPerPoint?" · "+money(pointsOf(k.id)*h.centsPerPoint):""}</span>${h.centsPerPoint&&pointsOf(k.id)>0&&S.canWrite?`<button class="btn small" data-payout="${k.id}">Paid out</button>`:""}</span></div>`).join("")||`<div class="row"><span class="muted">Add kids on the Family tab.</span></div>`}</div></section>`;
-}
-function moreCal(){
- const pending=tasks().filter(t=>!ME.calAdded["task:"+t.id]&&(t.assignee===myPid()||!t.assignee||S.isOwner));
- const sel=ui.cal.list?`<label class="field"><span>Add my events to</span><select id="calpick"><option value="">Choose a calendar</option>${ui.cal.list.map(c=>`<option value="${esc(c.id)}" ${c.id===ME.calendarId?"selected":""}>${esc(c.name)}</option>`).join("")}</select></label>`:ui.cal.err==="none"?`<p class="note">Direct adding isn't available here. Each task has an Open in Google Calendar link instead.</p>`:`<button class="btn primary" data-loadcal="1" ${ui.cal.loading?"disabled":""}>${ui.cal.loading?"Loading calendars…":"Connect my Google Calendar"}</button>`;
- const b=ui.bulk;
- return `<div class="calbox"><p class="note" style="margin:0">Each task becomes one repeating event on your own calendar, marked free so it doesn't block time. Seasonal tasks repeat on the first Saturday of their month. Everyone sets this up for themselves.</p>${sel}${ui.cal.err&&ui.cal.err!=="none"?`<p class="note err">${esc(ui.cal.err)}</p>`:""}
- <div class="grid2"><label class="field"><span>Reminder</span><select id="remind">${[[-1,"Calendar default"],[0,"At start"],[10,"10 min before"],[30,"30 min before"],[60,"1 hour before"],[1440,"1 day before"]].map(([v,l])=>`<option value="${v}" ${Number(ME.reminder)===v?"selected":""}>${l}</option>`).join("")}</select></label><label class="field"><span>Default time for new tasks</span><input type="time" id="deftime" value="${esc(ME.defaultTime||"09:00")}"></label></div>
- ${ui.cal.list&&ME.calendarId&&pending.length?`<button class="btn primary" data-bulk="1" ${b&&b.running?"disabled":""}>${b&&b.running?`Adding ${b.done} of ${b.total}…`:`Add ${pending.length} ${S.isOwner?"":"of my "}tasks to my calendar`}</button>`:""}${b&&b.msg?`<p class="note ${b.err?"err":""}">${esc(b.msg)}</p>`:""}</div>
- <section class="group" style="margin-top:18px"><div class="calbox"><b>Fridge chart</b><p class="note" style="margin:0">This week's chores by person plus the closing shift, as a page you can print.</p><div><button class="btn" data-chart="1" ${S.downloads?"":"disabled"}>Save printable chart</button></div>${S.downloads?"":`<p class="note">Saving files isn't available in this view.</p>`}</div></section>`;
-}
-function moreSettings(){
- const pr=(D.house&&D.house.profile)||{};
- return `<section class="group"><div class="calbox"><b>Away mode</b><p class="note" style="margin:0">Going on a trip? Turn this on and nothing goes overdue. When you're back, every due date moves forward by the days you were gone.</p>${paused()?`<button class="btn primary" data-unpause="1">I'm back</button>`:`<button class="btn" data-pause="1" ${S.canWrite?"":"disabled"}>Turn on Away mode</button>`}</div></section>
- <section class="group"><div class="group-head"><h2>Your home</h2></div>${profileForm(pr)}<p class="note">Changing this updates the Suggested list under House. It doesn't remove tasks you already have.</p></section>`;
 }
 function profileForm(pr){
  const seg=(k,opts)=>`<div class="seg" role="group">${opts.map(([v,l])=>`<button data-prof="${k}" data-v="${v}" aria-pressed="${pr[k]===v}">${l}</button>`).join("")}</div>`;
