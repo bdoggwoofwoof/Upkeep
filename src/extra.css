@@ -3,14 +3,14 @@
 .row:has(> .check:first-child) .check{margin-inline:-8px 0}
 .kidcard,.kidpick button{font-family:var(--sans)}
 
-.take{border:1px solid var(--rule);background:transparent;border-radius:999px;padding:5px 12px;font-size:.82rem;font-weight:600;color:var(--forest);white-space:nowrap;min-height:34px}
+.take{border:1px solid var(--rule);background:transparent;border-radius:999px;padding:5px 12px;font-size:var(--fs-sm);font-weight:600;color:var(--forest);white-space:nowrap;min-height:34px}
 .toast{border-radius:14px}
 .task .main .std{margin-top:2px}
 .toast span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 
-.ptr{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 8px);transform:translate(-50%,0);background:var(--ink);color:var(--paper);font-size:.82rem;font-weight:600;padding:6px 14px;border-radius:999px;opacity:0;pointer-events:none;z-index:45;transition:opacity .2s}
+.ptr{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 8px);transform:translate(-50%,0);background:var(--ink);color:var(--paper);font-size:var(--fs-sm);font-weight:600;padding:6px 14px;border-radius:999px;opacity:0;pointer-events:none;z-index:45;transition:opacity .2s}
 .pindots{display:flex;gap:14px;margin:var(--s3) 0}
 .pindots i{width:14px;height:14px;border-radius:50%;border:1.6px solid var(--ink-3)}
 .pindots i.on{background:var(--forest);border-color:var(--forest)}
 .pinpad{display:grid;grid-template-columns:repeat(3,72px);gap:12px;justify-content:center}
-.pinpad button{width:72px;height:72px;border-radius:50%;border:1px solid var(--rule);background:var(--paper);font-size:1.5rem;font-weight:500;color:var(--ink)}
+.pinpad button{width:72px;height:72px;border-radius:50%;border:1px solid var(--rule);background:var(--paper);font-size:var(--fs-2xl);font-weight:500;color:var(--ink)}
