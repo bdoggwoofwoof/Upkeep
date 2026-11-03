@@ -17,20 +17,30 @@ Familiar iPhone conventions, its own identity through type, color, spacing and s
 References for quality, not templates: Things 3 (hierarchy, restraint), Apple Home (organization), Day One (editorial warmth). Avoid generic chore apps and AI SaaS dashboards: piles of rounded cards, pastel gradients, floating widgets, emoji, heavy gamification. Avoid the opposite extreme too: no farmhouse, gingham, botanical borders or scrapbook.
 
 ## Tokens (src/head.html)
-- Light (default): paper #F5F1E8, leaf #FBF9F4, tint #EDE7DA, rule #DED6C6, ink #2B2D29, forest #2E4A3B, sage #7A8768, clay #9C5F45.
-- Dark: deep forest #111713 / #172019, forest #9BC2A6.
+- Light (default): paper #F5F1E8, leaf #FBF9F4, tint #EDE7DA, rule #DED6C6, ink #2B2D29, ink-2 #5F625A, ink-3 #66685F, forest #2E4A3B, sage #7A8768, soon #805B11, late #9E3A28, clay #9C5F45.
+- Dark: deep forest #111713 / #172019, forest #9BC2A6, ink-3 #8A8F83.
+- Contrast: every text color meets 4.5:1 on paper and on tint in both themes; meters use an outlined track (ink-3) so zero progress is still visible. Settings → More contrast darkens secondary text and lines further.
 - Meaning: forest = brand and complete, amber = coming due, red = genuinely late. Status always has a shape or word too (dot, ring, triangle, "2 days late"), never color alone.
-- Type: Hanken Grotesk for the interface; Newsreader (restrained serif) for page titles and section heads. Two families only.
+- Type: Hanken Grotesk for the interface; Newsreader (restrained serif) for page titles and section heads. Two families only. One scale: --fs-xs 13 · sm 14 · md 15 · base 16 · lg 18 · xl 20 · 2xl 24, h1 32. Labels are sentence case, never tiny uppercase.
 - Spacing scale 4/8/12/16/24/32/48. Radii 8/12/18, used on purpose: pills for controls, 12 for the few panels, sheets 18.
 
 ## Layout
-- Lists divided by hairline rules, not boxes. Cards only where they earn it (tonight's shift, a few panels). Rooms are a simple grid.
-- Bottom tabs with labels: Today, Schedule, Household, Home, More. From 900px they become a sidebar and Today splits into two columns.
-- Today answers: what today, who, what's next, what tonight. Greeting, one summary line, Needs attention, Today, then Tonight and Coming up. When everything's done: "You're all caught up." with what's next.
-- Complete buttons sit at the right edge for the thumb; secondary actions (Tomorrow, Skip) are a swipe away and also in the task sheet.
+- Lists divided by hairline rules, not boxes. Callouts (one component, three variants) only for what should be seen first: weather prep, tonight's shift, the season. Rooms are a simple grid.
+- Bottom tabs with labels: Today, Schedule, Household, Home, More. From 760px Today splits into two columns; from 900px the tabs become a sidebar.
+- Today reads in the order you act: alerts, tonight's shift, today's tasks by time of day, a short Coming up, then the season, plans and reminders. The DOM follows the same order.
+- Each task row has one trailing control, the complete button. The owner is in the meta line (small avatar + name). Tomorrow, Skip and Take it are a swipe away and in the task's read view.
+- Tapping a task opens a read view (when, who, Done means, steps, notes, comments, history). Edit is a separate state with grouped fields and a sticky Save.
+
+## Control roles
+- Primary: solid forest, one per screen or sheet.
+- Secondary: outlined pill or plain text. Destructive: quiet red text, always with Undo.
+- Filter (Everyone / Mine / Up for grabs, lists, Suggested): outlined chip, forest wash and a check when on.
+- Sub-navigation (Schedule views, More sections): text tabs with an underline; wraps, never clips.
+- Choices in forms (months, days, people): square toggles. Settings switches: real switches.
+- Visual size can be compact; hit areas are at least 44px through padding or an invisible extension.
 
 ## Motion and feedback
-Subtle everywhere; respect reduced motion. Small moments: the check settles and the row slides away; closing the shift; a star pops in Kid view. Short haptic on completion where supported. Sound only in Kid view (soft chime, can be off).
+Subtle everywhere; respect reduced motion (the device setting, or Settings → Reduce motion). Feedback uses one slot over the tab bar (top of the screen while a sheet or Kid view is open). Undo always wins; notices about what others did wait their turn. Small moments: the check settles and the row slides away; closing the shift; a star pops in Kid view. Short haptic on completion where supported. Sound only in Kid view (soft chime, can be off).
 
 ## Words
 Plain, concise, occasionally friendly: Complete task, Move to tomorrow, All caught up, Ready for tonight?
