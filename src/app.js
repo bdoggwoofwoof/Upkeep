@@ -262,7 +262,7 @@ function finishTask(id,credit,photo){
  const forWho=t.assignee&&t.assignee!==pid?` for ${pName(t.assignee)}`:"";
  const actId=logEvent({kind:"task",text:`finished “${t.name}”${forWho}`,ref:"task:"+id,who:pid,pts:ptsFor(t.mins),mins:t.mins|0,photo:photo||"",pending:kidNeedsOk});
  if(kidNeedsOk)put("approvals",rid(),{kind:"task",ref:id,act:actId,who:pid,label:t.name,pts:ptsFor(t.mins),photo:photo||"",prev,at:Date.now()});
- toast(`${kidNeedsOk?"Sent for an OK. ":"Done. "}Next: ${nice(n)}`,kidNeedsOk?null:()=>{patch("tasks",id,prev);remove("activity",actId)});
+ toast(`${kidNeedsOk?"Sent for an OK · ":"Completed · "}next ${nice(n)}`,kidNeedsOk?null:()=>{patch("tasks",id,prev);remove("activity",actId)});
 }
 function claim(id){if(!S.canWrite)return;const t=D.tasks[id];patch("tasks",id,{assignee:myPid()});logEvent({kind:"claim",text:`took “${t.name}”`,ref:"task:"+id})}
 function nudge(id){const t=D.tasks[id];if(!t||!t.assignee)return;logEvent({kind:"nudge",text:`nudged ${pName(t.assignee)} about “${t.name}”`,ref:"task:"+id,target:t.assignee});toast(`Nudged ${pName(t.assignee)}`)}
@@ -359,8 +359,8 @@ function chartHtml(){
  const r=routines().find(routineRunsTonight)||routines()[0];
  const ppl=[...people(),{id:"",name:"Anyone"}];
  const cell=(pid,d)=>ts.filter(t=>(t.assignee||"")===pid&&(t.next===d||(d===today()&&t.next<d))).map(t=>`<div>☐ ${esc(t.name)}</div>`).join("");
- return `<!doctype html><html><head><meta charset="utf-8"><title>Upkeep week of ${nice(today())}</title><style>body{font:13px/1.35 Georgia,serif;margin:24px;color:#111}h1{font-size:22px;margin:0 0 4px}table{border-collapse:collapse;width:100%;margin-top:14px}th,td{border:1px solid #999;padding:6px;vertical-align:top;text-align:left}th{background:#eee}td div{margin:2px 0}.s td{width:auto}@media print{body{margin:10mm}}</style></head><body>
- <h1>House chores · week of ${parse(today()).toLocaleDateString(undefined,{month:"long",day:"numeric"})}</h1><div>Check off as you go. Printed from Upkeep.</div>
+ return `<!doctype html><html><head><meta charset="utf-8"><title>Upkeep · week of ${nice(today())}</title><style>body{font:13px/1.35 Georgia,serif;margin:24px;color:#111}h1{font-size:22px;margin:0 0 4px}table{border-collapse:collapse;width:100%;margin-top:14px}th,td{border:1px solid #999;padding:6px;vertical-align:top;text-align:left}th{background:#eee}td div{margin:2px 0}.s td{width:auto}@media print{body{margin:10mm}}</style></head><body>
+ <h1>This week at home · ${parse(today()).toLocaleDateString(undefined,{month:"long",day:"numeric"})}</h1><div>Check things off as you go.</div>
  <table><tr><th>Who</th>${days.map(d=>`<th>${parse(d).toLocaleDateString(undefined,{weekday:"short",month:"numeric",day:"numeric"})}</th>`).join("")}</tr>
  ${ppl.map(p=>`<tr><th>${esc(p.id?pName(p.id):"Anyone")}</th>${days.map(d=>`<td>${cell(p.id,d)}</td>`).join("")}</tr>`).join("")}</table>
  ${r?`<h1 style="margin-top:22px">${esc(r.name)} · ${t12(r.time)}</h1><table class="s"><tr><th>Item</th><th>Who</th><th>Done means</th>${days.map(d=>`<th>${parse(d).toLocaleDateString(undefined,{weekday:"short"})}</th>`).join("")}</tr>${r.items.map(i=>`<tr><td>${esc(i.text)}</td><td>${esc(pName(i.assignee))}</td><td>${esc(i.standard||"")}</td>${days.map(()=>"<td></td>").join("")}</tr>`).join("")}</table>`:""}
@@ -404,7 +404,7 @@ function settleUp(){
 /* ---------- UI ---------- */
 let ui={tab:"today",who:"all",room:"All",q:"",houseView:"mine",libRoom:"All",routine:null,open:{},sheet:null,toast:null,cal:{list:null,loading:false,err:""},bulk:null,setup:null,editShift:false,plan:null,more:"home",kid:null,list:"Groceries",histWho:""};
 const I={
- check:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--on-accent)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+ check:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--forest-ink)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
  today:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l2.5 2.5L16 9"/><rect x="4" y="4" width="16" height="16" rx="3"/></svg>',
  moon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14.5A7.5 7.5 0 0 1 9.5 5a7.5 7.5 0 1 0 9.5 9.5z"/></svg>',
  house:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-6 8 6v8a1 1 0 0 1-1 1h-4v-5H9v5H5a1 1 0 0 1-1-1z"/></svg>',
@@ -438,7 +438,7 @@ function taskRow(t,o={}){
  const extra=[];
  if(multiUser()&&!t.assignee&&S.canWrite&&st!=="later")extra.push(`<button class="linkish" data-claim="${t.id}">I'll take it</button>`);
  return `<div class="row">
-  <button class="check" data-done="${t.id}" aria-label="Mark ${esc(t.name)} done" ${S.canWrite?"":"disabled"}>${I.check}</button>
+  <button class="check" data-done="${t.id}" aria-label="Mark ${esc(t.name)} done" ${S.canWrite?"":"disabled"}><i>${I.check}</i></button>
   <button class="main" data-edit="${t.id}"><span class="name">${esc(t.name)}</span>
    <span class="meta">${multiUser()?`<span class="who">${av(t.assignee)}${esc(pShort(t.assignee))}</span>`:""}<span>${esc(t.room)}</span><span>${freqText(t)}</span><span>${t.mins} min</span>${t.photoProof?"<span>Photo</span>":""}${t.rotate&&t.rotate.length>1?"<span>Rotates</span>":""}${nc?`<span>${nc} comment${nc>1?"s":""}</span>`:""}</span>
    ${t.standard?`<span class="std"><b>Done means:</b> ${esc(t.standard)}</span>`:""}</button>
@@ -466,7 +466,7 @@ function viewToday(){
  <section class="group"><div class="calbox"><b>How much time do you have?</b><div class="chips" style="margin:0">${[10,20,30,45,60,90].map(m=>`<button class="chip" data-plan="${m}" aria-pressed="${ui.plan&&ui.plan.mins===m}">${m<60?m+" min":m/60+" hr"+(m>60?"s":"")}</button>`).join("")}${kids().length?`<button class="chip" data-kidview="1">Kid view</button>`:""}</div>${ui.plan?planBlock():""}</div></section>
  ${shiftCard()}
  ${late.length?g("Catch up",late,""):""}
- ${g("Due today",tod,"<strong>Nothing due today.</strong> Enjoy the quiet, or get ahead on something below.")}
+ ${g("Due today",tod,"<strong>You're all caught up.</strong>")}
  ${g("Coming up this week",soon,"Nothing else this week.")}`;
 }
 function planBlock(){
@@ -475,7 +475,7 @@ function planBlock(){
  const s=timer.running?Math.max(0,Math.round((timer.end-Date.now())/1000)):timer.left;
  if(!list.length)return `<p class="note" style="margin:0">Nothing's due. You're ahead.</p>`;
  return `<p class="note" style="margin:0">${list.length} task${list.length>1?"s":""} · ${total} min, oldest first</p>
- <div class="list">${list.map(t=>`<div class="row" style="grid-template-columns:auto 1fr"><button class="check" data-done="${t.id}" aria-label="Mark ${esc(t.name)} done">${I.check}</button><button class="main" data-edit="${t.id}"><span class="name">${esc(t.name)}</span><span class="meta"><span>${t.mins} min</span><span>${esc(t.room)}</span></span></button></div>`).join("")}</div>
+ <div class="list">${list.map(t=>`<div class="row" style="grid-template-columns:auto 1fr"><button class="check" data-done="${t.id}" aria-label="Mark ${esc(t.name)} done"><i>${I.check}</i></button><button class="main" data-edit="${t.id}"><span class="name">${esc(t.name)}</span><span class="meta"><span>${t.mins} min</span><span>${esc(t.room)}</span></span></button></div>`).join("")}</div>
  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="stamp" id="clock" style="font-size:1.4rem">${fmtTime(s)}</span>${timer.running?`<button class="btn small" data-timer="pause">Pause</button>`:`<button class="btn small primary" data-timer="start">${s<total*60?"Resume":"Start timer"}</button>`}<button class="btn small" data-timer="reset">Reset</button><button class="linkish" data-plan="0">Close</button></div>`;
 }
 function viewShift(){
@@ -490,7 +490,7 @@ function viewShift(){
  <div class="progress" style="margin-top:0"><i style="width:${r.items.length?done/r.items.length*100:0}%"></i></div>
  <p class="note" style="margin:0 0 14px">${done} of ${r.items.length} done${done===r.items.length&&r.items.length?" · the house is closed for the night":""}. Resets at 4 AM.</p>
  <div class="list">${order.map(i=>{const c=D.checks[checkId(r.id,i.id)],nc=commentsFor("item:"+r.id+":"+i.id).length;
-  return `<div class="row"><button class="check ${c?"done":""}" data-tick="${i.id}" aria-label="${c?"Uncheck":"Check"} ${esc(i.text)}" ${S.canWrite?"":"disabled"}>${I.check}</button>
+  return `<div class="row"><button class="check ${c?"done":""}" data-tick="${i.id}" aria-label="${c?"Uncheck":"Check"} ${esc(i.text)}" ${S.canWrite?"":"disabled"}><i>${I.check}</i></button>
   <button class="main" data-item="${i.id}"><span class="name">${esc(i.text)}</span><span class="meta"><span class="who">${av(i.assignee)}${esc(pShort(i.assignee))}</span>${i.rotate&&i.rotate.length>1?"<span>Rotates</span>":""}${nc?`<span>${nc} comment${nc>1?"s":""}</span>`:""}</span>${i.standard?`<span class="std"><b>Done means:</b> ${esc(i.standard)}</span>`:""}</button>
   <div>${c?`<span class="checked-by">${esc(pShort(c.who))} · ${clock(c.at)}${c.pending||Object.values(D.approvals).some(a=>a.ref===c.id)?" · needs OK":""}</span>`:""}</div></div>`}).join("")||`<div class="row"><span class="muted">No items yet. Tap Edit to add some.</span></div>`}</div>
  <section class="group" style="margin-top:22px"><div class="calbox"><b>Put it on my calendar</b><p class="note" style="margin:0">One repeating event at ${t12(r.time)} with everyone's parts in the notes.</p>${calButtons("routine:"+r.id,routineAsEvent(r))}</div></section>`;
@@ -544,13 +544,13 @@ function viewFamily(){
  ${aps.length&&canApprove?`<section class="group"><div class="group-head"><h2>Waiting for your OK</h2><span class="stamp muted">${aps.length}</span></div><div class="list">${aps.map(a=>`<div class="row" style="grid-template-columns:auto 1fr auto">${av(a.who)}<span><span class="name">${esc(pName(a.who))}: ${esc(a.label)}</span><span class="meta"><span>${a.kind==="reward"?`wants this reward · ${a.pts} stars`:`${a.pts} star${a.pts>1?"s":""}`}</span><span>${ago(a.at)}</span></span>${a.photo?`<img src="${esc(photoUrl(a.photo))}" alt="Photo of ${esc(a.label)}" style="max-width:160px;border-radius:8px;margin-top:6px">`:""}</span><span style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn small primary" data-approve="${a.id}">OK</button><button class="btn small" data-reject="${a.id}">${a.kind==="reward"?"Not now":"Redo"}</button></span></div>`).join("")}</div></section>`:""}
  <section class="group"><div class="group-head"><h2>This week</h2><span class="stamp muted">last 7 days</span></div><div class="list">${people().map(p=>{const x=ws[p.id]||{pts:0,mins:0,n:0},sk=streakOf(p.id);return `<div class="row" style="grid-template-columns:auto 1fr auto">${av(p.id)}<span style="min-width:0"><span class="name">${esc(pName(p.id))}${p.id===myPid()?" (you)":""}</span><span class="meta"><span>${x.n} done</span><span>${x.mins} min</span>${sk?`<span>${sk}-day streak</span>`:""}</span><span class="progress"><i style="width:${Math.round(x.mins/totalMins*100)}%;background:${p.color||"var(--accent)"}"></i></span></span><span class="stamp">${x.pts} ★</span></div>`}).join("")}</div><p class="note">Bars show each person's share of the minutes done this week.</p></section>
  <section class="group"><div class="group-head"><h2>What's new</h2><span class="stamp muted">${unread()} new</span></div>${acts.length?`<div class="list feed">${acts.slice(0,30).map(a=>`<div class="ev ${a.by!==S.uid&&a.at>seen?"new":""}">${av(a.who||"")}<span><b>${esc(actorName(a))}</b> ${esc(a.text)}${a.photo?` <a class="linkish" href="${esc(photoUrl(a.photo))}" target="_blank" rel="noopener">photo</a>`:""}</span><span class="stamp muted">${ago(a.at)}</span></div>`).join("")}</div>`:`<div class="empty">When anyone checks something off or comments, it shows up here and pops up for everyone who has Upkeep open.</div>`}</section>
- <section class="group"><div class="group-head"><h2>History</h2><select id="histwho" style="width:auto"><option value="">Everyone</option>${people().map(p=>`<option value="${p.id}" ${ui.histWho===p.id?"selected":""}>${esc(pName(p.id))}</option>`).join("")}</select></div>${Object.keys(byDay).length?Object.keys(byDay).slice(0,14).map(d=>`<div class="eyebrow" style="margin:12px 0 6px">${nice(d)} · ${byDay[d].length} done</div><div class="list feed">${byDay[d].map(a=>`<div class="ev">${av(a.who)}<span><b>${esc(pShort(a.who))}</b> ${esc(a.text)}</span><span class="stamp muted">${clock(a.at)}</span></div>`).join("")}</div>`).join(""):`<div class="empty">Nothing finished yet.</div>`}</section>
- <section class="group"><div class="group-head"><h2>People</h2>${S.canWrite?`<button class="btn small" data-newperson="1">Add a kid or person</button>`:""}</div><div class="list">${people().map(p=>`<button class="row main" data-person="${p.id}" style="grid-template-columns:auto 1fr auto;width:100%">${av(p.id)}<span><span class="name">${esc(pName(p.id))}${p.id===myPid()?" (you)":""}</span><span class="meta"><span>${p.role==="kid"?"Kid":"Adult"}</span><span>${p.role==="kid"?"Uses Kid view":"Has their own phone"}</span><span>${pointsOf(p.id)} ★ total</span></span></span><span class="linkish">Edit</span></button>`).join("")}</div>
+ <section class="group"><div class="group-head"><h2>History</h2><select id="histwho" style="width:auto"><option value="">Everyone</option>${people().map(p=>`<option value="${p.id}" ${ui.histWho===p.id?"selected":""}>${esc(pName(p.id))}</option>`).join("")}</select></div>${Object.keys(byDay).length?Object.keys(byDay).slice(0,14).map(d=>`<div class="eyebrow" style="margin:12px 0 6px">${nice(d)} · ${byDay[d].length} done</div><div class="list feed">${byDay[d].map(a=>`<div class="ev">${av(a.who)}<span><b>${esc(pShort(a.who))}</b> ${esc(a.text)}</span><span class="stamp muted">${clock(a.at)}</span></div>`).join("")}</div>`).join(""):`<div class="empty">Nothing completed yet. Finished tasks show up here.</div>`}</section>
+ <section class="group"><div class="group-head"><h2>People</h2>${S.canWrite?`<button class="btn small" data-newperson="1">Add someone</button>`:""}</div><div class="list">${people().map(p=>`<button class="row main" data-person="${p.id}" style="grid-template-columns:auto 1fr auto;width:100%">${av(p.id)}<span><span class="name">${esc(pName(p.id))}${p.id===myPid()?" (you)":""}</span><span class="meta"><span>${p.role==="kid"?"Kid":"Adult"}</span><span>${p.role==="kid"?"Uses Kid view":"Has their own phone"}</span><span>${pointsOf(p.id)} ★ total</span></span></span><span class="linkish">Edit</span></button>`).join("")}</div>
  ${inviteBlock()}</section>`;
 }
 function viewKid(){
  const k=ui.kid==="pick"?null:D.people[ui.kid];
- if(!k)return `<header class="top"><div><div class="eyebrow">Kid view</div><h1>Who's doing chores?</h1></div><button class="btn small" data-exitkid="1">Back</button></header>
+ if(!k)return `<header class="top"><div><div class="eyebrow">Kid view</div><h1>Who's helping today?</h1></div><button class="btn small" data-exitkid="1">Back</button></header>
   <div class="kidpick">${kids().map(p=>`<button data-kidpick="${p.id}">${av(p.id,64)}<b>${esc(pName(p.id))}</b><span>${pointsOf(p.id)} stars</span></button>`).join("")||`<div class="empty">Add a kid on the Family tab first.</div>`}</div>`;
  const mine=tasks().filter(t=>t.assignee===k.id&&status(t)!=="later"&&status(t)!=="soon");
  const r=routines().find(routineRunsTonight);const items=r?r.items.filter(i=>i.assignee===k.id):[];
@@ -558,9 +558,9 @@ function viewKid(){
  const rewards=Object.values(D.rewards).sort((a,b)=>a.cost-b.cost),pts=pointsOf(k.id);
  const cpp=(D.house&&D.house.centsPerPoint)|0;
  const allDone=!mine.length&&items.every(i=>D.checks[checkId(r.id,i.id)]);
- return `<header class="top"><div><div class="eyebrow">Hi ${esc(pName(k.id))}!</div><h1>Your chores</h1></div><button class="btn small" data-exitkid="1">Done</button></header>
+ return `<header class="top"><div><div class="eyebrow">Hi ${esc(pName(k.id))}!</div><h1>Your jobs today</h1></div><button class="btn small" data-exitkid="1">Done</button></header>
  <div class="kidstars">${I.star}<b>${pts}</b><span>stars${cpp?` · ${money(pts*cpp)}`:""}</span>${streakOf(k.id)>1?`<span>· ${streakOf(k.id)} days in a row</span>`:""}</div>
- ${allDone?`<div class="kidcard done"><b>All done for today!</b><span>Go have fun.</span></div>`:""}
+ ${allDone?`<div class="kidcard done"><b>All done for today.</b><span>Nice work. Go have fun.</span></div>`:""}
  <div class="kidgrid">
  ${mine.map(t=>`<button class="kidcard" data-kiddone="${t.id}"><b>${esc(t.name)}</b>${t.standard?`<span>${esc(t.standard)}</span>`:""}${t.steps&&t.steps.length?`<span>${t.steps.map(esc).join(" · ")}</span>`:""}<em>${ptsFor(t.mins)} ★ ${t.photoProof?"· take a photo":""}</em></button>`).join("")}
  ${items.map(i=>{const c=D.checks[checkId(r.id,i.id)];return `<button class="kidcard ${c?"done":""}" data-kidtick="${i.id}" ${c?"disabled":""}><b>${esc(i.text)}</b>${i.standard?`<span>${esc(i.standard)}</span>`:""}<em>${c?"Done":"Tonight · 1 ★"}</em></button>`}).join("")}
@@ -598,7 +598,7 @@ function moreLists(){
  return `<div class="chips">${names.map(n=>`<button class="chip" data-list="${esc(n)}" aria-pressed="${ui.list===n}">${esc(n)} <span class="stamp">${Object.values(D.items).filter(i=>i.list===n&&!i.done).length}</span></button>`).join("")}${S.canWrite?`<button class="chip" data-newlist="1">+ New list</button>`:""}</div>
  ${ui.newList?`<div class="cmtform" style="margin-bottom:12px"><input type="text" id="nl-name" placeholder="List name, e.g. Costco"><button class="btn" data-savelist="1">Create</button></div>`:""}
  ${S.canWrite?`<div class="cmtform" style="margin-bottom:12px"><input type="text" id="li-new" placeholder="Add to ${esc(ui.list)}"><button class="btn primary" data-additem2="1">Add</button></div>`:""}
- <div class="list">${open.map(i=>`<div class="row" style="grid-template-columns:auto 1fr auto"><button class="check" data-buy="${i.id}" aria-label="Got ${esc(i.text)}">${I.check}</button><span style="min-width:0"><span class="name">${esc(i.text)}</span><span class="meta"><span class="who">${av(i.who)}${esc(pShort(i.who))}</span></span></span><button class="btn small" data-rmli="${i.id}" aria-label="Remove ${esc(i.text)}">✕</button></div>`).join("")||`<div class="row"><span class="muted">List is empty.</span></div>`}</div>
+ <div class="list">${open.map(i=>`<div class="row" style="grid-template-columns:auto 1fr auto"><button class="check" data-buy="${i.id}" aria-label="Got ${esc(i.text)}"><i>${I.check}</i></button><span style="min-width:0"><span class="name">${esc(i.text)}</span><span class="meta"><span class="who">${av(i.who)}${esc(pShort(i.who))}</span></span></span><button class="btn small" data-rmli="${i.id}" aria-label="Remove ${esc(i.text)}">✕</button></div>`).join("")||`<div class="row"><span class="muted">List is empty.</span></div>`}</div>
  ${bought.length?`<div class="eyebrow" style="margin:16px 0 6px">Buy again</div><div class="chips" style="flex-wrap:wrap">${bought.slice(0,24).map(i=>`<button class="chip" data-again="${i.id}">+ ${esc(i.text)}</button>`).join("")}</div>`:""}
  ${ui.list==="Groceries"?`<p class="note">Meal planning lives in Extract, your recipe app.</p>`:""}`;
 }
@@ -743,7 +743,7 @@ function renderLayer(){
   ${t.lastDone?`<p class="note">Last done ${nice(t.lastDone)}${t.lastBy?" by "+esc(pShort(t.lastBy)):""}.</p>`:""}
   ${s.isNew?"":commentBlock("task:"+s.id,t.name)}
   ${s.isNew?"":`<div class="calbox"><b>My calendar</b>${calButtons("task:"+s.id,t)}</div>`}
-  ${S.canWrite?`<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><button class="btn primary" data-save="1">${s.isNew?"Add task":"Save"}</button>${s.isNew?"":(s.confirmDel?`<span class="confirm">Delete for everyone? <button class="btn small danger" data-del="1">Delete</button><button class="btn small" data-nodel="1">Keep</button></span>`:`<button class="btn danger" data-askdel="1">Delete</button>`)}</div>`:""}
+  ${s.isNew?"":`<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn small" data-tomorrow="${s.id}">Move to tomorrow</button><button class="btn small" data-skip="${s.id}">Skip this time</button></div>`}${S.canWrite?`<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><button class="btn primary" data-save="1">${s.isNew?"Add task":"Save"}</button>${s.isNew?"":(s.confirmDel?`<span class="confirm">Delete for everyone? <button class="btn small danger" data-del="1">Delete</button><button class="btn small" data-nodel="1">Keep</button></span>`:`<button class="btn danger" data-askdel="1">Delete</button>`)}</div>`:""}
   </div></div>`;
  }
  if(s&&s.kind==="item"){
@@ -766,11 +766,11 @@ function renderLayer(){
   ${t&&t.standard?`<p class="std"><b>Done means:</b> ${esc(t.standard)}</p>`:""}
   ${S.photos?`<label class="field"><span>Add a photo of the finished job</span><input type="file" accept="image/*" capture="environment" id="fin-photo"></label>`:`<p class="note">Photos aren't available in this view, so this one goes through without one.</p>`}
   ${s.err?`<p class="note err">${esc(s.err)}</p>`:""}
-  <div><button class="btn primary" data-finish="1" ${s.busy?"disabled":""}>${s.busy?"Uploading…":"Mark done"}</button></div></div></div>`;
+  <div><button class="btn primary" data-finish="1" ${s.busy?"disabled":""}>${s.busy?"Uploading…":"Complete task"}</button></div></div></div>`;
  }
  if(s&&s.kind==="form")h+=formSheet(s);
  if(ui.toast)h+=`<div class="toast" role="status"><span>${esc(ui.toast.msg)}</span>${ui.toast.undo?'<button data-undo="1">Undo</button>':""}</div>`;
- layer.innerHTML=h;
+ layer.innerHTML=h;layer._sheet=ui.sheet;
 }
 function readDraft(){
  const d=ui.sheet.draft,v=id=>document.getElementById(id);if(!v("f-name"))return d;

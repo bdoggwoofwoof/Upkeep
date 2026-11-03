@@ -47,7 +47,7 @@ LIB_RAW.push(
 ["kids","Outside","Bring the trash cans back in","week",1,5],
 ["kids","Bathroom","Wipe the bathroom sink","week",1,5]
 );
-PACKS.push({id:"kids",name:"Kids' chores",sub:"Age-friendly jobs with stars: tidy room, set the table, toys, school bag"});
+PACKS.push({id:"kids",name:"Kids' jobs",sub:"Age-friendly jobs with stars: tidy room, set the table, toys, school bag"});
 
 /* Season anchors (months 1–12) and what the home needs for a task to apply. */
 const META={

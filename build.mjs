@@ -31,6 +31,7 @@ ${r('extra.css')}
 ${r('lib.js')}
 ${r('lib2.js')}
 ${r('app.js')}
+${r('design.js')}
 ${r('web.js')}
 </script>
 </body>
