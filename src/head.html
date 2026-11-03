@@ -140,13 +140,13 @@ button.row{border:0;border-bottom:1px solid var(--rule);text-align:start;width:1
 
 /* Sub-navigation: changes the view. Text tabs with an underline, wraps instead of clipping. */
 .subnav{display:flex;flex-wrap:wrap;gap:0 var(--s5);border-bottom:1px solid var(--rule);margin:0 0 var(--s4)}
-.subnav button{position:relative;background:none;border:0;padding:10px 0 9px;min-height:44px;font-size:var(--fs-md);font-weight:600;color:var(--ink-2);white-space:nowrap}
+.subnav button{position:relative;background:none;border:0;padding:10px 0 9px;min-height:44px;min-width:44px;font-size:var(--fs-md);font-weight:600;color:var(--ink-2);white-space:nowrap}
 .subnav button[aria-current="page"]{color:var(--ink)}
 .subnav button[aria-current="page"]::after{content:"";position:absolute;inset-inline:0;bottom:-1px;height:3px;border-radius:3px 3px 0 0;background:var(--forest)}
 .filter-row{margin:0 0 var(--s4)}
 .jump{display:flex;flex-wrap:wrap;align-items:center;gap:0 4px;margin:-6px 0 var(--s4)}
 .jump > span{font-size:var(--fs-sm);color:var(--ink-2);margin-inline-end:6px}
-.jump button{background:none;border:0;min-height:44px;padding:0 8px;font-size:var(--fs-sm);font-weight:600;color:var(--forest);border-radius:var(--r-sm)}
+.jump button{background:none;border:0;min-height:44px;min-width:44px;padding:0 8px;font-size:var(--fs-sm);font-weight:600;color:var(--forest);border-radius:var(--r-sm)}
 .jump button:hover{background:var(--tint)}
 /* Folding groups (Schedule) */
 .fold{border-bottom:1px solid var(--rule)}
@@ -220,7 +220,7 @@ h3.day span{font-weight:500;color:var(--ink-2)}
 a.btn{text-decoration:none}
 .field{display:flex;flex-direction:column;gap:6px}
 .field > span{font-size:var(--fs-sm);font-weight:600;color:var(--ink-2)}
-input[type=text],input[type=date],input[type=time],input[type=number],input[type=search],select,textarea{background:var(--leaf);border:1px solid var(--rule);border-radius:var(--r-sm);padding:10px 12px;width:100%;min-width:0;min-height:44px}
+input[type=text],input[type=password],input[type=email],input[type=date],input[type=time],input[type=number],input[type=search],select,textarea{background:var(--leaf);border:1px solid var(--rule);border-radius:var(--r-sm);padding:10px 12px;width:100%;min-width:0;min-height:44px}
 textarea{min-height:72px;resize:vertical}
 .cmtform .btn{flex:none}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:var(--s3)}
@@ -259,7 +259,7 @@ textarea{min-height:72px;resize:vertical}
 .back svg{width:18px;height:18px}
 .lib-tools{display:flex;flex-wrap:wrap;gap:var(--s3) var(--s4);align-items:center;margin:var(--s3) 0 var(--s4)}
 .inline-select{display:flex;align-items:center;gap:var(--s2);font-size:var(--fs-sm);font-weight:600;color:var(--ink-2)}
-.inline-select select{width:auto;min-height:36px;padding:6px 10px}
+.inline-select select{width:auto;min-height:44px;padding:6px 10px}
 .added{display:inline-flex;align-items:center;gap:4px;font-size:var(--fs-sm);color:var(--ok);font-weight:600}
 .added svg{width:14px;height:14px}
 
@@ -373,7 +373,7 @@ nav.tabs .brand{display:none}
 .s-label{font-weight:600}
 .s-sub{font-size:var(--fs-sm);color:var(--ink-2)}
 .err-text{color:var(--late)}
-.set-row .s-select{width:auto;min-height:36px;padding:6px 10px;flex:none;max-width:60%}
+.set-row .s-select{width:auto;min-height:44px;padding:6px 10px;flex:none;max-width:60%}
 details.set-row{display:block;padding:0}
 details.set-row > summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:var(--s4);padding:12px 0;min-height:56px;cursor:pointer}
 details.set-row > summary::-webkit-details-marker{display:none}
