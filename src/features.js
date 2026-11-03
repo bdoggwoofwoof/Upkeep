@@ -1,15 +1,6 @@
 /* ---------- Batch 2: phones & invites, arranging, pull to refresh, seasons & milestones,
    time of day, undo delete, backup, Kid view lock, freeze & storm prep ---------- */
 
-/* Phones and invite link */
-function inviteBlock(){
- const devs=(S.devices||[]).slice().sort((a,b)=>a.at-b.at);
- return `<div class="calbox" style="margin-top:var(--s4)"><b>Invite someone</b><p class="note">Send this link to adults in your house. They open it, pick their name and they're in. Kids don't need it; use Kid view on any family phone or tablet.</p>
- <div style="display:flex;gap:var(--s2);flex-wrap:wrap"><button class="btn primary small" data-invite="1">Share invite link</button><button class="btn small" data-copy="${esc(inviteLink())}">Copy link</button></div>
- ${ui.confirmRotate?`<div class="confirm">Make a new invite link? The old one stops working. Phones already in the house stay in. <button class="btn small danger" data-rotate="2">Make new link</button><button class="btn small" data-rotate="0">Cancel</button></div>`:`<button class="linkish" data-rotate="1">Reset invite link</button>`}</div>
- ${devs.length?`<section class="group" style="margin-top:var(--s5)"><div class="group-head"><h2>Phones in this house</h2><span class="stamp">${devs.length}</span></div><div class="list">${devs.map(d=>`<div class="row"><span class="main"><span class="name">${esc(d.label)}</span><span class="meta"><span>Joined ${new Date(d.at).toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"})}</span></span></span>${d.id===S.deviceId?`<span class="pill">This phone</span>`:ui.confirmRevoke===d.id?`<span class="confirm"><button class="btn small danger" data-revoke="${d.id}">Remove</button><button class="btn small" data-revoke="">Keep</button></span>`:`<button class="linkish" data-askrevoke="${d.id}">Remove</button>`}</div>`).join("")}</div><p class="note" style="padding-top:var(--s2)">Removing a phone signs it out of the house. Its person and history stay.</p></section>`:""}`;
-}
-
 /* Seasons */
 const SEASONS=[["Winter",[12,1,2]],["Spring",[3,4,5]],["Summer",[6,7,8]],["Fall",[9,10,11]]];
 function seasonNow(){
@@ -60,13 +51,7 @@ function checkMilestones(){
 function milestonesBlock(){
  const m=(D.house&&D.house.milestones)||{},ks=Object.keys(m).sort((a,b)=>m[b]-m[a]);
  if(!ks.length)return"";
- return `<section class="group"><div class="group-head"><h2>Milestones</h2><span class="stamp">${ks.length}</span></div><div class="list">${ks.map(k=>`<div class="row"><span class="main"><span class="name">${k.startsWith("season")?esc(k.split("-")[2].replace(/^./,c=>c.toUpperCase())+" "+k.split("-")[1]+" checklist finished"):"The household "+esc(MILESTONE_TEXT[k]||k)}</span><span class="meta"><span>${new Date(m[k]).toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"})}</span></span></span><span></span></div>`).join("")}</div></section>`;
-}
-function viewHousehold(){
- const html=viewFamily().replace("<h1>Family</h1>","<h1>Household</h1>");
- const at=html.indexOf('<section class="group"><div class="group-head"><h2>What\'s new');
- const withMs=at>0?html.slice(0,at)+milestonesBlock()+html.slice(at):html+milestonesBlock();
- return withMs+`<section class="group"><div class="group-head"><h2>Kids, stars and rewards</h2></div><div style="height:var(--s3)"></div>${moreKids()}</section>`;
+ return fold("milestones","Milestones",`${ks.length}`,()=>`<div class="list">${ks.map(k=>`<div class="row"><span class="main"><span class="name">${k.startsWith("season")?esc(k.split("-")[2].replace(/^./,c=>c.toUpperCase())+" "+k.split("-")[1]+" checklist finished"):"The household "+esc(MILESTONE_TEXT[k]||k)}</span><span class="meta"><span>${new Date(m[k]).toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"})}</span></span></span><span></span></div>`).join("")}</div>`,false);
 }
 
 /* Freeze and storm prep (Open-Meteo, no key) */
@@ -101,6 +86,7 @@ function wxAlert(){
  return null;
 }
 function liveNotice(a){
+ if(ui.kid)return; // Kid view: no adult household notices
  const text=`${pName(a.actor||a.who)} ${a.text}`;toast(text);
  if(ME.notify&&document.hidden&&"Notification" in window&&Notification.permission==="granted"){try{navigator.serviceWorker?.ready.then(r=>r.showNotification("Upkeep",{body:text,icon:"/icon-192.png",tag:a.id})).catch(()=>{})}catch(e){}}
 }
@@ -125,25 +111,49 @@ function drawPin(){
  <button class="linkish" data-pincancel="1">Cancel</button></div></div>`;
 }
 
-/* Settings (adds backup, Kid view lock, location; keeps the earlier sections) */
+/* Settings: grouped list sections. Longer explanations sit in secondary text or open on demand. */
+function applyPrefs(){
+ const r=document.documentElement;
+ if(ME.theme==="light"||ME.theme==="dark")r.dataset.theme=ME.theme;else delete r.dataset.theme;
+ if(ME.textSize==="large")r.dataset.text="large";else delete r.dataset.text;
+ if(ME.contrast)r.dataset.contrast="more";else delete r.dataset.contrast;
+ if(ME.motion==="reduce")r.dataset.motion="reduce";else delete r.dataset.motion;
+}
+applyPrefs();
+function setRow(label,sub,control,o={}){return `<${o.tag||"div"} class="set-row"${o.attr||""}><span class="s-text"><span class="s-label">${label}</span>${sub?`<span class="s-sub">${sub}</span>`:""}</span>${control||""}</${o.tag||"div"}>`}
+function setMore(id,label,sub,inner){return `<details class="set-row more" data-fold="set-${id}" ${ui.folds&&ui.folds["set-"+id]?"open":""}><summary><span class="s-text"><span class="s-label">${label}</span>${sub?`<span class="s-sub">${sub}</span>`:""}</span>${IC.chevd}</summary><div class="s-body">${inner}</div></details>`}
 function moreSettings(){
- const pr=(D.house&&D.house.profile)||{},h=D.house||{};
- const canNotify="Notification" in window;
- return `<section class="group"><div class="calbox"><b>Away mode</b><p class="note">Going on a trip? Turn this on and nothing goes overdue. When you're back, every due date moves forward by the days you were gone.</p>${paused()?`<button class="btn primary" data-unpause="1">I'm back</button>`:`<div><button class="btn" data-pause="1">Turn on Away mode</button></div>`}</div></section>
- <section class="group"><div class="calbox"><b>Freeze and storm reminders</b><p class="note">With your town set, Upkeep checks the forecast and shows a short prep list before a hard freeze, heavy snow, high winds or a big storm.</p>
- ${h.place?`<p style="margin:0">${esc(h.place.name)} <button class="linkish" data-placeclear="1">Change</button></p>`:`<div class="cmtform"><input type="text" id="place-q" placeholder="Town, e.g. Andrews NC" autocomplete="address-level2"><button class="btn" data-placefind="1">Find</button></div>${ui.places?ui.places.length?`<div class="list">${ui.places.map((p,i)=>`<button class="row" data-placepick="${i}"><span class="main"><span class="name">${esc(p.name)}</span></span><span class="linkish">Use</span></button>`).join("")}</div>`:`<p class="note">No towns found. Try the town name without the ZIP.</p>`:""}`}</div></section>
- <section class="group"><div class="calbox"><b>Notifications on this device</b><p class="note">A notice when someone completes something, checks a shift item, comments or nudges you, and before bad weather. On iPhone, add Upkeep to your Home Screen first (Share → Add to Home Screen).</p>${canNotify?`<label class="switch"><input type="checkbox" id="notify" ${ME.notify&&Notification.permission==="granted"?"checked":""}><span>Show notifications</span></label>${Notification.permission==="denied"?`<p class="note err">Notifications are blocked for Upkeep in this browser's settings.</p>`:""}`:`<p class="note">This browser doesn't support notifications.</p>`}</div></section>
- <section class="group"><div class="calbox"><b>Kid view</b><p class="note">A PIN keeps kids from leaving Kid view on a shared tablet. It's the same PIN on every device in the house.</p>
- ${h.kidPin?`<p style="margin:0">PIN is on.</p>`:""}
- <div class="cmtform"><input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="pin-new" placeholder="${h.kidPin?"New 4-digit PIN":"4-digit PIN"}" autocomplete="off"><button class="btn" data-pinset="1">${h.kidPin?"Change":"Set PIN"}</button></div>
- ${h.kidPin?`<button class="linkish" data-pinclear="1">Turn off the PIN</button>`:""}
- <label class="switch"><input type="checkbox" id="kiddevice" ${ME.kidDevice?"checked":""}><span>Open this device straight into Kid view</span></label>
- <label class="switch"><input type="checkbox" id="kidsound" ${ME.kidSound!==false?"checked":""}><span>Soft sound when a kid completes something</span></label></div></section>
- <section class="group"><div class="group-head"><h2>Your home</h2></div><div style="height:var(--s3)"></div>${profileForm(pr)}<p class="note" style="margin-top:var(--s2)">Changing this updates Home → Library → Suggested for you. It doesn't remove tasks you already have.</p></section>
- <section class="group"><div class="calbox"><b>Backup</b><p class="note">Save everything in this house to a file: tasks, routines, people, history, records and lists. Photos stay online and are linked from the backup.</p>
- <div style="display:flex;gap:var(--s2);flex-wrap:wrap"><button class="btn small" data-backup="1">Download backup</button><button class="btn small" data-csv="1">Tasks as a spreadsheet (CSV)</button><label class="btn small" style="cursor:pointer">Restore from backup<input type="file" accept="application/json,.json" id="restore-file" hidden></label></div>
- ${ui.restore?`<div class="confirm">Replace everything in this house with the backup from ${esc(ui.restore.when)}? (${ui.restore.count} items) Everyone in the house will see the restored version. <button class="btn small danger" data-restore="1">Replace</button><button class="btn small" data-restore="0">Cancel</button></div>`:""}</div></section>
- <section class="group"><div class="calbox"><b>This phone</b><p class="note">Signed in as ${esc(pName(myPid()))}. ${S.ops.length?`${S.ops.length} change${S.ops.length>1?"s":""} waiting to sync.`:"Everything is synced."}</p><div style="display:flex;gap:var(--s2);flex-wrap:wrap"><button class="btn small" data-switchme="1">I'm someone else</button>${ui.confirmLeave?`<span class="confirm">Leave this house on this phone? <button class="btn small danger" data-leave="2">Leave</button><button class="btn small" data-leave="0">Stay</button></span>`:`<button class="btn small danger" data-leave="1">Leave this house</button>`}</div></div></section>`;
+ const pr=(D.house&&D.house.profile)||{},h=D.house||{},canNotify="Notification" in window,feats=PROFILE_Q.filter(([k])=>pr[k]).length;
+ const sw=(id,on,dis)=>`<input type="checkbox" class="sw" id="${id}" ${on?"checked":""} ${dis?"disabled":""}>`;
+ const group=(t,rows)=>`<section class="set-group"><h2>${t}</h2><div class="set-list">${rows}</div></section>`;
+ return group("Appearance and accessibility",
+  setRow("Theme","Light, dark, or match this device",`<select id="pref-theme" class="s-select" aria-label="Theme">${[["system","Match device"],["light","Light"],["dark","Dark"]].map(([v,l])=>`<option value="${v}" ${(ME.theme||"system")===v?"selected":""}>${l}</option>`).join("")}</select>`,{tag:"label"})
+  +setRow("Larger text","Makes every screen's text about 12% bigger",sw("pref-text",ME.textSize==="large"),{tag:"label"})
+  +setRow("More contrast","Darker secondary text and lines",sw("pref-contrast",!!ME.contrast),{tag:"label"})
+  +setRow("Reduce motion","Upkeep also follows your device's setting",sw("pref-motion",ME.motion==="reduce"),{tag:"label"}))
+ +group("Household",
+  setMore("home","Your home",`${({house:"House",townhouse:"Townhouse",apartment:"Apartment"})[pr.home]||"House"} · ${pr.own==="rent"?"Rent":"Own"} · ${feats} feature${feats===1?"":"s"}`,`${profileForm(pr)}<p class="note">This changes what Home → Task library suggests. It doesn't remove tasks you already have.</p>`)
+  +setMore("kid","Kid view",h.kidPin?"PIN is on":"No PIN",`<div class="field"><span>PIN to leave Kid view <small>the same on every device</small></span><div class="cmtform"><input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="pin-new" placeholder="${h.kidPin?"New 4-digit PIN":"4-digit PIN"}" autocomplete="off" aria-label="4-digit PIN"><button class="btn small" data-pinset="1">${h.kidPin?"Change PIN":"Set PIN"}</button></div>${h.kidPin?`<button class="linkish" data-pinclear="1">Turn off the PIN</button>`:""}</div>
+   ${setRow("Open this device in Kid view","For a shared tablet",sw("kiddevice",!!ME.kidDevice),{tag:"label"})}${setRow("Sound when a kid finishes something","",sw("kidsound",ME.kidSound!==false),{tag:"label"})}`))
+ +group("Notifications and reminders",
+  canNotify?setRow("Notifications on this device",Notification.permission==="denied"?`<span class="err-text">Blocked in this browser's settings.</span>`:"When someone finishes something, comments or nudges you, and before bad weather. On iPhone, add Upkeep to your Home Screen first.",sw("notify",ME.notify&&Notification.permission==="granted",Notification.permission==="denied"),{tag:"label"}):setRow("Notifications","This browser doesn't support them.","")
+  +setRow("Calendar reminders","Set the reminder time and subscribe under Calendar",`<button class="btn small" data-more="cal">Open</button>`))
+ +group("Away mode and weather",
+  setRow("Away mode",paused()?`On since ${nice(h.pause.from)}. Turning it off moves due dates forward by the days you were gone.`:"While it's on, nothing goes overdue",sw("away",paused(),!S.canWrite),{tag:"label"})
+  +setMore("wx","Freeze and storm prep",h.place?esc(h.place.name):"Set your town to get prep lists before bad weather",h.place?`<p class="note">Upkeep checks the forecast for ${esc(h.place.name)} and puts a short prep list at the top of Today before a hard freeze, heavy snow, high winds, a big storm or extreme heat.</p><button class="linkish" data-placeclear="1">Change town</button>`:`<div class="cmtform"><input type="text" id="place-q" placeholder="Town, e.g. Andrews NC" autocomplete="address-level2" aria-label="Town"><button class="btn small" data-placefind="1">Find</button></div>${ui.places?ui.places.length?`<div class="list">${ui.places.map((p,i)=>`<button class="row link" data-placepick="${i}"><span class="main"><span class="name">${esc(p.name)}</span></span><span class="linkish">Use</span></button>`).join("")}</div>`:`<p class="note">No towns found. Try the town name without the ZIP code.</p>`:""}`))
+ +group("Backup and restore",
+  setRow("Download a backup","Everything in this house as a file. Photos stay online and are linked.",`<button class="btn small" data-backup="1">Download</button>`)
+  +setRow("Tasks as a spreadsheet","A CSV file you can open in Excel or Sheets",`<button class="btn small" data-csv="1">Download</button>`)
+  +setRow("Restore from a backup","Replaces everything in this house",`<label class="btn small">Choose file<input type="file" accept="application/json,.json" id="restore-file" hidden></label>`)
+  +(ui.restore?`<div class="confirm set-confirm" role="alert"><span>Replace everything in this house with the backup from ${esc(ui.restore.when)}? (${ui.restore.count} items) Everyone will see the restored version.</span><button class="btn small danger" data-restore="1">Replace</button><button class="btn small" data-restore="0">Cancel</button></div>`:""))
+ +group("This phone",
+  setRow(`Signed in as ${esc(pName(myPid()))}`,"Check-offs and comments from this phone carry this name",`<button class="btn small" data-switchme="1">Switch person</button>`)
+  +setRow("Sync",S.ops.length?`${S.ops.length} change${S.ops.length>1?"s":""} saved on this phone, waiting to sync`:S.note&&/^Offline/.test(S.note)?"Offline. Changes are saved on this phone.":"Everything is synced","")
+  +setRow("Leave this house",ui.confirmLeave?"This phone will need a new invite link to come back.":"Signs this phone out. Your person and history stay.",ui.confirmLeave?`<span class="confirm"><button class="btn small danger" data-leave="2">Leave</button><button class="btn small" data-leave="0">Stay</button></span>`:`<button class="btn small danger" data-leave="1">Leave</button>`))
+ +group("Help",
+  setMore("h1","Add Upkeep to your Home Screen","",`<p>On iPhone: open Upkeep in Safari, tap Share, then Add to Home Screen. On Android: open the browser menu and tap Install app or Add to Home screen. It opens like an app and works offline.</p>`)
+  +setMore("h2","How tasks are scheduled","",`<p>Each task repeats on its own schedule. Seasonal jobs land on the first Saturday of their month. When you finish a task, the next date is set from its schedule, or from the day you finished it if it counts from when it's done.</p>`)
+  +setMore("h3","Sharing with your household","",`<p>Adults join with the invite link under Household. Each phone gets its own key, so you can reset the link or remove a phone without signing anyone else out. Kids use Kid view on any family device.</p>`));
 }
 function downloadFile(name,text,type){const u=URL.createObjectURL(new Blob([text],{type}));const a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),30000)}
 function backupJson(){
@@ -243,6 +253,11 @@ document.addEventListener("change",async e=>{
  const el=e.target;
  if(el.dataset.prep){const k=el.dataset.prep,i=+el.dataset.i;const cur=(D.house&&D.house.prep&&D.house.prep[k]);let arr2=Array.isArray(cur)?[...cur]:[];if(el.checked){if(!arr2.includes(i))arr2.push(i)}else arr2=arr2.filter(x=>x!==i);putHouse({prep:Object.assign({},(D.house&&D.house.prep)||{},{[k]:arr2})});haptic(8);return}
  if(el.id==="kiddevice"){ME.kidDevice=el.checked;saveMe();return}
+ if(el.id==="pref-theme"){ME.theme=el.value;applyPrefs();saveMe();return}
+ if(el.id==="pref-text"){ME.textSize=el.checked?"large":"";applyPrefs();saveMe();return}
+ if(el.id==="pref-contrast"){ME.contrast=el.checked;applyPrefs();saveMe();return}
+ if(el.id==="pref-motion"){ME.motion=el.checked?"reduce":"";applyPrefs();saveMe();return}
+ if(el.id==="away"){if(el.checked&&!paused())startPause();else if(!el.checked&&paused())endPause();return}
  if(el.id==="kidsound"){ME.kidSound=el.checked;saveMe();return}
  if(el.id==="restore-file"){const f=el.files&&el.files[0];if(!f)return;try{const j=JSON.parse(await f.text());if(j.app!=="upkeep"||!j.docs)throw 0;const count=COLS.reduce((n,c)=>n+Object.keys(j.docs[c]||{}).length,0);ui.restore={docs:j.docs,when:new Date(j.exported).toLocaleString(),count};render()}catch(err){toast("That file isn't an Upkeep backup.")}return}
 });

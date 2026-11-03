@@ -160,7 +160,7 @@ function fold(id,title,stamp,inner,defOpen,preview,cls=""){
  return `<details class="fold ${cls}" id="g-${id}" data-fold="${id}" ${open?"open":""}><summary><span class="f-head"><span class="f-title">${title}</span>${preview&&!open?`<span class="f-prev">${preview}</span>`:""}</span><span class="stamp">${stamp}</span>${IC.chevd}</summary><div class="f-body">${open?inner():""}</div></details>`;
 }
 const preview=l=>{const n=l.slice(0,2).map(t=>esc(t.name)).join(", ");return l.length>2?`${n} and ${l.length-2} more`:n};
-document.addEventListener("toggle",e=>{const d=e.target;if(d&&d.dataset&&d.dataset.fold){const prev=ui.folds&&ui.folds[d.dataset.fold];ui.folds=Object.assign({},ui.folds||{},{[d.dataset.fold]:d.open});if(!!prev!==d.open&&(d.open?!d.querySelector(".f-body").children.length:d.querySelector(".f-prev")===null)){const id=d.id;render();document.getElementById(id)?.querySelector("summary")?.focus({preventScroll:true})}}},true);
+document.addEventListener("toggle",e=>{const d=e.target;if(!d||!d.dataset||!d.dataset.fold)return;const prev=ui.folds&&ui.folds[d.dataset.fold];ui.folds=Object.assign({},ui.folds||{},{[d.dataset.fold]:d.open});const fb=d.querySelector(":scope > .f-body");if(fb&&!!prev!==d.open&&(d.open?!fb.children.length:d.querySelector(".f-prev")===null)){const id=d.id;render();document.getElementById(id)?.querySelector("summary")?.focus({preventScroll:true})}},true);
 function jumpTo(id){if(id!=="routines")ui.folds=Object.assign({},ui.folds||{},{[id]:true});render();const el=document.getElementById("g-"+id);if(el){el.scrollIntoView({block:"start",behavior:reduced()?"auto":"smooth"});el.querySelector("summary,h2")?.focus({preventScroll:true})}}
 
 /* ---------- Schedule: the next two weeks open, later months folded, seasons by season ---------- */
@@ -217,6 +217,58 @@ function viewSchedule(){
  }
  return `<header class="top"><div class="ttl"><h1>Schedule</h1><span class="date">${tasks().length} recurring tasks</span></div></header>${nav}${whoSeg()?`<div class="filter-row">${whoSeg()}</div>`:""}${body}`;
 }
+/* ---------- Household: what's waiting on you, people and their share, invite, activity, kids ---------- */
+function actDay(ms){const d=ymd(new Date(ms)),n=daysBetween(d,today());return n===0?"Today":n===1?"Yesterday":nice(d)}
+function viewHousehold(){
+ const me=myPid(),canApprove=!isKid(me),seen=ui.seenBefore??(ME.lastSeen||0);
+ if(ui.tab==="household"&&ui.seenBefore==null){ui.seenBefore=ME.lastSeen||0;setTimeout(()=>{if(ui.tab==="household"){ME.lastSeen=Date.now();ls.set("upkeep-me",ME);renderTabs()}},1200)}
+ const aps=Object.values(D.approvals).sort((a,b)=>a.at-b.at),ws=weekStats(),total=Object.values(ws).reduce((a,x)=>a+x.mins,0);
+ const approvals=aps.length&&canApprove?`<section class="group"><div class="group-head"><h2>Waiting for your OK</h2><span class="stamp">${aps.length}</span></div><div class="list">${aps.map(a=>`<div class="row approve"><span class="main"><span class="name">${esc(pName(a.who))}: ${esc(a.label)}</span><span class="meta"><span>${a.kind==="reward"?`Wants this reward · ${a.pts} stars`:`${a.pts} star${a.pts>1?"s":""}`}</span><span>${ago(a.at)}</span></span>${a.photo?`<img src="${esc(photoUrl(a.photo))}" alt="Photo of ${esc(a.label)}" class="proof">`:""}</span><span class="row-acts"><button class="btn small" data-reject="${a.id}">${a.kind==="reward"?"Not now":"Redo"}</button><button class="btn small primary" data-approve="${a.id}">OK</button></span></div>`).join("")}</div></section>`:"";
+ const ppl=`<section class="group"><div class="group-head"><h2>People</h2><span class="gh-r">${S.canWrite?`<button class="linkish" data-newperson="1">Add someone</button>`:""}<span class="stamp">This week</span></span></div>
+ <div class="list">${people().map(p=>{const x=ws[p.id]||{pts:0,mins:0,n:0},sk=streakOf(p.id),share=total?Math.round(x.mins/total*100):0;
+  return `<button class="row person" data-person="${p.id}"><span class="av-wrap">${av(p.id,32)}</span><span class="main"><span class="name">${esc(pName(p.id))}${p.id===me?" (you)":""}</span><span class="meta"><span>${p.role==="kid"?"Kid":"Adult"}</span><span>${x.n} done, ${fmtMins(x.mins)}</span>${sk>1?`<span>${sk}-day streak</span>`:""}${p.role==="kid"?`<span>${pointsOf(p.id)} ★</span>`:""}</span><span class="share"><span class="meter" aria-hidden="true"><i style="width:${share}%"></i></span><span class="pct">${share}%</span></span></span>${IC.chev}</button>`}).join("")}</div>
+ <p class="more-note">The percentage is each person's share of the minutes done in the last 7 days.</p></section>`;
+ const devs=(S.devices||[]).slice().sort((a,b)=>a.at-b.at);
+ const invite=`<section class="group"><div class="group-head"><h2>Invite someone</h2></div>
+ <p class="note">Send this link to adults in your house. They open it, pick their name and they're in. Kids don't need it; use Kid view on any family phone or tablet.</p>
+ <div class="btn-row"><button class="btn primary small" data-invite="1">Share invite link</button><button class="btn small" data-copy="${esc(inviteLink())}">Copy link</button>${ui.confirmRotate?"":`<button class="linkish" data-rotate="1">Reset link</button>`}</div>
+ ${ui.confirmRotate?`<div class="confirm" role="alert"><span>Make a new invite link? The old one stops working. Phones already in the house stay in.</span><button class="btn small danger" data-rotate="2">Make new link</button><button class="btn small" data-rotate="0">Cancel</button></div>`:""}
+ ${devs.length?fold("phones","Phones in this house",`${devs.length}`,()=>`<div class="list">${devs.map(d=>`<div class="row"><span class="main"><span class="name">${esc(d.label)}</span><span class="meta"><span>Joined ${new Date(d.at).toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"})}</span></span></span>${d.id===S.deviceId?`<span class="added">This phone</span>`:ui.confirmRevoke===d.id?`<span class="confirm"><button class="btn small danger" data-revoke="${d.id}">Remove</button><button class="btn small" data-revoke="">Keep</button></span>`:`<button class="linkish" data-askrevoke="${d.id}">Remove</button>`}</div>`).join("")}</div><p class="more-note">Removing a phone signs it out of the house. Its person and history stay.</p>`,false):""}</section>`;
+ const acts=Object.values(D.activity).filter(a=>!ui.histWho||a.who===ui.histWho||a.actor===ui.histWho).sort((a,b)=>b.at-a.at);
+ const lim=ui.actLimit||25,shown=acts.slice(0,lim),newN=acts.filter(a=>a.by!==S.uid&&a.at>seen).length;
+ const byDay=[];shown.forEach(a=>{const k=actDay(a.at);let g=byDay.find(x=>x.k===k);if(!g)byDay.push(g={k,list:[]});g.list.push(a)});
+ const activity=`<section class="group"><div class="group-head"><h2>Activity</h2><label class="inline-select"><span class="sr">Show activity for</span><select id="histwho">${[["","Everyone"],...people().map(p=>[p.id,pName(p.id)])].map(([v,l])=>`<option value="${v}" ${ui.histWho===v?"selected":""}>${esc(l)}</option>`).join("")}</select></label></div>
+ ${newN?`<p class="more-note">${newN} new since you last looked.</p>`:""}
+ ${byDay.length?byDay.map(g=>`<h3 class="day">${g.k}<span>${g.list.filter(a=>a.kind==="task"||a.kind==="check").length?g.list.filter(a=>a.kind==="task"||a.kind==="check").length+" done":""}</span></h3><div class="feed">${g.list.map(a=>{const nw=a.by!==S.uid&&a.at>seen;return `<div class="ev${nw?" new":""}">${av(a.who||a.actor||"",24)}<span><b>${esc(actorName(a))}</b> ${esc(a.text)}${a.photo?` <a class="linkish" href="${esc(photoUrl(a.photo))}" target="_blank" rel="noopener">Photo</a>`:""}${nw?` <span class="new-tag">New</span>`:""}</span><span class="stamp">${clock(a.at)}</span></div>`}).join("")}</div>`).join(""):`<div class="empty">When anyone finishes something or comments, it shows up here.</div>`}
+ ${acts.length>lim?`<button class="btn small" data-actmore="1">Show more</button>`:""}</section>`;
+ const ms=milestonesBlock();
+ return `<header class="top"><div class="ttl"><h1>Household</h1><span class="date">${people().length} ${people().length===1?"person":"people"}</span></div>${kids().length?`<button class="btn small" data-kidview="1">Open Kid view</button>`:""}</header>
+ ${banners()}${approvals}${ppl}${invite}${activity}${ms}
+ <section class="group"><div class="group-head"><h2>Kids, stars and rewards</h2></div>${moreKids()}</section>`;
+}
+
+/* ---------- Kid view: big cards with a clear done button, simple words, stars ---------- */
+function viewKid(){
+ const k=ui.kid==="pick"?null:D.people[ui.kid];
+ if(!k)return `<header class="top kid-head"><div class="ttl"><h1>Who's helping today?</h1></div><button class="btn small" data-exitkid="1">Exit kid view</button></header>
+  <div class="kidpick">${kids().map(p=>`<button data-kidpick="${p.id}">${av(p.id,64)}<b>${esc(pName(p.id))}</b><span>${pointsOf(p.id)} stars</span></button>`).join("")||`<div class="empty">Add a kid under Household → People first.</div>`}</div>`;
+ const mine=tasks().filter(t=>t.assignee===k.id&&(status(t)==="today"||status(t)==="late"));
+ const r=routines().find(routineRunsTonight),items=r?r.items.filter(i=>i.assignee===k.id):[];
+ const doneToday=Object.values(D.activity).filter(a=>a.kind==="task"&&a.who===k.id&&ymd(new Date(a.at))===today()).sort((a,b)=>a.at-b.at);
+ const rewards=Object.values(D.rewards).sort((a,b)=>a.cost-b.cost),pts=pointsOf(k.id),cpp=(D.house&&D.house.centsPerPoint)|0,sk=streakOf(k.id);
+ const openItems=items.filter(i=>!D.checks[checkId(r.id,i.id)]),allDone=!mine.length&&!openItems.length;
+ const card=(attr,title,std,stars,tag,done,note)=>`<button class="kidcard ${done?"done":""}" ${attr} ${done?"disabled":""} aria-label="${esc(title)}${done?", done":`, ${stars} star${stars>1?"s":""}. Tap when it's done.`}"><span class="k-text">${tag?`<span class="k-tag">${tag}</span>`:""}<b>${esc(title)}</b>${std?`<span class="k-std">${esc(std)}</span>`:""}<span class="k-stars">${done?esc(note||"Done!"):`${IC.star}${stars}`}</span></span><span class="k-check" aria-hidden="true">${IC.check}</span></button>`;
+ return `<header class="top kid-head"><div class="ttl"><h1>Hi, ${esc(pName(k.id))}</h1></div><button class="btn small" data-exitkid="1">Exit kid view</button></header>
+ <div class="kidstars">${IC.star}<b>${pts}</b><span>stars${cpp?` · ${money(pts*cpp)}`:""}${sk>1?` · ${sk} days in a row`:""}</span></div>
+ ${allDone?`<div class="kid-done"><span class="k-check big" aria-hidden="true">${IC.check}</span><b>All done for today!</b><span>Nice work. Go have fun.</span></div>`:`<h2 class="kid-h">Your jobs today</h2>`}
+ <div class="kidgrid">
+ ${mine.map(t=>card(`data-kiddone="${t.id}"`,t.name,t.standard,ptsFor(t.mins),t.photoProof?"Take a photo":"",false)).join("")}
+ ${items.map(i=>{const c=D.checks[checkId(r.id,i.id)];return card(`data-kidtick="${i.id}"`,i.text,c?"":i.standard,1,"Tonight",!!c,c&&Object.values(D.approvals).some(a=>a.ref===c.id)?"Done! Waiting for a grown-up":"Done!")}).join("")}
+ ${doneToday.map(a=>card("",(D.tasks[(a.ref||"").slice(5)]||{}).name||a.text,"",a.pts||1,"",true,a.pending?"Done! Waiting for a grown-up":"Done!")).join("")}
+ </div>
+ ${rewards.length?`<section class="group kid-rewards"><h2 class="kid-h">Rewards</h2><div class="list">${rewards.map(w=>`<div class="row"><span class="main"><span class="name">${esc(w.name)}</span><span class="meta"><span>${w.cost} stars</span></span></span><button class="btn ${pts>=w.cost?"primary":""}" data-redeem="${w.id}" ${pts>=w.cost?"":"disabled"}>${pts>=w.cost?"Ask for it":`${w.cost-pts} more stars`}</button></div>`).join("")}</div></section>`:""}`;
+}
+
 /* ---------- Home: rooms first, then records; each record type is its own page ---------- */
 function roomStatus(r){
  const ts=tasks().filter(t=>t.room===r),late=ts.filter(t=>status(t)==="late").length,due=ts.filter(t=>status(t)==="today").length,soon=ts.filter(t=>status(t)==="soon").length;
@@ -270,7 +322,7 @@ function chime(){
  try{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();const t=audioCtx.currentTime;
   [660,880].forEach((f,i)=>{const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type="sine";o.frequency.value=f;g.gain.setValueAtTime(0,t+i*.09);g.gain.linearRampToValueAtTime(.12,t+i*.09+.02);g.gain.exponentialRampToValueAtTime(.001,t+i*.09+.35);o.connect(g);g.connect(audioCtx.destination);o.start(t+i*.09);o.stop(t+i*.09+.4)})}catch(e){}
 }
-const reduced=()=>window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+const reduced=()=>ME.motion==="reduce"||!!(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches);
 function moveTomorrow(id){const t=D.tasks[id];if(!t)return;const prev=t.next;patch("tasks",id,{next:addDays(today(),1)});toast(`Moved to tomorrow`,()=>patch("tasks",id,{next:prev}))}
 function skipOnce(id){const t=D.tasks[id];if(!t)return;const prev=t.next;const n=nextAfter(t,today());patch("tasks",id,{next:n});toast(`Skipped · next ${nice(n)}`,()=>patch("tasks",id,{next:prev}))}
 document.addEventListener("click",e=>{
@@ -295,6 +347,8 @@ document.addEventListener("click",e=>{
  if(ds.prepopen){e.stopImmediatePropagation();const a=wxAlert();ui.prepOpen=Object.assign({},ui.prepOpen||{},{[ds.prepopen]:!(ui.prepOpen&&ds.prepopen in ui.prepOpen?ui.prepOpen[ds.prepopen]:a&&a.day<=1)});render();return}
  if(ds.dismiss){e.stopImmediatePropagation();ME.dismissed=Object.assign({},ME.dismissed||{},{[ds.dismiss]:Date.now()});saveMe();return}
  if(ds.claim&&b.closest(".acts")){e.stopImmediatePropagation();closeSwipe();claim(ds.claim);return}
+ if(ds.actmore){e.stopImmediatePropagation();ui.actLimit=(ui.actLimit||25)+50;render();return}
+ if(ds.more&&b.closest(".set-row")){e.stopImmediatePropagation();ui.more=ds.more;render();window.scrollTo(0,0);return}
  if(ds.jump){e.stopImmediatePropagation();jumpTo(ds.jump);return}
  if(ds.sv){e.stopImmediatePropagation();ui.schedView=ds.sv;render();return}
  if(ds.hv2){e.stopImmediatePropagation();ui.homeView=ds.hv2;ui.q="";ui.roomOpen=null;render();window.scrollTo(0,0);if(ds.hv2!=="rooms")document.querySelector("h1")?.setAttribute("tabindex","-1"),document.querySelector("h1")?.focus({preventScroll:true});return}

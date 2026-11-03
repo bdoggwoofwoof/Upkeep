@@ -45,10 +45,16 @@
   --forest:#9BC2A6; --forest-ink:#0F1511; --forest-wash:#1F2E25;
   --sage:#A8B48F; --sage-strong:#A8B48F; --clay:#D19A7E;
   --ok:#8FBF9C; --soon:#D9AF5E; --soon-wash:#2E2817; --late:#E28B76; --late-wash:#36201B; --rule-strong:#3A4A3F; color-scheme:dark }
+/* Per-device preferences (Settings → Appearance and accessibility) */
+:root[data-text="large"]{font-size:112.5%}
+:root[data-contrast="more"]{--ink-2:#45473F;--ink-3:#4C4E46;--rule:#B4A991;--rule-strong:#8A806B}
+@media (prefers-color-scheme: dark){ :root[data-contrast="more"]:not([data-theme="light"]){--ink-2:#CDD0C6;--ink-3:#B8BCB0;--rule:#46564B;--rule-strong:#66786B} }
+:root[data-contrast="more"][data-theme="dark"]{--ink-2:#CDD0C6;--ink-3:#B8BCB0;--rule:#46564B;--rule-strong:#66786B}
+:root[data-motion="reduce"] *,:root[data-motion="reduce"] *::before,:root[data-motion="reduce"] *::after{animation:none!important;transition:none!important}
 
 *{box-sizing:border-box}
 html,body{height:100%}
-body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:1rem;line-height:1.45;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--paper)}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer;-webkit-tap-highlight-color:transparent}
@@ -375,26 +381,79 @@ nav.tabs .brand{display:none}
   .edit-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 var(--s6)}
 }
 
+/* Settings and other grouped lists */
+.set-group{margin:0 0 var(--s5)}
+.set-group > h2{font-family:var(--serif);font-weight:500;font-size:var(--fs-xl);margin:0 0 var(--s1)}
+.set-list{display:flex;flex-direction:column}
+.set-row{display:flex;align-items:center;justify-content:space-between;gap:var(--s4);padding:12px 0;min-height:56px;border-bottom:1px solid var(--rule)}
+.set-row .s-text{display:flex;flex-direction:column;gap:2px;min-width:0}
+.s-label{font-weight:600}
+.s-sub{font-size:var(--fs-sm);color:var(--ink-2)}
+.err-text{color:var(--late)}
+.s-select{width:auto;min-height:36px;padding:6px 10px;flex:none}
+details.set-row{display:block;padding:0}
+details.set-row > summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:var(--s4);padding:12px 0;min-height:56px;cursor:pointer}
+details.set-row > summary::-webkit-details-marker{display:none}
+details.set-row .chevd{width:18px;height:18px;color:var(--ink-2);flex:none;transition:transform .2s var(--ease)}
+details.set-row[open] .chevd{transform:rotate(180deg)}
+.s-body{padding:0 0 var(--s4);display:flex;flex-direction:column;gap:var(--s3)}
+.s-body p{margin:0;color:var(--ink-2)}
+.s-body .set-row:last-child{border-bottom:0}
+.set-confirm{padding:var(--s3) 0}
+input.sw{appearance:none;-webkit-appearance:none;position:relative;flex:none;width:46px;height:28px;border-radius:99px;background:var(--rule-strong);margin:0;cursor:pointer;transition:background .2s var(--ease)}
+input.sw::before{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--leaf);box-shadow:0 1px 2px rgb(0 0 0 / .2);transition:transform .2s var(--ease)}
+input.sw:checked{background:var(--forest)}
+input.sw:checked::before{transform:translateX(18px)}
+input.sw:disabled{opacity:.5}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.row.person{grid-template-columns:auto 1fr auto}
+.row.person .share{display:flex;align-items:center;gap:var(--s2);margin-top:4px}
+.row.person .meter{flex:1;max-width:220px;margin:0}
+.row.person .pct{font-size:var(--fs-sm);font-weight:600;color:var(--ink);min-width:3ch}
+.row.person .chev{width:18px;height:18px;color:var(--ink-2)}
+.row.approve{grid-template-columns:1fr auto;align-items:start}
+.proof{max-width:160px;border-radius:var(--r-sm);margin-top:6px}
+.feed .ev.new{background:linear-gradient(90deg,var(--forest-wash),transparent 70%)}
+.new-tag{display:inline-block;font-size:var(--fs-xs);font-weight:700;color:var(--forest);margin-inline-start:4px}
+
 /* Setup */
 .packs{display:grid;gap:0}
 .pack{display:grid;grid-template-columns:auto 1fr;gap:var(--s3);align-items:start;padding:var(--s3) 0;border-bottom:1px solid var(--rule)}
 .pack input{width:20px;height:20px;margin-top:2px;accent-color:var(--forest)}
 .pack small{color:var(--ink-2);display:block}
 
-/* Kid view: bigger, warmer, a little playful */
+/* Kid view: big, friendly cards with an obvious done button */
+.kid-head{align-items:center}
+.kid-h{font-family:var(--sans);font-weight:700;font-size:var(--fs-lg);margin:var(--s2) 0 var(--s3)}
 .kidpick{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:var(--s4)}
-.kidpick button{background:var(--leaf);border:1px solid var(--rule);border-radius:var(--r-lg);padding:var(--s5) var(--s3);display:flex;flex-direction:column;align-items:center;gap:var(--s2);font-size:var(--fs-lg);color:inherit}
+.kidpick button{background:var(--leaf);border:2px solid var(--rule);border-radius:var(--r-lg);padding:var(--s5) var(--s3);display:flex;flex-direction:column;align-items:center;gap:var(--s2);font-size:var(--fs-lg);color:inherit;font-family:var(--sans)}
 .kidpick span{color:var(--ink-2);font-size:var(--fs-sm)}
-.kidstars{display:inline-flex;align-items:center;gap:8px;color:var(--soon);background:var(--soon-wash);border-radius:999px;padding:8px 16px;max-width:100%;flex-wrap:wrap;margin-bottom:var(--s5)}
-.kidstars b{font-family:var(--serif);font-weight:500;font-size:var(--fs-2xl);line-height:1}
+.kidstars{display:inline-flex;align-items:center;gap:8px;color:var(--soon);background:var(--soon-wash);border-radius:999px;padding:8px 16px;max-width:100%;flex-wrap:wrap;margin-bottom:var(--s4)}
+.kidstars svg{width:22px;height:22px}
+.kidstars b{font-size:var(--fs-2xl);font-weight:700;line-height:1}
 .kidstars.pop svg{animation:pop .5s var(--ease)}
-.kidgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr));gap:var(--s4)}
-.kidcard{background:var(--leaf);border:2px solid var(--rule);border-radius:var(--r-lg);padding:var(--s5);text-align:start;display:flex;flex-direction:column;gap:6px;min-height:140px;color:inherit}
-.kidcard b{font-family:var(--serif);font-weight:500;font-size:var(--fs-2xl);line-height:1.15}
-.kidcard span{color:var(--ink-2);font-size:var(--fs-md)}
-.kidcard em{font-style:normal;font-weight:700;color:var(--soon);margin-top:auto}
+.kidgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:var(--s3)}
+.kidcard{display:flex;align-items:center;gap:var(--s4);background:var(--leaf);border:2px solid var(--rule-strong);border-radius:var(--r-lg);padding:var(--s4) var(--s4) var(--s4) var(--s5);text-align:start;color:inherit;font-family:var(--sans);min-height:88px;width:100%}
+.kidcard:active{transform:scale(.99)}
+.k-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.kidcard b{font-weight:700;font-size:var(--fs-xl);line-height:1.2}
+.k-std{color:var(--ink-2);font-size:var(--fs-md)}
+.k-tag{align-self:flex-start;font-size:var(--fs-xs);font-weight:700;color:var(--forest);background:var(--forest-wash);border-radius:99px;padding:2px 10px}
+.k-stars{display:inline-flex;align-items:center;gap:4px;font-weight:700;color:var(--soon)}
+.k-stars svg{width:18px;height:18px}
+.k-check{flex:none;width:52px;height:52px;border-radius:50%;border:2.5px solid var(--forest);display:grid;place-items:center}
+.k-check svg{width:24px;height:24px;opacity:0}
 .kidcard.done{background:var(--forest-wash);border-color:var(--forest)}
-.kidcard.done em,.kidcard.done b{color:var(--forest)}
+.kidcard.done .k-check{background:var(--forest)}
+.kidcard.done .k-check svg{opacity:1}
+.kidcard.done b{color:var(--forest)}
+.kidcard.done .k-stars{color:var(--forest)}
+.kid-done{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:var(--s4) 0 var(--s5)}
+.kid-done b{font-size:var(--fs-2xl);color:var(--forest)}
+.kid-done span{color:var(--ink-2)}
+.k-check.big{width:64px;height:64px;background:var(--forest);border-color:var(--forest)}
+.k-check.big svg{opacity:1;width:30px;height:30px}
+.kid-rewards{margin-top:var(--s6)}
 
 @keyframes rise{from{transform:translateY(14px);opacity:0}to{transform:none;opacity:1}}
 @keyframes fade{from{opacity:0}to{opacity:1}}
@@ -436,7 +495,6 @@ nav.tabs .brand{display:none}
 .swipe .acts button{min-width:85px}
 .row:has(> .check:first-child){grid-template-columns:auto 1fr auto}
 .row:has(> .check:first-child) .check{margin-inline:-8px 0}
-.kidcard,.kidpick button{font-family:var(--sans)}
 
 .take{border:1px solid var(--rule);background:transparent;border-radius:999px;padding:5px 12px;font-size:var(--fs-sm);font-weight:600;color:var(--forest);white-space:nowrap;min-height:34px}
 .toast{border-radius:14px}
@@ -1194,41 +1252,6 @@ function viewShiftEdit(r){
  <div class="cmtform add-item" style="margin-top:12px"><input type="text" id="r-new" placeholder="Add an item, e.g. Start the dishwasher" aria-label="New item"><button class="btn" data-additem="1">Add</button></div></section>
  <button class="linkish danger" data-rmroutine="1">Delete this routine</button>`;
 }
-function viewFamily(){
- const acts=Object.values(D.activity).sort((a,b)=>b.at-a.at),seen=ME.lastSeen||0,ws=weekStats(),aps=Object.values(D.approvals).sort((a,b)=>a.at-b.at);
- const canApprove=!isKid(myPid());
- setTimeout(()=>{if(unread()&&ui.tab==="family"){ME.lastSeen=Date.now();saveMe()}},1500);
- const totalMins=Object.values(ws).reduce((a,x)=>a+x.mins,0)||1;
- const hist=acts.filter(a=>(a.kind==="task"||a.kind==="check")&&(!ui.histWho||a.who===ui.histWho));
- const byDay={};hist.forEach(a=>{const d=ymd(new Date(a.at));(byDay[d]=byDay[d]||[]).push(a)});
- return `<header class="top"><div><div class="eyebrow">${people().length} in this house</div><h1>Family</h1></div>${kids().length?`<button class="btn small" data-kidview="1">Kid view</button>`:""}</header>${note()}
- ${aps.length&&canApprove?`<section class="group"><div class="group-head"><h2>Waiting for your OK</h2><span class="stamp muted">${aps.length}</span></div><div class="list">${aps.map(a=>`<div class="row" style="grid-template-columns:auto 1fr auto">${av(a.who)}<span><span class="name">${esc(pName(a.who))}: ${esc(a.label)}</span><span class="meta"><span>${a.kind==="reward"?`wants this reward · ${a.pts} stars`:`${a.pts} star${a.pts>1?"s":""}`}</span><span>${ago(a.at)}</span></span>${a.photo?`<img src="${esc(photoUrl(a.photo))}" alt="Photo of ${esc(a.label)}" style="max-width:160px;border-radius:8px;margin-top:6px">`:""}</span><span style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn small primary" data-approve="${a.id}">OK</button><button class="btn small" data-reject="${a.id}">${a.kind==="reward"?"Not now":"Redo"}</button></span></div>`).join("")}</div></section>`:""}
- <section class="group"><div class="group-head"><h2>This week</h2><span class="stamp muted">last 7 days</span></div><div class="list">${people().map(p=>{const x=ws[p.id]||{pts:0,mins:0,n:0},sk=streakOf(p.id);return `<div class="row" style="grid-template-columns:auto 1fr auto">${av(p.id)}<span style="min-width:0"><span class="name">${esc(pName(p.id))}${p.id===myPid()?" (you)":""}</span><span class="meta"><span>${x.n} done</span><span>${x.mins} min</span>${sk?`<span>${sk}-day streak</span>`:""}</span><span class="progress"><i style="width:${Math.round(x.mins/totalMins*100)}%;background:${p.color||"var(--accent)"}"></i></span></span><span class="stamp">${x.pts} ★</span></div>`}).join("")}</div><p class="note">Bars show each person's share of the minutes done this week.</p></section>
- <section class="group"><div class="group-head"><h2>What's new</h2><span class="stamp muted">${unread()} new</span></div>${acts.length?`<div class="list feed">${acts.slice(0,30).map(a=>`<div class="ev ${a.by!==S.uid&&a.at>seen?"new":""}">${av(a.who||"")}<span><b>${esc(actorName(a))}</b> ${esc(a.text)}${a.photo?` <a class="linkish" href="${esc(photoUrl(a.photo))}" target="_blank" rel="noopener">photo</a>`:""}</span><span class="stamp muted">${ago(a.at)}</span></div>`).join("")}</div>`:`<div class="empty">When anyone checks something off or comments, it shows up here and pops up for everyone who has Upkeep open.</div>`}</section>
- <section class="group"><div class="group-head"><h2>History</h2><select id="histwho" style="width:auto"><option value="">Everyone</option>${people().map(p=>`<option value="${p.id}" ${ui.histWho===p.id?"selected":""}>${esc(pName(p.id))}</option>`).join("")}</select></div>${Object.keys(byDay).length?Object.keys(byDay).slice(0,14).map(d=>`<div class="eyebrow" style="margin:12px 0 6px">${nice(d)} · ${byDay[d].length} done</div><div class="list feed">${byDay[d].map(a=>`<div class="ev">${av(a.who)}<span><b>${esc(pShort(a.who))}</b> ${esc(a.text)}</span><span class="stamp muted">${clock(a.at)}</span></div>`).join("")}</div>`).join(""):`<div class="empty">Nothing completed yet. Finished tasks show up here.</div>`}</section>
- <section class="group"><div class="group-head"><h2>People</h2>${S.canWrite?`<button class="btn small" data-newperson="1">Add someone</button>`:""}</div><div class="list">${people().map(p=>`<button class="row main" data-person="${p.id}" style="grid-template-columns:auto 1fr auto;width:100%">${av(p.id)}<span><span class="name">${esc(pName(p.id))}${p.id===myPid()?" (you)":""}</span><span class="meta"><span>${p.role==="kid"?"Kid":"Adult"}</span><span>${p.role==="kid"?"Uses Kid view":"Has their own phone"}</span><span>${pointsOf(p.id)} ★ total</span></span></span><span class="linkish">Edit</span></button>`).join("")}</div>
- ${inviteBlock()}</section>`;
-}
-function viewKid(){
- const k=ui.kid==="pick"?null:D.people[ui.kid];
- if(!k)return `<header class="top"><div><div class="eyebrow">Kid view</div><h1>Who's helping today?</h1></div><button class="btn small" data-exitkid="1">Back</button></header>
-  <div class="kidpick">${kids().map(p=>`<button data-kidpick="${p.id}">${av(p.id,64)}<b>${esc(pName(p.id))}</b><span>${pointsOf(p.id)} stars</span></button>`).join("")||`<div class="empty">Add a kid on the Family tab first.</div>`}</div>`;
- const mine=tasks().filter(t=>t.assignee===k.id&&status(t)!=="later"&&status(t)!=="soon");
- const r=routines().find(routineRunsTonight);const items=r?r.items.filter(i=>i.assignee===k.id):[];
- const pend=Object.values(D.approvals).filter(a=>a.who===k.id);
- const rewards=Object.values(D.rewards).sort((a,b)=>a.cost-b.cost),pts=pointsOf(k.id);
- const cpp=(D.house&&D.house.centsPerPoint)|0;
- const allDone=!mine.length&&items.every(i=>D.checks[checkId(r.id,i.id)]);
- return `<header class="top"><div><div class="eyebrow">Hi ${esc(pName(k.id))}!</div><h1>Your jobs today</h1></div><button class="btn small" data-exitkid="1">Done</button></header>
- <div class="kidstars">${I.star}<b>${pts}</b><span>stars${cpp?` · ${money(pts*cpp)}`:""}</span>${streakOf(k.id)>1?`<span>· ${streakOf(k.id)} days in a row</span>`:""}</div>
- ${allDone?`<div class="kidcard done"><b>All done for today.</b><span>Nice work. Go have fun.</span></div>`:""}
- <div class="kidgrid">
- ${mine.map(t=>`<button class="kidcard" data-kiddone="${t.id}"><b>${esc(t.name)}</b>${t.standard?`<span>${esc(t.standard)}</span>`:""}${t.steps&&t.steps.length?`<span>${t.steps.map(esc).join(" · ")}</span>`:""}<em>${ptsFor(t.mins)} ★ ${t.photoProof?"· take a photo":""}</em></button>`).join("")}
- ${items.map(i=>{const c=D.checks[checkId(r.id,i.id)];return `<button class="kidcard ${c?"done":""}" data-kidtick="${i.id}" ${c?"disabled":""}><b>${esc(i.text)}</b>${i.standard?`<span>${esc(i.standard)}</span>`:""}<em>${c?"Done":"Tonight · 1 ★"}</em></button>`}).join("")}
- </div>
- ${pend.length?`<p class="note">${pend.length} waiting for a grown-up's OK.</p>`:""}
- ${rewards.length?`<section class="group"><h2 style="margin:20px 0 10px">Rewards</h2><div class="list">${rewards.map(w=>`<div class="row" style="grid-template-columns:1fr auto"><span><span class="name">${esc(w.name)}</span><span class="meta"><span>${w.cost} ★</span></span></span><button class="btn small ${pts>=w.cost?"primary":""}" data-redeem="${w.id}" ${pts>=w.cost?"":"disabled"}>${pts>=w.cost?"Ask for it":(w.cost-pts)+" more ★"}</button></div>`).join("")}</div></section>`:""}`;
-}
 function moreInfo(){
  const rows=Object.values(D.info).sort((a,b)=>(a.order||0)-(b.order||0));const have=new Set(rows.map(r=>r.label));
  return `<p class="note" style="margin-top:0">The things everyone asks about. Anyone this page is shared with can see these, so keep alarm codes and passwords to what you'd tell a house guest.</p>
@@ -1265,13 +1288,13 @@ function moreMoney(){
  <section class="group"><div class="group-head"><h2>Recent</h2></div><div class="list">${xs.slice(0,40).map(e=>`<button class="row main" data-form="expenses:${e.id}" style="grid-template-columns:1fr auto;width:100%"><span><span class="name">${esc(e.what)}</span><span class="meta"><span>${esc(pShort(e.paidBy))} paid</span><span>${nice(e.date)}</span><span>split ${(e.split||[]).length||adults().length} ways</span></span></span><span class="stamp">${money(e.amount)}</span></button>`).join("")||`<div class="row"><span class="muted">No expenses yet.</span></div>`}</div></section>`;
 }
 function moreKids(){
- const ws=Object.values(D.rewards).sort((a,b)=>a.cost-b.cost),h=D.house||{};
- return `<div class="calbox" style="margin-bottom:16px">
-  <label class="switch"><input type="checkbox" id="kidok" ${h.kidApproval!==false?"checked":""} ${S.canWrite&&!isKid(myPid())?"":"disabled"}><span>Kids' check-offs wait for a grown-up's OK before stars count</span></label>
-  <div class="grid2"><label class="field"><span>Allowance per star</span><select id="cpp" ${S.canWrite?"":"disabled"}>${[0,5,10,25,50,100].map(c=>`<option value="${c}" ${(h.centsPerPoint|0)===c?"selected":""}>${c?money(c):"No money, just stars"}</option>`).join("")}</select></label></div>
-  <p class="note" style="margin:0">Stars: 1 for a quick job, up to 5 for a long one. Shift items are 1 star.</p></div>
- <section class="group"><div class="group-head"><h2>Rewards</h2>${S.canWrite?`<button class="btn small" data-form="rewards:new">Add reward</button>`:""}</div><div class="list">${ws.map(w=>`<button class="row main" data-form="rewards:${w.id}" style="grid-template-columns:1fr auto;width:100%"><span class="name">${esc(w.name)}</span><span class="stamp">${w.cost} ★</span></button>`).join("")||`<div class="row"><span class="muted">Ideas: pick the movie (20 ★), stay up 30 minutes late (30 ★), a trip for ice cream (50 ★).</span></div>`}</div></section>
- <section class="group"><div class="group-head"><h2>Balances</h2></div><div class="list">${kids().map(k=>`<div class="row" style="grid-template-columns:auto 1fr auto">${av(k.id)}<span class="name">${esc(pName(k.id))}</span><span style="display:flex;gap:8px;align-items:center"><span class="stamp">${pointsOf(k.id)} ★${h.centsPerPoint?" · "+money(pointsOf(k.id)*h.centsPerPoint):""}</span>${h.centsPerPoint&&pointsOf(k.id)>0&&S.canWrite?`<button class="btn small" data-payout="${k.id}">Paid out</button>`:""}</span></div>`).join("")||`<div class="row"><span class="muted">Add kids on the Family tab.</span></div>`}</div></section>`;
+ const ws=Object.values(D.rewards).sort((a,b)=>a.cost-b.cost),h=D.house||{},can=S.canWrite&&!isKid(myPid());
+ return `<div class="set-list">
+  <label class="set-row"><span class="s-text"><span class="s-label">Grown-up OK before stars count</span><span class="s-sub">Kids' check-offs wait for an adult to approve them.</span></span><input type="checkbox" class="sw" id="kidok" ${h.kidApproval!==false?"checked":""} ${can?"":"disabled"}></label>
+  <label class="set-row"><span class="s-text"><span class="s-label">Allowance per star</span><span class="s-sub">1 star for a quick job, up to 5 for a long one. Shift items are 1 star.</span></span><select id="cpp" class="s-select" ${S.canWrite?"":"disabled"}>${[0,5,10,25,50,100].map(c=>`<option value="${c}" ${(h.centsPerPoint|0)===c?"selected":""}>${c?money(c):"Stars only"}</option>`).join("")}</select></label></div>
+ <h3 class="day">Rewards<span>${S.canWrite?`<button class="linkish" data-form="rewards:new">Add reward</button>`:""}</span></h3>
+ <div class="list">${ws.map(w=>`<button class="row link" data-form="rewards:${w.id}"><span class="main"><span class="name">${esc(w.name)}</span><span class="meta"><span>${w.cost} stars</span></span></span>${IC.chev}</button>`).join("")||`<div class="empty">Ideas: pick the movie (20 stars), stay up 30 minutes late (30), a trip for ice cream (50).</div>`}</div>
+ ${kids().length?`<h3 class="day">Balances<span></span></h3><div class="list">${kids().map(k=>`<div class="row"><span class="main"><span class="name">${esc(pName(k.id))}</span><span class="meta"><span>${pointsOf(k.id)} stars${h.centsPerPoint?" · "+money(pointsOf(k.id)*h.centsPerPoint):""}</span></span></span>${h.centsPerPoint&&pointsOf(k.id)>0&&S.canWrite?`<button class="btn small" data-payout="${k.id}">Mark paid out</button>`:"<span></span>"}</div>`).join("")}</div>`:`<p class="note">Add a kid under People to use Kid view.</p>`}`;
 }
 const PROFILE_GROUPS=[["Outside",["yard","deck","garage","pool","grill","sprinkler"]],["Systems",["central","basement","fireplace","generator","septic","well","softener"]],["Who lives here",["kids","pets","car"]]];
 function profileForm(pr){
@@ -1428,7 +1451,7 @@ function setupHouse(pr){
 /* ---------- Events ---------- */
 document.addEventListener("click",async e=>{
  const b=e.target.closest("button,[data-close]");if(!b)return;const ds=b.dataset;
- if(ds.tab){if(ds.tab==="home"&&b.closest("nav.tabs")){ui.homeView="rooms";ui.roomOpen=null}ui.tab=ds.tab;ui.q="";ui.editShift=false;render();window.scrollTo(0,0);if(ds.tab==="more"&&ui.more==="cal")loadCalendars();return}
+ if(ds.tab){ui.seenBefore=null;if(ds.tab==="home"&&b.closest("nav.tabs")){ui.homeView="rooms";ui.roomOpen=null}ui.tab=ds.tab;ui.q="";ui.editShift=false;render();window.scrollTo(0,0);if(ds.tab==="more"&&ui.more==="cal")loadCalendars();return}
  if(ds.who){ui.who=ds.who;if(ui.plan)ui.plan.ids=buildPlan(ui.plan.mins);render();return}
  if(ds.done){startDone(ds.done);return}
  if(ds.finish){const s=ui.sheet,file=document.getElementById("fin-photo")?.files?.[0];let photo="";
@@ -1710,7 +1733,7 @@ function fold(id,title,stamp,inner,defOpen,preview,cls=""){
  return `<details class="fold ${cls}" id="g-${id}" data-fold="${id}" ${open?"open":""}><summary><span class="f-head"><span class="f-title">${title}</span>${preview&&!open?`<span class="f-prev">${preview}</span>`:""}</span><span class="stamp">${stamp}</span>${IC.chevd}</summary><div class="f-body">${open?inner():""}</div></details>`;
 }
 const preview=l=>{const n=l.slice(0,2).map(t=>esc(t.name)).join(", ");return l.length>2?`${n} and ${l.length-2} more`:n};
-document.addEventListener("toggle",e=>{const d=e.target;if(d&&d.dataset&&d.dataset.fold){const prev=ui.folds&&ui.folds[d.dataset.fold];ui.folds=Object.assign({},ui.folds||{},{[d.dataset.fold]:d.open});if(!!prev!==d.open&&(d.open?!d.querySelector(".f-body").children.length:d.querySelector(".f-prev")===null)){const id=d.id;render();document.getElementById(id)?.querySelector("summary")?.focus({preventScroll:true})}}},true);
+document.addEventListener("toggle",e=>{const d=e.target;if(!d||!d.dataset||!d.dataset.fold)return;const prev=ui.folds&&ui.folds[d.dataset.fold];ui.folds=Object.assign({},ui.folds||{},{[d.dataset.fold]:d.open});const fb=d.querySelector(":scope > .f-body");if(fb&&!!prev!==d.open&&(d.open?!fb.children.length:d.querySelector(".f-prev")===null)){const id=d.id;render();document.getElementById(id)?.querySelector("summary")?.focus({preventScroll:true})}},true);
 function jumpTo(id){if(id!=="routines")ui.folds=Object.assign({},ui.folds||{},{[id]:true});render();const el=document.getElementById("g-"+id);if(el){el.scrollIntoView({block:"start",behavior:reduced()?"auto":"smooth"});el.querySelector("summary,h2")?.focus({preventScroll:true})}}
 
 /* ---------- Schedule: the next two weeks open, later months folded, seasons by season ---------- */
@@ -1767,6 +1790,58 @@ function viewSchedule(){
  }
  return `<header class="top"><div class="ttl"><h1>Schedule</h1><span class="date">${tasks().length} recurring tasks</span></div></header>${nav}${whoSeg()?`<div class="filter-row">${whoSeg()}</div>`:""}${body}`;
 }
+/* ---------- Household: what's waiting on you, people and their share, invite, activity, kids ---------- */
+function actDay(ms){const d=ymd(new Date(ms)),n=daysBetween(d,today());return n===0?"Today":n===1?"Yesterday":nice(d)}
+function viewHousehold(){
+ const me=myPid(),canApprove=!isKid(me),seen=ui.seenBefore??(ME.lastSeen||0);
+ if(ui.tab==="household"&&ui.seenBefore==null){ui.seenBefore=ME.lastSeen||0;setTimeout(()=>{if(ui.tab==="household"){ME.lastSeen=Date.now();ls.set("upkeep-me",ME);renderTabs()}},1200)}
+ const aps=Object.values(D.approvals).sort((a,b)=>a.at-b.at),ws=weekStats(),total=Object.values(ws).reduce((a,x)=>a+x.mins,0);
+ const approvals=aps.length&&canApprove?`<section class="group"><div class="group-head"><h2>Waiting for your OK</h2><span class="stamp">${aps.length}</span></div><div class="list">${aps.map(a=>`<div class="row approve"><span class="main"><span class="name">${esc(pName(a.who))}: ${esc(a.label)}</span><span class="meta"><span>${a.kind==="reward"?`Wants this reward · ${a.pts} stars`:`${a.pts} star${a.pts>1?"s":""}`}</span><span>${ago(a.at)}</span></span>${a.photo?`<img src="${esc(photoUrl(a.photo))}" alt="Photo of ${esc(a.label)}" class="proof">`:""}</span><span class="row-acts"><button class="btn small" data-reject="${a.id}">${a.kind==="reward"?"Not now":"Redo"}</button><button class="btn small primary" data-approve="${a.id}">OK</button></span></div>`).join("")}</div></section>`:"";
+ const ppl=`<section class="group"><div class="group-head"><h2>People</h2><span class="gh-r">${S.canWrite?`<button class="linkish" data-newperson="1">Add someone</button>`:""}<span class="stamp">This week</span></span></div>
+ <div class="list">${people().map(p=>{const x=ws[p.id]||{pts:0,mins:0,n:0},sk=streakOf(p.id),share=total?Math.round(x.mins/total*100):0;
+  return `<button class="row person" data-person="${p.id}"><span class="av-wrap">${av(p.id,32)}</span><span class="main"><span class="name">${esc(pName(p.id))}${p.id===me?" (you)":""}</span><span class="meta"><span>${p.role==="kid"?"Kid":"Adult"}</span><span>${x.n} done, ${fmtMins(x.mins)}</span>${sk>1?`<span>${sk}-day streak</span>`:""}${p.role==="kid"?`<span>${pointsOf(p.id)} ★</span>`:""}</span><span class="share"><span class="meter" aria-hidden="true"><i style="width:${share}%"></i></span><span class="pct">${share}%</span></span></span>${IC.chev}</button>`}).join("")}</div>
+ <p class="more-note">The percentage is each person's share of the minutes done in the last 7 days.</p></section>`;
+ const devs=(S.devices||[]).slice().sort((a,b)=>a.at-b.at);
+ const invite=`<section class="group"><div class="group-head"><h2>Invite someone</h2></div>
+ <p class="note">Send this link to adults in your house. They open it, pick their name and they're in. Kids don't need it; use Kid view on any family phone or tablet.</p>
+ <div class="btn-row"><button class="btn primary small" data-invite="1">Share invite link</button><button class="btn small" data-copy="${esc(inviteLink())}">Copy link</button>${ui.confirmRotate?"":`<button class="linkish" data-rotate="1">Reset link</button>`}</div>
+ ${ui.confirmRotate?`<div class="confirm" role="alert"><span>Make a new invite link? The old one stops working. Phones already in the house stay in.</span><button class="btn small danger" data-rotate="2">Make new link</button><button class="btn small" data-rotate="0">Cancel</button></div>`:""}
+ ${devs.length?fold("phones","Phones in this house",`${devs.length}`,()=>`<div class="list">${devs.map(d=>`<div class="row"><span class="main"><span class="name">${esc(d.label)}</span><span class="meta"><span>Joined ${new Date(d.at).toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"})}</span></span></span>${d.id===S.deviceId?`<span class="added">This phone</span>`:ui.confirmRevoke===d.id?`<span class="confirm"><button class="btn small danger" data-revoke="${d.id}">Remove</button><button class="btn small" data-revoke="">Keep</button></span>`:`<button class="linkish" data-askrevoke="${d.id}">Remove</button>`}</div>`).join("")}</div><p class="more-note">Removing a phone signs it out of the house. Its person and history stay.</p>`,false):""}</section>`;
+ const acts=Object.values(D.activity).filter(a=>!ui.histWho||a.who===ui.histWho||a.actor===ui.histWho).sort((a,b)=>b.at-a.at);
+ const lim=ui.actLimit||25,shown=acts.slice(0,lim),newN=acts.filter(a=>a.by!==S.uid&&a.at>seen).length;
+ const byDay=[];shown.forEach(a=>{const k=actDay(a.at);let g=byDay.find(x=>x.k===k);if(!g)byDay.push(g={k,list:[]});g.list.push(a)});
+ const activity=`<section class="group"><div class="group-head"><h2>Activity</h2><label class="inline-select"><span class="sr">Show activity for</span><select id="histwho">${[["","Everyone"],...people().map(p=>[p.id,pName(p.id)])].map(([v,l])=>`<option value="${v}" ${ui.histWho===v?"selected":""}>${esc(l)}</option>`).join("")}</select></label></div>
+ ${newN?`<p class="more-note">${newN} new since you last looked.</p>`:""}
+ ${byDay.length?byDay.map(g=>`<h3 class="day">${g.k}<span>${g.list.filter(a=>a.kind==="task"||a.kind==="check").length?g.list.filter(a=>a.kind==="task"||a.kind==="check").length+" done":""}</span></h3><div class="feed">${g.list.map(a=>{const nw=a.by!==S.uid&&a.at>seen;return `<div class="ev${nw?" new":""}">${av(a.who||a.actor||"",24)}<span><b>${esc(actorName(a))}</b> ${esc(a.text)}${a.photo?` <a class="linkish" href="${esc(photoUrl(a.photo))}" target="_blank" rel="noopener">Photo</a>`:""}${nw?` <span class="new-tag">New</span>`:""}</span><span class="stamp">${clock(a.at)}</span></div>`}).join("")}</div>`).join(""):`<div class="empty">When anyone finishes something or comments, it shows up here.</div>`}
+ ${acts.length>lim?`<button class="btn small" data-actmore="1">Show more</button>`:""}</section>`;
+ const ms=milestonesBlock();
+ return `<header class="top"><div class="ttl"><h1>Household</h1><span class="date">${people().length} ${people().length===1?"person":"people"}</span></div>${kids().length?`<button class="btn small" data-kidview="1">Open Kid view</button>`:""}</header>
+ ${banners()}${approvals}${ppl}${invite}${activity}${ms}
+ <section class="group"><div class="group-head"><h2>Kids, stars and rewards</h2></div>${moreKids()}</section>`;
+}
+
+/* ---------- Kid view: big cards with a clear done button, simple words, stars ---------- */
+function viewKid(){
+ const k=ui.kid==="pick"?null:D.people[ui.kid];
+ if(!k)return `<header class="top kid-head"><div class="ttl"><h1>Who's helping today?</h1></div><button class="btn small" data-exitkid="1">Exit kid view</button></header>
+  <div class="kidpick">${kids().map(p=>`<button data-kidpick="${p.id}">${av(p.id,64)}<b>${esc(pName(p.id))}</b><span>${pointsOf(p.id)} stars</span></button>`).join("")||`<div class="empty">Add a kid under Household → People first.</div>`}</div>`;
+ const mine=tasks().filter(t=>t.assignee===k.id&&(status(t)==="today"||status(t)==="late"));
+ const r=routines().find(routineRunsTonight),items=r?r.items.filter(i=>i.assignee===k.id):[];
+ const doneToday=Object.values(D.activity).filter(a=>a.kind==="task"&&a.who===k.id&&ymd(new Date(a.at))===today()).sort((a,b)=>a.at-b.at);
+ const rewards=Object.values(D.rewards).sort((a,b)=>a.cost-b.cost),pts=pointsOf(k.id),cpp=(D.house&&D.house.centsPerPoint)|0,sk=streakOf(k.id);
+ const openItems=items.filter(i=>!D.checks[checkId(r.id,i.id)]),allDone=!mine.length&&!openItems.length;
+ const card=(attr,title,std,stars,tag,done,note)=>`<button class="kidcard ${done?"done":""}" ${attr} ${done?"disabled":""} aria-label="${esc(title)}${done?", done":`, ${stars} star${stars>1?"s":""}. Tap when it's done.`}"><span class="k-text">${tag?`<span class="k-tag">${tag}</span>`:""}<b>${esc(title)}</b>${std?`<span class="k-std">${esc(std)}</span>`:""}<span class="k-stars">${done?esc(note||"Done!"):`${IC.star}${stars}`}</span></span><span class="k-check" aria-hidden="true">${IC.check}</span></button>`;
+ return `<header class="top kid-head"><div class="ttl"><h1>Hi, ${esc(pName(k.id))}</h1></div><button class="btn small" data-exitkid="1">Exit kid view</button></header>
+ <div class="kidstars">${IC.star}<b>${pts}</b><span>stars${cpp?` · ${money(pts*cpp)}`:""}${sk>1?` · ${sk} days in a row`:""}</span></div>
+ ${allDone?`<div class="kid-done"><span class="k-check big" aria-hidden="true">${IC.check}</span><b>All done for today!</b><span>Nice work. Go have fun.</span></div>`:`<h2 class="kid-h">Your jobs today</h2>`}
+ <div class="kidgrid">
+ ${mine.map(t=>card(`data-kiddone="${t.id}"`,t.name,t.standard,ptsFor(t.mins),t.photoProof?"Take a photo":"",false)).join("")}
+ ${items.map(i=>{const c=D.checks[checkId(r.id,i.id)];return card(`data-kidtick="${i.id}"`,i.text,c?"":i.standard,1,"Tonight",!!c,c&&Object.values(D.approvals).some(a=>a.ref===c.id)?"Done! Waiting for a grown-up":"Done!")}).join("")}
+ ${doneToday.map(a=>card("",(D.tasks[(a.ref||"").slice(5)]||{}).name||a.text,"",a.pts||1,"",true,a.pending?"Done! Waiting for a grown-up":"Done!")).join("")}
+ </div>
+ ${rewards.length?`<section class="group kid-rewards"><h2 class="kid-h">Rewards</h2><div class="list">${rewards.map(w=>`<div class="row"><span class="main"><span class="name">${esc(w.name)}</span><span class="meta"><span>${w.cost} stars</span></span></span><button class="btn ${pts>=w.cost?"primary":""}" data-redeem="${w.id}" ${pts>=w.cost?"":"disabled"}>${pts>=w.cost?"Ask for it":`${w.cost-pts} more stars`}</button></div>`).join("")}</div></section>`:""}`;
+}
+
 /* ---------- Home: rooms first, then records; each record type is its own page ---------- */
 function roomStatus(r){
  const ts=tasks().filter(t=>t.room===r),late=ts.filter(t=>status(t)==="late").length,due=ts.filter(t=>status(t)==="today").length,soon=ts.filter(t=>status(t)==="soon").length;
@@ -1820,7 +1895,7 @@ function chime(){
  try{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();const t=audioCtx.currentTime;
   [660,880].forEach((f,i)=>{const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type="sine";o.frequency.value=f;g.gain.setValueAtTime(0,t+i*.09);g.gain.linearRampToValueAtTime(.12,t+i*.09+.02);g.gain.exponentialRampToValueAtTime(.001,t+i*.09+.35);o.connect(g);g.connect(audioCtx.destination);o.start(t+i*.09);o.stop(t+i*.09+.4)})}catch(e){}
 }
-const reduced=()=>window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+const reduced=()=>ME.motion==="reduce"||!!(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches);
 function moveTomorrow(id){const t=D.tasks[id];if(!t)return;const prev=t.next;patch("tasks",id,{next:addDays(today(),1)});toast(`Moved to tomorrow`,()=>patch("tasks",id,{next:prev}))}
 function skipOnce(id){const t=D.tasks[id];if(!t)return;const prev=t.next;const n=nextAfter(t,today());patch("tasks",id,{next:n});toast(`Skipped · next ${nice(n)}`,()=>patch("tasks",id,{next:prev}))}
 document.addEventListener("click",e=>{
@@ -1845,6 +1920,8 @@ document.addEventListener("click",e=>{
  if(ds.prepopen){e.stopImmediatePropagation();const a=wxAlert();ui.prepOpen=Object.assign({},ui.prepOpen||{},{[ds.prepopen]:!(ui.prepOpen&&ds.prepopen in ui.prepOpen?ui.prepOpen[ds.prepopen]:a&&a.day<=1)});render();return}
  if(ds.dismiss){e.stopImmediatePropagation();ME.dismissed=Object.assign({},ME.dismissed||{},{[ds.dismiss]:Date.now()});saveMe();return}
  if(ds.claim&&b.closest(".acts")){e.stopImmediatePropagation();closeSwipe();claim(ds.claim);return}
+ if(ds.actmore){e.stopImmediatePropagation();ui.actLimit=(ui.actLimit||25)+50;render();return}
+ if(ds.more&&b.closest(".set-row")){e.stopImmediatePropagation();ui.more=ds.more;render();window.scrollTo(0,0);return}
  if(ds.jump){e.stopImmediatePropagation();jumpTo(ds.jump);return}
  if(ds.sv){e.stopImmediatePropagation();ui.schedView=ds.sv;render();return}
  if(ds.hv2){e.stopImmediatePropagation();ui.homeView=ds.hv2;ui.q="";ui.roomOpen=null;render();window.scrollTo(0,0);if(ds.hv2!=="rooms")document.querySelector("h1")?.setAttribute("tabindex","-1"),document.querySelector("h1")?.focus({preventScroll:true});return}
@@ -2054,15 +2131,6 @@ if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.ser
 /* ---------- Batch 2: phones & invites, arranging, pull to refresh, seasons & milestones,
    time of day, undo delete, backup, Kid view lock, freeze & storm prep ---------- */
 
-/* Phones and invite link */
-function inviteBlock(){
- const devs=(S.devices||[]).slice().sort((a,b)=>a.at-b.at);
- return `<div class="calbox" style="margin-top:var(--s4)"><b>Invite someone</b><p class="note">Send this link to adults in your house. They open it, pick their name and they're in. Kids don't need it; use Kid view on any family phone or tablet.</p>
- <div style="display:flex;gap:var(--s2);flex-wrap:wrap"><button class="btn primary small" data-invite="1">Share invite link</button><button class="btn small" data-copy="${esc(inviteLink())}">Copy link</button></div>
- ${ui.confirmRotate?`<div class="confirm">Make a new invite link? The old one stops working. Phones already in the house stay in. <button class="btn small danger" data-rotate="2">Make new link</button><button class="btn small" data-rotate="0">Cancel</button></div>`:`<button class="linkish" data-rotate="1">Reset invite link</button>`}</div>
- ${devs.length?`<section class="group" style="margin-top:var(--s5)"><div class="group-head"><h2>Phones in this house</h2><span class="stamp">${devs.length}</span></div><div class="list">${devs.map(d=>`<div class="row"><span class="main"><span class="name">${esc(d.label)}</span><span class="meta"><span>Joined ${new Date(d.at).toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"})}</span></span></span>${d.id===S.deviceId?`<span class="pill">This phone</span>`:ui.confirmRevoke===d.id?`<span class="confirm"><button class="btn small danger" data-revoke="${d.id}">Remove</button><button class="btn small" data-revoke="">Keep</button></span>`:`<button class="linkish" data-askrevoke="${d.id}">Remove</button>`}</div>`).join("")}</div><p class="note" style="padding-top:var(--s2)">Removing a phone signs it out of the house. Its person and history stay.</p></section>`:""}`;
-}
-
 /* Seasons */
 const SEASONS=[["Winter",[12,1,2]],["Spring",[3,4,5]],["Summer",[6,7,8]],["Fall",[9,10,11]]];
 function seasonNow(){
@@ -2113,13 +2181,7 @@ function checkMilestones(){
 function milestonesBlock(){
  const m=(D.house&&D.house.milestones)||{},ks=Object.keys(m).sort((a,b)=>m[b]-m[a]);
  if(!ks.length)return"";
- return `<section class="group"><div class="group-head"><h2>Milestones</h2><span class="stamp">${ks.length}</span></div><div class="list">${ks.map(k=>`<div class="row"><span class="main"><span class="name">${k.startsWith("season")?esc(k.split("-")[2].replace(/^./,c=>c.toUpperCase())+" "+k.split("-")[1]+" checklist finished"):"The household "+esc(MILESTONE_TEXT[k]||k)}</span><span class="meta"><span>${new Date(m[k]).toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"})}</span></span></span><span></span></div>`).join("")}</div></section>`;
-}
-function viewHousehold(){
- const html=viewFamily().replace("<h1>Family</h1>","<h1>Household</h1>");
- const at=html.indexOf('<section class="group"><div class="group-head"><h2>What\'s new');
- const withMs=at>0?html.slice(0,at)+milestonesBlock()+html.slice(at):html+milestonesBlock();
- return withMs+`<section class="group"><div class="group-head"><h2>Kids, stars and rewards</h2></div><div style="height:var(--s3)"></div>${moreKids()}</section>`;
+ return fold("milestones","Milestones",`${ks.length}`,()=>`<div class="list">${ks.map(k=>`<div class="row"><span class="main"><span class="name">${k.startsWith("season")?esc(k.split("-")[2].replace(/^./,c=>c.toUpperCase())+" "+k.split("-")[1]+" checklist finished"):"The household "+esc(MILESTONE_TEXT[k]||k)}</span><span class="meta"><span>${new Date(m[k]).toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"})}</span></span></span><span></span></div>`).join("")}</div>`,false);
 }
 
 /* Freeze and storm prep (Open-Meteo, no key) */
@@ -2154,6 +2216,7 @@ function wxAlert(){
  return null;
 }
 function liveNotice(a){
+ if(ui.kid)return; // Kid view: no adult household notices
  const text=`${pName(a.actor||a.who)} ${a.text}`;toast(text);
  if(ME.notify&&document.hidden&&"Notification" in window&&Notification.permission==="granted"){try{navigator.serviceWorker?.ready.then(r=>r.showNotification("Upkeep",{body:text,icon:"/icon-192.png",tag:a.id})).catch(()=>{})}catch(e){}}
 }
@@ -2178,25 +2241,49 @@ function drawPin(){
  <button class="linkish" data-pincancel="1">Cancel</button></div></div>`;
 }
 
-/* Settings (adds backup, Kid view lock, location; keeps the earlier sections) */
+/* Settings: grouped list sections. Longer explanations sit in secondary text or open on demand. */
+function applyPrefs(){
+ const r=document.documentElement;
+ if(ME.theme==="light"||ME.theme==="dark")r.dataset.theme=ME.theme;else delete r.dataset.theme;
+ if(ME.textSize==="large")r.dataset.text="large";else delete r.dataset.text;
+ if(ME.contrast)r.dataset.contrast="more";else delete r.dataset.contrast;
+ if(ME.motion==="reduce")r.dataset.motion="reduce";else delete r.dataset.motion;
+}
+applyPrefs();
+function setRow(label,sub,control,o={}){return `<${o.tag||"div"} class="set-row"${o.attr||""}><span class="s-text"><span class="s-label">${label}</span>${sub?`<span class="s-sub">${sub}</span>`:""}</span>${control||""}</${o.tag||"div"}>`}
+function setMore(id,label,sub,inner){return `<details class="set-row more" data-fold="set-${id}" ${ui.folds&&ui.folds["set-"+id]?"open":""}><summary><span class="s-text"><span class="s-label">${label}</span>${sub?`<span class="s-sub">${sub}</span>`:""}</span>${IC.chevd}</summary><div class="s-body">${inner}</div></details>`}
 function moreSettings(){
- const pr=(D.house&&D.house.profile)||{},h=D.house||{};
- const canNotify="Notification" in window;
- return `<section class="group"><div class="calbox"><b>Away mode</b><p class="note">Going on a trip? Turn this on and nothing goes overdue. When you're back, every due date moves forward by the days you were gone.</p>${paused()?`<button class="btn primary" data-unpause="1">I'm back</button>`:`<div><button class="btn" data-pause="1">Turn on Away mode</button></div>`}</div></section>
- <section class="group"><div class="calbox"><b>Freeze and storm reminders</b><p class="note">With your town set, Upkeep checks the forecast and shows a short prep list before a hard freeze, heavy snow, high winds or a big storm.</p>
- ${h.place?`<p style="margin:0">${esc(h.place.name)} <button class="linkish" data-placeclear="1">Change</button></p>`:`<div class="cmtform"><input type="text" id="place-q" placeholder="Town, e.g. Andrews NC" autocomplete="address-level2"><button class="btn" data-placefind="1">Find</button></div>${ui.places?ui.places.length?`<div class="list">${ui.places.map((p,i)=>`<button class="row" data-placepick="${i}"><span class="main"><span class="name">${esc(p.name)}</span></span><span class="linkish">Use</span></button>`).join("")}</div>`:`<p class="note">No towns found. Try the town name without the ZIP.</p>`:""}`}</div></section>
- <section class="group"><div class="calbox"><b>Notifications on this device</b><p class="note">A notice when someone completes something, checks a shift item, comments or nudges you, and before bad weather. On iPhone, add Upkeep to your Home Screen first (Share → Add to Home Screen).</p>${canNotify?`<label class="switch"><input type="checkbox" id="notify" ${ME.notify&&Notification.permission==="granted"?"checked":""}><span>Show notifications</span></label>${Notification.permission==="denied"?`<p class="note err">Notifications are blocked for Upkeep in this browser's settings.</p>`:""}`:`<p class="note">This browser doesn't support notifications.</p>`}</div></section>
- <section class="group"><div class="calbox"><b>Kid view</b><p class="note">A PIN keeps kids from leaving Kid view on a shared tablet. It's the same PIN on every device in the house.</p>
- ${h.kidPin?`<p style="margin:0">PIN is on.</p>`:""}
- <div class="cmtform"><input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="pin-new" placeholder="${h.kidPin?"New 4-digit PIN":"4-digit PIN"}" autocomplete="off"><button class="btn" data-pinset="1">${h.kidPin?"Change":"Set PIN"}</button></div>
- ${h.kidPin?`<button class="linkish" data-pinclear="1">Turn off the PIN</button>`:""}
- <label class="switch"><input type="checkbox" id="kiddevice" ${ME.kidDevice?"checked":""}><span>Open this device straight into Kid view</span></label>
- <label class="switch"><input type="checkbox" id="kidsound" ${ME.kidSound!==false?"checked":""}><span>Soft sound when a kid completes something</span></label></div></section>
- <section class="group"><div class="group-head"><h2>Your home</h2></div><div style="height:var(--s3)"></div>${profileForm(pr)}<p class="note" style="margin-top:var(--s2)">Changing this updates Home → Library → Suggested for you. It doesn't remove tasks you already have.</p></section>
- <section class="group"><div class="calbox"><b>Backup</b><p class="note">Save everything in this house to a file: tasks, routines, people, history, records and lists. Photos stay online and are linked from the backup.</p>
- <div style="display:flex;gap:var(--s2);flex-wrap:wrap"><button class="btn small" data-backup="1">Download backup</button><button class="btn small" data-csv="1">Tasks as a spreadsheet (CSV)</button><label class="btn small" style="cursor:pointer">Restore from backup<input type="file" accept="application/json,.json" id="restore-file" hidden></label></div>
- ${ui.restore?`<div class="confirm">Replace everything in this house with the backup from ${esc(ui.restore.when)}? (${ui.restore.count} items) Everyone in the house will see the restored version. <button class="btn small danger" data-restore="1">Replace</button><button class="btn small" data-restore="0">Cancel</button></div>`:""}</div></section>
- <section class="group"><div class="calbox"><b>This phone</b><p class="note">Signed in as ${esc(pName(myPid()))}. ${S.ops.length?`${S.ops.length} change${S.ops.length>1?"s":""} waiting to sync.`:"Everything is synced."}</p><div style="display:flex;gap:var(--s2);flex-wrap:wrap"><button class="btn small" data-switchme="1">I'm someone else</button>${ui.confirmLeave?`<span class="confirm">Leave this house on this phone? <button class="btn small danger" data-leave="2">Leave</button><button class="btn small" data-leave="0">Stay</button></span>`:`<button class="btn small danger" data-leave="1">Leave this house</button>`}</div></div></section>`;
+ const pr=(D.house&&D.house.profile)||{},h=D.house||{},canNotify="Notification" in window,feats=PROFILE_Q.filter(([k])=>pr[k]).length;
+ const sw=(id,on,dis)=>`<input type="checkbox" class="sw" id="${id}" ${on?"checked":""} ${dis?"disabled":""}>`;
+ const group=(t,rows)=>`<section class="set-group"><h2>${t}</h2><div class="set-list">${rows}</div></section>`;
+ return group("Appearance and accessibility",
+  setRow("Theme","Light, dark, or match this device",`<select id="pref-theme" class="s-select" aria-label="Theme">${[["system","Match device"],["light","Light"],["dark","Dark"]].map(([v,l])=>`<option value="${v}" ${(ME.theme||"system")===v?"selected":""}>${l}</option>`).join("")}</select>`,{tag:"label"})
+  +setRow("Larger text","Makes every screen's text about 12% bigger",sw("pref-text",ME.textSize==="large"),{tag:"label"})
+  +setRow("More contrast","Darker secondary text and lines",sw("pref-contrast",!!ME.contrast),{tag:"label"})
+  +setRow("Reduce motion","Upkeep also follows your device's setting",sw("pref-motion",ME.motion==="reduce"),{tag:"label"}))
+ +group("Household",
+  setMore("home","Your home",`${({house:"House",townhouse:"Townhouse",apartment:"Apartment"})[pr.home]||"House"} · ${pr.own==="rent"?"Rent":"Own"} · ${feats} feature${feats===1?"":"s"}`,`${profileForm(pr)}<p class="note">This changes what Home → Task library suggests. It doesn't remove tasks you already have.</p>`)
+  +setMore("kid","Kid view",h.kidPin?"PIN is on":"No PIN",`<div class="field"><span>PIN to leave Kid view <small>the same on every device</small></span><div class="cmtform"><input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="pin-new" placeholder="${h.kidPin?"New 4-digit PIN":"4-digit PIN"}" autocomplete="off" aria-label="4-digit PIN"><button class="btn small" data-pinset="1">${h.kidPin?"Change PIN":"Set PIN"}</button></div>${h.kidPin?`<button class="linkish" data-pinclear="1">Turn off the PIN</button>`:""}</div>
+   ${setRow("Open this device in Kid view","For a shared tablet",sw("kiddevice",!!ME.kidDevice),{tag:"label"})}${setRow("Sound when a kid finishes something","",sw("kidsound",ME.kidSound!==false),{tag:"label"})}`))
+ +group("Notifications and reminders",
+  canNotify?setRow("Notifications on this device",Notification.permission==="denied"?`<span class="err-text">Blocked in this browser's settings.</span>`:"When someone finishes something, comments or nudges you, and before bad weather. On iPhone, add Upkeep to your Home Screen first.",sw("notify",ME.notify&&Notification.permission==="granted",Notification.permission==="denied"),{tag:"label"}):setRow("Notifications","This browser doesn't support them.","")
+  +setRow("Calendar reminders","Set the reminder time and subscribe under Calendar",`<button class="btn small" data-more="cal">Open</button>`))
+ +group("Away mode and weather",
+  setRow("Away mode",paused()?`On since ${nice(h.pause.from)}. Turning it off moves due dates forward by the days you were gone.`:"While it's on, nothing goes overdue",sw("away",paused(),!S.canWrite),{tag:"label"})
+  +setMore("wx","Freeze and storm prep",h.place?esc(h.place.name):"Set your town to get prep lists before bad weather",h.place?`<p class="note">Upkeep checks the forecast for ${esc(h.place.name)} and puts a short prep list at the top of Today before a hard freeze, heavy snow, high winds, a big storm or extreme heat.</p><button class="linkish" data-placeclear="1">Change town</button>`:`<div class="cmtform"><input type="text" id="place-q" placeholder="Town, e.g. Andrews NC" autocomplete="address-level2" aria-label="Town"><button class="btn small" data-placefind="1">Find</button></div>${ui.places?ui.places.length?`<div class="list">${ui.places.map((p,i)=>`<button class="row link" data-placepick="${i}"><span class="main"><span class="name">${esc(p.name)}</span></span><span class="linkish">Use</span></button>`).join("")}</div>`:`<p class="note">No towns found. Try the town name without the ZIP code.</p>`:""}`))
+ +group("Backup and restore",
+  setRow("Download a backup","Everything in this house as a file. Photos stay online and are linked.",`<button class="btn small" data-backup="1">Download</button>`)
+  +setRow("Tasks as a spreadsheet","A CSV file you can open in Excel or Sheets",`<button class="btn small" data-csv="1">Download</button>`)
+  +setRow("Restore from a backup","Replaces everything in this house",`<label class="btn small">Choose file<input type="file" accept="application/json,.json" id="restore-file" hidden></label>`)
+  +(ui.restore?`<div class="confirm set-confirm" role="alert"><span>Replace everything in this house with the backup from ${esc(ui.restore.when)}? (${ui.restore.count} items) Everyone will see the restored version.</span><button class="btn small danger" data-restore="1">Replace</button><button class="btn small" data-restore="0">Cancel</button></div>`:""))
+ +group("This phone",
+  setRow(`Signed in as ${esc(pName(myPid()))}`,"Check-offs and comments from this phone carry this name",`<button class="btn small" data-switchme="1">Switch person</button>`)
+  +setRow("Sync",S.ops.length?`${S.ops.length} change${S.ops.length>1?"s":""} saved on this phone, waiting to sync`:S.note&&/^Offline/.test(S.note)?"Offline. Changes are saved on this phone.":"Everything is synced","")
+  +setRow("Leave this house",ui.confirmLeave?"This phone will need a new invite link to come back.":"Signs this phone out. Your person and history stay.",ui.confirmLeave?`<span class="confirm"><button class="btn small danger" data-leave="2">Leave</button><button class="btn small" data-leave="0">Stay</button></span>`:`<button class="btn small danger" data-leave="1">Leave</button>`))
+ +group("Help",
+  setMore("h1","Add Upkeep to your Home Screen","",`<p>On iPhone: open Upkeep in Safari, tap Share, then Add to Home Screen. On Android: open the browser menu and tap Install app or Add to Home screen. It opens like an app and works offline.</p>`)
+  +setMore("h2","How tasks are scheduled","",`<p>Each task repeats on its own schedule. Seasonal jobs land on the first Saturday of their month. When you finish a task, the next date is set from its schedule, or from the day you finished it if it counts from when it's done.</p>`)
+  +setMore("h3","Sharing with your household","",`<p>Adults join with the invite link under Household. Each phone gets its own key, so you can reset the link or remove a phone without signing anyone else out. Kids use Kid view on any family device.</p>`));
 }
 function downloadFile(name,text,type){const u=URL.createObjectURL(new Blob([text],{type}));const a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),30000)}
 function backupJson(){
@@ -2296,6 +2383,11 @@ document.addEventListener("change",async e=>{
  const el=e.target;
  if(el.dataset.prep){const k=el.dataset.prep,i=+el.dataset.i;const cur=(D.house&&D.house.prep&&D.house.prep[k]);let arr2=Array.isArray(cur)?[...cur]:[];if(el.checked){if(!arr2.includes(i))arr2.push(i)}else arr2=arr2.filter(x=>x!==i);putHouse({prep:Object.assign({},(D.house&&D.house.prep)||{},{[k]:arr2})});haptic(8);return}
  if(el.id==="kiddevice"){ME.kidDevice=el.checked;saveMe();return}
+ if(el.id==="pref-theme"){ME.theme=el.value;applyPrefs();saveMe();return}
+ if(el.id==="pref-text"){ME.textSize=el.checked?"large":"";applyPrefs();saveMe();return}
+ if(el.id==="pref-contrast"){ME.contrast=el.checked;applyPrefs();saveMe();return}
+ if(el.id==="pref-motion"){ME.motion=el.checked?"reduce":"";applyPrefs();saveMe();return}
+ if(el.id==="away"){if(el.checked&&!paused())startPause();else if(!el.checked&&paused())endPause();return}
  if(el.id==="kidsound"){ME.kidSound=el.checked;saveMe();return}
  if(el.id==="restore-file"){const f=el.files&&el.files[0];if(!f)return;try{const j=JSON.parse(await f.text());if(j.app!=="upkeep"||!j.docs)throw 0;const count=COLS.reduce((n,c)=>n+Object.keys(j.docs[c]||{}).length,0);ui.restore={docs:j.docs,when:new Date(j.exported).toLocaleString(),count};render()}catch(err){toast("That file isn't an Upkeep backup.")}return}
 });
