@@ -523,10 +523,11 @@ function viewSetup(){
 
 /* ---------- Sheets ---------- */
 function commentBlock(ref,label){
- const cs=commentsFor(ref);
- return `<div class="field"><span>Comments</span><div class="comments">${cs.map(c=>`<div class="cmt">${av(c.who)}<div><b>${esc(pShort(c.who))}</b> <span class="when">${ago(c.at)}</span><div>${esc(c.text)}</div></div></div>`).join("")||`<span class="note">No comments yet.</span>`}</div>${S.canWrite&&multiUser()?`<div class="cmtform"><input type="text" id="c-text" placeholder="Leave a note for the family"><button class="btn" data-comment="${esc(ref)}" data-label="${esc(label)}">Post</button></div>`:""}</div>`;
+ const cs=commentsFor(ref),canPost=S.canWrite&&multiUser();
+ if(!cs.length&&!canPost)return"";
+ return `<div class="t-sec"><h3>Comments</h3>${cs.length?`<div class="comments">${cs.map(c=>`<div class="cmt">${av(c.who,22)}<div><b>${esc(pShort(c.who))}</b> <span class="when">${ago(c.at)}</span><div>${esc(c.text)}</div></div></div>`).join("")}</div>`:""}${canPost?`<div class="cmtform"><input type="text" id="c-text" placeholder="Leave a note for the household" aria-label="Comment"><button class="btn small" data-comment="${esc(ref)}" data-label="${esc(label)}">Post</button></div>`:""}</div>`;
 }
-function rotatePick(list,id){return `<div class="field"><span>Rotate between (passes to the next person each time it's done)</span><div class="chips" style="flex-wrap:wrap;margin:0">${people().map(p=>`<label class="chip"><input type="checkbox" data-rot="${id}" value="${p.id}" ${list&&list.includes(p.id)?"checked":""} ${S.canWrite?"":"disabled"} style="margin-right:4px;accent-color:var(--accent)">${esc(pName(p.id))}</label>`).join("")}</div></div>`}
+function rotatePick(list,id){return `<div class="field"><span>Take turns <small>passes to the next person each time it's done</small></span><div class="toggles">${people().map(p=>`<label><input type="checkbox" data-rot="${id}" value="${p.id}" ${list&&list.includes(p.id)?"checked":""} ${S.canWrite?"":"disabled"}><span>${esc(pName(p.id))}</span></label>`).join("")}</div></div>`}
 const FORMS={
  info:{title:"Home info",fields:[["label","Label","text"],["value","Value","textarea"]]},
  things:{title:"Appliance",fields:[["name","Name","text","Furnace, fridge, water heater…"],["room","Where","text"],["brand","Brand","text"],["model","Model number","text"],["serial","Serial number","text"],["bought","Bought or installed","date"],["warranty","Warranty ends","date"],["manual","Manual link","text","https://…"],["filter","Filter or part size","text"],["notes","Notes","textarea"]],photo:true},
@@ -543,7 +544,7 @@ function formSheet(s){
   if(type==="textarea")return `<label class="field"><span>${label}</span><textarea id="g-${k}" style="min-height:70px" ${ro}>${esc(v||"")}</textarea></label>`;
   if(type==="money")return `<label class="field"><span>${label}</span><input type="number" step="0.01" min="0" id="g-${k}" value="${v!=null&&v!==""?(v/100).toFixed(2):""}" ${ro}></label>`;
   if(type==="person")return `<label class="field"><span>${label}</span><select id="g-${k}" ${ro}>${people().map(p=>`<option value="${p.id}" ${p.id===(v||myPid())?"selected":""}>${esc(pName(p.id))}</option>`).join("")}</select></label>`;
-  if(type==="people"){const sel=v&&v.length?v:adults().map(p=>p.id);return `<div class="field"><span>${label}</span><div class="chips" style="flex-wrap:wrap;margin:0">${people().map(p=>`<label class="chip"><input type="checkbox" data-gk="${k}" value="${p.id}" ${sel.includes(p.id)?"checked":""} ${ro} style="margin-right:4px;accent-color:var(--accent)">${esc(pName(p.id))}</label>`).join("")}</div></div>`}
+  if(type==="people"){const sel=v&&v.length?v:adults().map(p=>p.id);return `<div class="field"><span>${label}</span><div class="toggles">${people().map(p=>`<label><input type="checkbox" data-gk="${k}" value="${p.id}" ${sel.includes(p.id)?"checked":""} ${ro}><span>${esc(pName(p.id))}</span></label>`).join("")}</div></div>`}
   if(type==="pro")return `<label class="field"><span>${label}</span><select id="g-${k}" ${ro}><option value="">Did it ourselves</option>${Object.values(D.pros).map(p=>`<option value="${p.id}" ${p.id===v?"selected":""}>${esc(p.name)}</option>`).join("")}</select></label>`;
   if(type==="role")return `<label class="field"><span>${label}</span><select id="g-${k}" ${ro}><option value="kid" ${v==="kid"?"selected":""}>Kid (simple view, stars, needs OK)</option><option value="adult" ${v!=="kid"?"selected":""}>Adult</option></select></label>`;
   if(type==="color")return `<div class="field"><span>${label}</span><div class="chips" style="margin:0">${COLORS.map(c=>`<label class="chip" style="padding:4px"><input type="radio" name="g-color" value="${c}" ${c===(v||COLORS[0])?"checked":""} ${ro} style="accent-color:${c}"><span class="av" style="background:${c}"></span></label>`).join("")}</div></div>`;
@@ -596,29 +597,7 @@ function openForm(spec){
 }
 function renderLayer(){
  let h="";const s=ui.sheet;
- if(s&&s.kind==="task"){
-  const t=s.draft,ro=!S.canWrite?"disabled":"";
-  h+=`<div class="scrim" data-close="1"></div><div class="sheet" role="dialog" aria-label="Task"><div class="panel">
-  <div class="bar"><h2>${s.isNew?"New task":esc(t.name)}</h2><button class="btn small" data-close="1">Close</button></div>
-  <label class="field"><span>Task</span><input type="text" id="f-name" value="${esc(t.name)}" placeholder="e.g. Clean the dryer vent" ${ro}></label>
-  ${multiUser()?`<label class="field"><span>Whose job</span><select id="f-who" ${ro}>${peopleOptions(t.assignee)}</select></label>${rotatePick(t.rotate,"task")}`:""}
-  ${!s.isNew&&t.assignee&&t.assignee!==myPid()&&S.canWrite&&status(t)!=="later"?`<div><button class="btn small" data-nudge="${s.id}">Nudge ${esc(pName(t.assignee))}</button></div>`:""}
-  <div class="grid2"><label class="field"><span>Room</span><select id="f-room" ${ro}>${ROOMS.map(r=>`<option ${r===t.room?"selected":""}>${r}</option>`).join("")}</select></label><label class="field"><span>About how long (min)</span><input type="number" id="f-mins" min="1" value="${t.mins}" ${ro}></label></div>
-  <div class="grid2"><label class="field"><span>Repeat every</span><input type="number" id="f-every" min="1" value="${t.every}" ${ro}></label><label class="field"><span>&nbsp;</span><select id="f-unit" ${ro}>${[["day","days"],["week","weeks"],["month","months"],["year","years"]].map(([v,l])=>`<option value="${v}" ${v===t.unit?"selected":""}>${l}</option>`).join("")}</select></label></div>
-  ${t.unit==="week"?`<label class="field"><span>On</span><select id="f-wd" ${ro}>${DAYS.map((d,i)=>`<option value="${i}" ${i===t.weekday?"selected":""}>${d}</option>`).join("")}</select></label>`:""}
-  <div class="field"><span>Only in these months (optional, for seasonal jobs)</span><div class="daypick">${MONTHS.map((m,i)=>`<label><input type="checkbox" data-month="${i+1}" ${(t.months||[]).includes(i+1)?"checked":""} ${ro}>${m}</label>`).join("")}</div></div>
-  <div class="grid2"><label class="field"><span>Next due</span><input type="date" id="f-next" value="${esc(t.next)}" ${ro}></label><label class="field"><span>Time</span><input type="time" id="f-time" value="${esc(t.time)}" ${ro}></label></div>
-  <label class="switch"><input type="checkbox" id="f-flex" ${t.flexible?"checked":""} ${ro}><span>Count from when it's finished, not a fixed date</span></label>
-  <label class="switch"><input type="checkbox" id="f-photo" ${t.photoProof?"checked":""} ${ro}><span>Ask for a photo when it's done</span></label>
-  <label class="field"><span>Done means (the standard)</span><textarea id="f-std" style="min-height:60px" placeholder="What finished looks like, so everyone does it the same way" ${ro}>${esc(t.standard||"")}</textarea></label>
-  <label class="field"><span>Checklist (one step per line)</span><textarea id="f-steps" ${ro}>${esc((t.steps||[]).join("\n"))}</textarea></label>
-  <label class="field"><span>Notes</span><input type="text" id="f-notes" value="${esc(t.notes||"")}" placeholder="Filter size, brand, who to call…" ${ro}></label>
-  ${t.lastDone?`<p class="note">Last done ${nice(t.lastDone)}${t.lastBy?" by "+esc(pShort(t.lastBy)):""}.</p>`:""}
-  ${s.isNew?"":commentBlock("task:"+s.id,t.name)}
-  ${s.isNew?"":`<div class="calbox"><b>My calendar</b>${calButtons("task:"+s.id,t)}</div>`}
-  ${s.isNew?"":`<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn small" data-tomorrow="${s.id}">Move to tomorrow</button><button class="btn small" data-skip="${s.id}">Skip this time</button></div>`}${S.canWrite?`<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><button class="btn primary" data-save="1">${s.isNew?"Add task":"Save"}</button>${s.isNew?"":(s.confirmDel?`<span class="confirm">Delete for everyone? <button class="btn small danger" data-del="1">Delete</button><button class="btn small" data-nodel="1">Keep</button></span>`:`<button class="btn danger" data-askdel="1">Delete</button>`)}</div>`:""}
-  </div></div>`;
- }
+ if(s&&s.kind==="task")h+=taskSheet(s);
  if(s&&s.kind==="item"){
   const r=D.routines[s.rid],i=r&&r.items.find(x=>x.id===s.iid);
   if(i){const ro=!S.canWrite?"disabled":"",c=D.checks[checkId(r.id,i.id)];
@@ -643,7 +622,7 @@ function renderLayer(){
  }
  if(s&&s.kind==="form")h+=formSheet(s);
  if(ui.toast)h+=`<div class="toast" role="status"><span>${esc(ui.toast.msg)}</span>${ui.toast.undo?'<button data-undo="1">Undo</button>':""}</div>`;
- layer.innerHTML=h;layer._sheet=ui.sheet;
+ const prev=!!layer.querySelector(".sheet");layer.innerHTML=h;layer._sheet=ui.sheet;afterLayer(prev);
 }
 function readDraft(){
  const d=ui.sheet.draft,v=id=>document.getElementById(id);if(!v("f-name"))return d;
@@ -656,7 +635,7 @@ function readDraft(){
  d.standard=v("f-std").value.trim();d.steps=v("f-steps").value.split("\n").map(x=>x.trim()).filter(Boolean);d.notes=v("f-notes").value.trim();
  return d;
 }
-function openTask(id){const t=D.tasks[id];if(!t)return;const d=JSON.parse(JSON.stringify(t));delete d.id;d.months=d.months||[];d.rotate=d.rotate||[];ui.sheet={kind:"task",id,draft:d};ui.calMsg=null;renderLayer();if(!ui.cal.list&&!ui.cal.err)loadCalendars()}
+function openTask(id,mode){const t=D.tasks[id];if(!t)return;const d=JSON.parse(JSON.stringify(t));delete d.id;d.months=d.months||[];d.rotate=d.rotate||[];ui.sheet={kind:"task",id,draft:d,mode:mode||"view"};ui.calMsg=null;renderLayer();if(!ui.cal.list&&!ui.cal.err)loadCalendars()}
 function saveTask(){
  const d=readDraft();if(!d.name){document.getElementById("f-name").focus();return}
  if(d.unit==="week"){if(d.weekday==null)d.weekday=parse(d.next).getDay();d.next=onWeekday(d.next,d.weekday)}else d.weekday=null;
@@ -664,7 +643,7 @@ function saveTask(){
  d.stepsDone=(d.stepsDone||[]).filter(i=>i<d.steps.length);
  const id=ui.sheet.isNew?rid():ui.sheet.id,prev=D.tasks[id];put("tasks",id,d);
  if(d.assignee&&d.assignee!==myPid()&&(!prev||prev.assignee!==d.assignee))logEvent({kind:"assign",text:`gave ${pName(d.assignee)} “${d.name}”`,ref:"task:"+id});
- ui.sheet=null;toast(`Saved · next ${nice(d.next)}`);
+ if(ui.sheet.isNew){ui.sheet=null;toast(`Added · first due ${nice(d.next)}`)}else{openTask(id,"view");toast(`Saved · next ${nice(d.next)}`)}
 }
 function startDone(id,credit){
  const t=D.tasks[id];if(!t)return;

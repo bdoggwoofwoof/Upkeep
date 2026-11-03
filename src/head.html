@@ -73,8 +73,8 @@ button.row{border:0;border-bottom:1px solid var(--rule);text-align:start;width:1
 
 /* Task row: name + who on the left, complete button at the thumb edge */
 .task{grid-template-columns:1fr auto}
-.task .due{font-size:.8rem;font-weight:600;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
-.task .due.late{color:var(--late)} .task .due.today{color:var(--forest)} .task .due.soon{color:var(--soon)} .task .due.later{color:var(--ink-3);font-weight:500}
+.due{font-size:.8125rem;font-weight:600;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.due.late{color:var(--late)} .due.today{color:var(--forest)} .due.soon{color:var(--soon)} .due.later{color:var(--ink-2);font-weight:500}
 .due svg{width:12px;height:12px}
 .who{display:inline-flex;align-items:center;gap:5px;color:var(--ink-2);white-space:nowrap}
 .av-open{width:16px;height:16px;border-radius:50%;border:1.5px dashed var(--ink-3);flex:none}
@@ -163,7 +163,8 @@ a.btn{text-decoration:none}
 .field{display:flex;flex-direction:column;gap:6px}
 .field > span{font-size:.82rem;font-weight:600;color:var(--ink-2)}
 input[type=text],input[type=date],input[type=time],input[type=number],input[type=search],select,textarea{background:var(--leaf);border:1px solid var(--rule);border-radius:var(--r-sm);padding:10px 12px;width:100%;min-width:0;min-height:44px}
-textarea{min-height:88px;resize:vertical}
+textarea{min-height:72px;resize:vertical}
+.cmtform .btn{flex:none}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:var(--s3)}
 .toolbar{display:flex;gap:var(--s2);flex-wrap:wrap;margin-bottom:var(--s4)}
 .toolbar input[type=search]{flex:1 1 200px}
@@ -223,6 +224,58 @@ nav.tabs .brand{display:none}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(82px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--paper);padding:12px 16px;border-radius:999px;display:flex;gap:var(--s4);align-items:center;z-index:40;font-size:.92rem;max-width:calc(100% - 32px);animation:rise .22s var(--ease)}
 .toast button{background:none;border:0;color:inherit;font-weight:700}
 
+/* Task sheet: a read view with a compact action bar, and a grouped edit form */
+.sheet .panel.split{padding:0;gap:0;overflow:hidden}
+.sheet-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--s3);padding:var(--s5) max(18px,env(safe-area-inset-right,0px)) var(--s2) max(18px,env(safe-area-inset-left,0px))}
+.sheet-title{font-family:var(--serif);font-weight:500;font-size:1.45rem;line-height:1.2;margin:0;outline:none}
+.icon-btn{width:44px;height:44px;margin:-10px -12px -10px 0;border-radius:50%;border:0;background:none;color:var(--ink-2);display:grid;place-items:center;flex:none}
+.icon-btn:hover{background:var(--tint)}
+.sheet-body{overflow:auto;overscroll-behavior:contain;padding:var(--s1) max(18px,env(safe-area-inset-right,0px)) var(--s5) max(18px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:14px}
+.sheet-foot{display:flex;gap:var(--s2);align-items:center;padding:10px max(18px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-left,0px));border-top:1px solid var(--rule);background:var(--leaf)}
+.btn.text{background:none;border-color:transparent;color:var(--forest);padding-inline:12px}
+.push{margin-inline-start:auto}
+.btn .tk{width:16px;height:16px;margin-inline-start:-2px}
+.t-when{display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px;margin:0}
+.t-when .due{font-size:.9375rem}
+.t-move{display:inline-flex;gap:18px;flex-wrap:wrap}
+.t-facts{margin:0;color:var(--ink-2);font-size:.9375rem}
+.t-owner{margin:0;display:flex;gap:6px 18px;align-items:center;flex-wrap:wrap}
+.t-owner .who{color:var(--ink);font-size:.9375rem}
+.std-box{border-inline-start:3px solid var(--forest);padding:6px 0 6px 14px}
+.std-box b{display:block;font-size:.875rem;color:var(--forest);font-weight:600}
+.std-box p{margin:2px 0 0;font-size:1rem}
+.t-sec h3{font-size:.875rem;font-weight:600;color:var(--ink-2);margin:0 0 6px}
+.t-sec > p{margin:0}
+.hist{margin:0;padding:0;list-style:none;font-size:.9375rem;color:var(--ink-2)}
+.hist li{padding:2px 0}
+.cal-links{display:flex;flex-wrap:wrap;gap:8px 20px;margin:0 0 4px}
+.fgroup{border:0;padding:0;margin:0 0 var(--s5);display:flex;flex-direction:column;gap:var(--s3);min-width:0}
+.fgroup legend{font-family:var(--serif);font-size:1.1rem;font-weight:500;padding:0;margin-bottom:var(--s2)}
+.field small{font-weight:400;color:var(--ink-2)}
+.repeat{display:flex;gap:var(--s2);align-items:center;flex-wrap:wrap}
+.repeat input{width:76px;flex:none}
+.repeat select{width:auto;flex:1 1 110px}
+.repeat .on{color:var(--ink-2)}
+.months{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.toggles{display:flex;flex-wrap:wrap;gap:6px}
+.toggles label{position:relative}
+.toggles input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
+.toggles span{display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border:1px solid var(--rule-strong);border-radius:var(--r-sm);font-size:.875rem;font-weight:600;color:var(--ink-2)}
+.toggles input:checked + span{background:var(--forest-wash);border-color:var(--forest);color:var(--forest)}
+.toggles input:focus-visible + span{outline:2px solid var(--forest);outline-offset:2px}
+.toggles input:disabled + span{opacity:.6}
+.months label{position:relative}
+.months input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
+.months span{display:grid;place-items:center;min-height:40px;border:1px solid var(--rule-strong);border-radius:var(--r-sm);font-size:.875rem;font-weight:600;color:var(--ink-2)}
+.months input:checked + span{background:var(--forest-wash);border-color:var(--forest);color:var(--forest)}
+.months input:focus-visible + span{outline:2px solid var(--forest);outline-offset:2px}
+.linkish.danger{color:var(--late);align-self:flex-start}
+@media (min-width:760px){
+  .sheet .panel.view{max-width:600px}
+  .sheet .panel.edit{max-width:820px}
+  .edit-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 var(--s6)}
+}
+
 /* Setup */
 .packs{display:grid;gap:0}
 .pack{display:grid;grid-template-columns:auto 1fr;gap:var(--s3);align-items:start;padding:var(--s3) 0;border-bottom:1px solid var(--rule)}
@@ -250,7 +303,7 @@ nav.tabs .brand{display:none}
 @keyframes settle{0%{transform:scale(.7)}60%{transform:scale(1.12)}100%{transform:scale(1)}}
 .check.done i,.row.completing .check i{animation:settle .3s var(--ease)}
 
-@media (max-width:420px){ h1{font-size:1.8rem} .grid2{grid-template-columns:1fr} }
+@media (max-width:420px){ h1{font-size:1.8rem} .grid2{grid-template-columns:1fr} .grid2.keep{grid-template-columns:1fr 1fr} }
 @media (max-width:360px){ .filters{gap:6px} .filter{padding-inline:11px} }
 /* Today: one column on phones in reading order (alerts, tonight, tasks, the rest); two columns from tablet up */
 @media (min-width:760px){

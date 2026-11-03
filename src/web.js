@@ -28,7 +28,7 @@ function viewWhoAmI(){
 }
 function calButtons(key,ev){
  const o=key.startsWith("task:")?{task:key.slice(5)}:{routine:key.slice(8)};
- return `<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center"><a class="btn small primary" href="${esc(gcalLink(ev))}" target="_blank" rel="noopener">Add to Google Calendar</a><a class="linkish" href="${esc(icsUrl(Object.assign({dl:"1"},o)))}">Apple / Outlook (.ics)</a></div><p class="note" style="margin:0">Tip: subscribing under More → Calendar keeps every task in sync on its own.</p>`;
+ return `<p class="cal-links"><a class="linkish" href="${esc(gcalLink(ev))}" target="_blank" rel="noopener">Add to Google Calendar</a><a class="linkish" href="${esc(icsUrl(Object.assign({dl:"1"},o)))}">Apple or Outlook (.ics)</a></p><p class="note">To keep every task in sync on its own, subscribe under More → Calendar.</p>`;
 }
 function moreCal(){
  const me=myPid(),mine=icsUrl({p:me||"all"}),all=icsUrl({p:"all"});

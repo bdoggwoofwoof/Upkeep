@@ -211,7 +211,7 @@ function skipOnce(id){const t=D.tasks[id];if(!t)return;const prev=t.next;const n
 document.addEventListener("click",e=>{
  const b=e.target.closest("button");if(!b)return;const ds=b.dataset;
  if(swipeState.blockClick){e.stopImmediatePropagation();e.preventDefault();swipeState.blockClick=false;return}
- if(ds.done){
+ if(ds.done&&!b.closest(".sheet")){
   const t=D.tasks[ds.done];if(!t||!S.canWrite)return;
   e.stopImmediatePropagation();haptic(10);
   if(t.photoProof){startDone(ds.done);return}
@@ -221,6 +221,10 @@ document.addEventListener("click",e=>{
  if(ds.tick||ds.kidtick){haptic(10);if(ds.kidtick)chime();
   setTimeout(()=>{const r=routines().find(x=>x.id===ui.routine)||routines().find(routineRunsTonight);if(r){const all=r.items.length,done=r.items.filter(i=>D.checks[checkId(r.id,i.id)]).length;if(all&&done===all){haptic([12,60,12]);toast("That's the house closed for the night.")}}},60);return}
  if(ds.kiddone){haptic(10);chime();setTimeout(()=>{const s=document.querySelector(".kidstars");if(s){s.classList.remove("pop");void s.offsetWidth;s.classList.add("pop")}},80);return}
+ if(ds.done&&b.closest(".sheet")){e.stopImmediatePropagation();const id=ds.done;ui.sheet=null;renderLayer();startDone(id);return}
+ if(ds.claim&&b.closest(".sheet")){e.stopImmediatePropagation();claim(ds.claim);if(ui.sheet&&ui.sheet.draft)ui.sheet.draft.assignee=myPid();renderLayer();toast("It's yours now");return}
+ if(ds.editmode){e.stopImmediatePropagation();ui.sheet.mode="edit";renderLayer();return}
+ if(ds.viewmode){e.stopImmediatePropagation();openTask(ui.sheet.id,"view");return}
  if(ds.tomorrow){e.stopImmediatePropagation();if(ui.sheet)ui.sheet=null;moveTomorrow(ds.tomorrow);return}
  if(ds.skip){e.stopImmediatePropagation();if(ui.sheet)ui.sheet=null;skipOnce(ds.skip);return}
  if(ds.prepopen){e.stopImmediatePropagation();const a=wxAlert();ui.prepOpen=Object.assign({},ui.prepOpen||{},{[ds.prepopen]:!(ui.prepOpen&&ds.prepopen in ui.prepOpen?ui.prepOpen[ds.prepopen]:a&&a.day<=1)});render();return}
@@ -283,3 +287,80 @@ function viewShift(){
    <button class="check ${c?"done":""}" data-tick="${i.id}" aria-label="${c?"Undo":"Complete"} ${esc(i.text)}" aria-pressed="${!!c}"><i>${IC.check}</i></button></div>`}).join("")||`<div class="empty">No items yet. Tap Edit to add some.</div>`}</div>
  <section class="group" style="margin-top:var(--s6)"><div class="calbox"><b>Put it on your calendar</b><p class="note">One repeating event at ${t12(r.time)} with everyone's parts in the notes.</p>${calButtons("routine:"+r.id,routineAsEvent(r))}</div></section>`;
 }
+
+/* ---------- Task sheet: read first, edit on request ---------- */
+function sheetShell(label,head,body,foot,cls=""){
+ return `<div class="scrim" data-close="1"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(label)}"><div class="panel split ${cls}">
+ <div class="sheet-head">${head}<button class="icon-btn" data-close="1" aria-label="Close">${IC.x}</button></div>
+ <div class="sheet-body">${body}</div>${foot?`<div class="sheet-foot">${foot}</div>`:""}</div></div>`;
+}
+function whenText(t){
+ const st=status(t),d=daysBetween(today(),t.next);
+ if(st==="late")return `<span class="due late">${IC.tri}${-d===1?"1 day late":-d+" days late"}</span>`;
+ if(st==="today")return `<span class="due today">${IC.dot}Due today${t.timeSet?" at "+t12(t.time):""}</span>`;
+ if(st==="soon")return `<span class="due soon">${IC.ring}Due ${d===1?"tomorrow":nice(t.next)}${t.timeSet?" at "+t12(t.time):""}</span>`;
+ return `<span class="due later">Next ${nice(t.next)}</span>`;
+}
+function taskView(s){
+ const t=D.tasks[s.id]||s.draft,id=s.id,st=status(t),me=myPid();
+ const rot=t.rotate&&t.rotate.length>1?`Takes turns: ${t.rotate.map(p=>esc(pShort(p))).join(", ")}`:"";
+ const owner=!multiUser()?"":t.assignee?`<span class="who">${av(t.assignee,22)}<span>${t.assignee===me?"Your job":esc(pName(t.assignee))+"'s job"}</span></span>${t.assignee!==me&&S.canWrite&&st!=="later"?`<button class="linkish" data-nudge="${id}">Nudge ${esc(pName(t.assignee))}</button>`:""}`:`<span class="who open"><span class="av-open" aria-hidden="true"></span><span>Up for grabs</span></span>`;
+ const hist=Object.values(D.activity).filter(a=>a.kind==="task"&&a.ref==="task:"+id).sort((a,b)=>b.at-a.at).slice(0,3);
+ const body=`<p class="t-when">${whenText(t)}${S.canWrite&&st!=="later"?`<span class="t-move"><button class="linkish" data-tomorrow="${id}">Move to tomorrow</button><button class="linkish" data-skip="${id}">Skip this time</button></span>`:""}</p>
+ <p class="t-facts">${esc(freqText(t))} · about ${fmtMins(t.mins)} · ${esc(t.room)}</p>
+ ${owner?`<p class="t-owner">${owner}</p>`:""}${rot?`<p class="t-facts">${rot}</p>`:""}
+ ${t.standard?`<div class="std-box"><b>Done means</b><p>${esc(t.standard)}</p></div>`:""}
+ ${(t.steps||[]).length?`<div class="t-sec"><h3>Steps</h3><div class="steps">${t.steps.map((x,i)=>`<label><input type="checkbox" data-step="${id}" data-i="${i}" ${(t.stepsDone||[]).includes(i)?"checked":""} ${S.canWrite?"":"disabled"}><span>${esc(x)}</span></label>`).join("")}</div></div>`:""}
+ ${t.notes?`<div class="t-sec"><h3>Notes</h3><p>${esc(t.notes)}</p></div>`:""}
+ ${t.photoProof?`<p class="t-facts">Needs a photo when it's done.</p>`:""}
+ ${commentBlock("task:"+id,t.name)}
+ <div class="t-sec"><h3>History</h3>${hist.length?`<ul class="hist">${hist.map(a=>`<li>${esc(pShort(a.who))} finished it ${nice(ymd(new Date(a.at)))}</li>`).join("")}</ul>`:`<p class="muted">Not done yet in Upkeep.</p>`}</div>
+ <div class="t-sec"><h3>Calendar</h3>${calButtons("task:"+id,t)}</div>`;
+ const foot=S.canWrite?`<button class="btn primary" data-done="${id}">${IC.tick}Complete</button>${multiUser()&&!t.assignee&&st!=="later"?`<button class="btn" data-claim="${id}">Take it</button>`:""}<button class="btn text push" data-editmode="1">Edit</button>`:"";
+ return sheetShell(t.name,`<h2 class="sheet-title" tabindex="-1">${esc(t.name)}</h2>`,body,foot,"view");
+}
+function taskEdit(s){
+ const t=s.draft,ro=!S.canWrite?"disabled":"";
+ const body=`<div class="edit-grid">
+ <fieldset class="fgroup"><legend>Task</legend>
+  <label class="field"><span>Name</span><input type="text" id="f-name" value="${esc(t.name)}" placeholder="e.g. Clean the dryer vent" ${ro}></label>
+  <label class="field"><span>Done means</span><textarea id="f-std" rows="2" placeholder="What finished looks like, so everyone does it the same way" ${ro}>${esc(t.standard||"")}</textarea></label>
+  <label class="field"><span>Steps <small>one per line</small></span><textarea id="f-steps" rows="3" ${ro}>${esc((t.steps||[]).join("\n"))}</textarea></label>
+  <label class="field"><span>Notes</span><input type="text" id="f-notes" value="${esc(t.notes||"")}" placeholder="Filter size, brand, who to call…" ${ro}></label>
+ </fieldset>
+ <div>
+ ${multiUser()?`<fieldset class="fgroup"><legend>Who</legend><label class="field"><span>Whose job</span><select id="f-who" ${ro}>${peopleOptions(t.assignee)}</select></label>${rotatePick(t.rotate,"task")}</fieldset>`:""}
+ <fieldset class="fgroup"><legend>When</legend>
+  <div class="field"><span id="rep-l">Repeats every</span><div class="repeat" role="group" aria-labelledby="rep-l"><input type="number" id="f-every" min="1" value="${t.every}" aria-label="Number" ${ro}><select id="f-unit" aria-label="Unit" ${ro}>${[["day","days"],["week","weeks"],["month","months"],["year","years"]].map(([v,l])=>`<option value="${v}" ${v===t.unit?"selected":""}>${l}</option>`).join("")}</select>${t.unit==="week"?`<span class="on">on</span><select id="f-wd" aria-label="Day of the week" ${ro}>${DAYS.map((d,i)=>`<option value="${i}" ${i===t.weekday?"selected":""}>${d}</option>`).join("")}</select>`:""}</div></div>
+  <div class="grid2 keep"><label class="field"><span>Next due</span><input type="date" id="f-next" value="${esc(t.next)}" ${ro}></label><label class="field"><span>Time</span><input type="time" id="f-time" value="${esc(t.time)}" ${ro}></label></div>
+  <div class="field"><span>Only in these months <small>for seasonal jobs</small></span><div class="months">${MONTHS.map((m,i)=>`<label><input type="checkbox" data-month="${i+1}" ${(t.months||[]).includes(i+1)?"checked":""} ${ro}><span>${m}</span></label>`).join("")}</div></div>
+  <label class="switch"><input type="checkbox" id="f-flex" ${t.flexible?"checked":""} ${ro}><span>Count from when it's finished, not a fixed date</span></label>
+ </fieldset>
+ <fieldset class="fgroup"><legend>Details</legend>
+  <div class="grid2 keep"><label class="field"><span>Room</span><select id="f-room" ${ro}>${ROOMS.map(r=>`<option ${r===t.room?"selected":""}>${r}</option>`).join("")}</select></label><label class="field"><span>Minutes</span><input type="number" id="f-mins" min="1" value="${t.mins}" ${ro}></label></div>
+  <label class="switch"><input type="checkbox" id="f-photo" ${t.photoProof?"checked":""} ${ro}><span>Ask for a photo when it's done</span></label>
+ </fieldset>
+ ${s.isNew||!S.canWrite?"":`<button class="linkish danger" data-del="1">Delete this task</button>`}
+ </div></div>`;
+ const foot=S.canWrite?`<button class="btn primary" data-save="1">${s.isNew?"Add task":"Save"}</button><button class="btn text" data-${s.isNew?"close":"viewmode"}="1">Cancel</button>`:"";
+ return sheetShell(s.isNew?"New task":"Edit task",`<h2 class="sheet-title" tabindex="-1">${s.isNew?"New task":"Edit task"}</h2>`,body,foot,"edit");
+}
+function taskSheet(s){return s.isNew||s.mode==="edit"?taskEdit(s):taskView(s)}
+
+/* Focus: move into a sheet when it opens, keep it there, and return it to what opened it */
+let sheetOpener=null;
+function selectorFor(el){if(!el||!el.dataset)return null;const k=Object.keys(el.dataset)[0];return k?`[data-${k.replace(/[A-Z]/g,m=>"-"+m.toLowerCase())}="${CSS.escape(el.dataset[k])}"]`:null}
+function afterLayer(prev){
+ const now=layer.querySelector(".sheet");
+ if(now&&!prev){sheetOpener=selectorFor(document.activeElement);(now.querySelector("[data-autofocus]")||now.querySelector(".sheet-title,h2")||now).focus?.({preventScroll:true})}
+ else if(now&&prev&&layer._mode!==(ui.sheet&&ui.sheet.mode)){(now.querySelector(".sheet-title")||now).focus?.({preventScroll:true})}
+ else if(!now&&prev&&sheetOpener){const el=document.querySelector(sheetOpener);if(el)el.focus({preventScroll:true});sheetOpener=null}
+ layer._mode=ui.sheet&&ui.sheet.mode;
+}
+document.addEventListener("keydown",e=>{
+ if(e.key!=="Tab")return;const sh=layer.querySelector(".sheet")||document.querySelector("#pinwrap .sheet");if(!sh)return;
+ const f=[...sh.querySelectorAll('button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])')].filter(x=>!x.disabled&&x.offsetParent!==null);if(!f.length)return;
+ const first=f[0],last=f[f.length-1];
+ if(!sh.contains(document.activeElement)){e.preventDefault();first.focus();return}
+ if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}
+});
