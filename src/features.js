@@ -160,7 +160,7 @@ function tasksCsv(){
 }
 
 /* Arranging (long-press) */
-const arr={timer:null,row:null,x:0,y:0,drag:null};
+const arr={timer:null,row:null,x:0,y:0,drag:null,raf:0};
 function startArrange(list){
  ui.arranging=list.dataset.sort;list.classList.add("arranging");
  list.insertAdjacentHTML("beforebegin",`<div class="arrange-bar" role="status"><span>Drag, or use the arrows, to change the order</span><button class="btn small primary" data-arrdone="1">Done</button></div>`);
@@ -175,32 +175,60 @@ function finishArrange(){
  if(key&&key.startsWith("shift:")){const r=D.routines[key.slice(6)];if(r){const by=Object.fromEntries(r.items.map(i=>[i.id,i]));const items=ids.map(id=>by[id]).filter(Boolean);r.items.forEach(i=>{if(!ids.includes(i.id))items.push(i)});updateRoutine(r,{items})}}
  ui.arranging=null;render();toast("Order saved");
 }
+/* Long-press a row: arranging starts and that row is already picked up, so one press-and-drag works.
+   Later drags start on any row in the list. The arrows do the same without dragging. */
+function grab(item,list,y){
+ const r=item.getBoundingClientRect();
+ arr.drag={el:item,list,off:y-r.top,y};item.classList.add("dragging");haptic(8);
+ cancelAnimationFrame(arr.raf);arr.raf=requestAnimationFrame(dragTick);
+}
+function dragTo(y){
+ const g=arr.drag;if(!g)return;g.y=y;
+ const sib=[...g.list.children].filter(x=>x!==g.el);
+ let before=null;for(const s of sib){const r=s.getBoundingClientRect();if(y<r.top+r.height/2){before=s;break}}
+ if(before){if(g.el.nextElementSibling!==before)before.before(g.el)}else if(g.list.lastElementChild!==g.el)g.list.appendChild(g.el);
+ g.el.style.transform="none";const top=g.el.getBoundingClientRect().top;
+ g.el.style.transform=`translateY(${Math.round(y-g.off-top)}px)`;
+}
+function dragTick(){
+ const g=arr.drag;if(!g)return;
+ const edge=90,h=window.innerHeight;let v=0;
+ if(g.y<edge)v=-Math.ceil((edge-g.y)/6);else if(g.y>h-edge-60)v=Math.ceil((g.y-(h-edge-60))/6);
+ if(v){window.scrollBy(0,v);dragTo(g.y)}
+ arr.raf=requestAnimationFrame(dragTick);
+}
+function drop(){
+ const g=arr.drag;if(!g)return;cancelAnimationFrame(arr.raf);
+ g.el.style.transform="";g.el.classList.remove("dragging");arr.drag=null;
+ swipeState.blockClick=true;setTimeout(()=>swipeState.blockClick=false,350);
+}
 document.addEventListener("pointerdown",e=>{
- const row=e.target.closest(".list[data-sort] [data-row]");if(!row||ui.arranging)return;
+ const row=e.target.closest(".list[data-sort] [data-row]");if(!row||ui.arranging||e.target.closest(".check,.mv"))return;
+ if(e.pointerType==="mouse"&&e.button!==0)return;
  arr.x=e.clientX;arr.y=e.clientY;arr.row=row;
- clearTimeout(arr.timer);arr.timer=setTimeout(()=>{const list=row.closest(".list[data-sort]");if(list&&!swipeState.moved){swipeState.el=null;startArrange(list);swipeState.blockClick=true;setTimeout(()=>swipeState.blockClick=false,600)}},550);
+ clearTimeout(arr.timer);arr.timer=setTimeout(()=>{arr.timer=null;const list=row.closest(".list[data-sort]");if(!list||swipeState.moved)return;
+  swipeState.el=null;startArrange(list);const item=row.closest(".list.arranging > *");if(item&&arr.row)grab(item,list,arr.y)},500);
 },true);
 document.addEventListener("pointermove",e=>{
- if(arr.timer&&arr.row&&(Math.abs(e.clientX-arr.x)>8||Math.abs(e.clientY-arr.y)>8)){clearTimeout(arr.timer);arr.timer=null}
- const g=arr.drag;if(!g)return;e.preventDefault();
- const dy=e.clientY-g.y;g.el.style.transform=`translateY(${dy}px)`;
- const sib=[...g.list.children].filter(x=>x!==g.el);
- for(const s of sib){const r=s.getBoundingClientRect();const mid=r.top+r.height/2;
-  if(dy>0&&e.clientY>mid&&g.el.compareDocumentPosition(s)&Node.DOCUMENT_POSITION_FOLLOWING){s.after(g.el);g.y=e.clientY;g.el.style.transform="";break}
-  if(dy<0&&e.clientY<mid&&g.el.compareDocumentPosition(s)&Node.DOCUMENT_POSITION_PRECEDING){s.before(g.el);g.y=e.clientY;g.el.style.transform="";break}}
+ if(arr.timer&&arr.row){if(Math.abs(e.clientX-arr.x)>8||Math.abs(e.clientY-arr.y)>8){clearTimeout(arr.timer);arr.timer=null}else{arr.y=e.clientY}}
+ if(!arr.drag)return;e.preventDefault();dragTo(e.clientY);
 },{passive:false});
-document.addEventListener("pointerup",()=>{clearTimeout(arr.timer);arr.timer=null;arr.row=null;if(arr.drag){arr.drag.el.style.transform="";arr.drag.el.classList.remove("dragging");arr.drag=null}});
+/* Touch: once a row is picked up, the page must not scroll instead */
+document.addEventListener("touchmove",e=>{if(arr.drag&&e.cancelable)e.preventDefault()},{passive:false});
+const endPress=()=>{clearTimeout(arr.timer);arr.timer=null;arr.row=null;drop()};
+document.addEventListener("pointerup",endPress);
+document.addEventListener("pointercancel",endPress);
 document.addEventListener("pointerdown",e=>{
- const list=e.target.closest(".list.arranging");if(!list)return;
+ const list=e.target.closest(".list.arranging");if(!list||arr.drag)return;
  const item=e.target.closest(".list.arranging > *");if(!item||e.target.closest(".mv"))return;
- e.preventDefault();arr.drag={el:item,list,y:e.clientY};item.classList.add("dragging");
+ e.preventDefault();grab(item,list,e.clientY);
 });
 
 /* Pull to refresh */
 const ptr=document.createElement("div");ptr.className="ptr";ptr.setAttribute("aria-hidden","true");document.body.appendChild(ptr);
 const pull={y0:null,dy:0};
 document.addEventListener("touchstart",e=>{if(window.scrollY>0||ui.sheet||ui.pin||ui.arranging||e.target.closest(".sheet,.swipe"))return;pull.y0=e.touches[0].clientY;pull.dy=0},{passive:true});
-document.addEventListener("touchmove",e=>{if(pull.y0==null)return;pull.dy=Math.max(0,e.touches[0].clientY-pull.y0);if(pull.dy>10){ptr.textContent=pull.dy>70?"Release to sync":"Pull to sync";ptr.style.opacity=Math.min(1,pull.dy/70);ptr.style.transform=`translate(-50%,${Math.min(pull.dy,90)/2}px)`}},{passive:true});
+document.addEventListener("touchmove",e=>{if(pull.y0==null)return;if(arr.drag||ui.arranging){pull.y0=null;ptr.style.opacity=0;return}pull.dy=Math.max(0,e.touches[0].clientY-pull.y0);if(pull.dy>10){ptr.textContent=pull.dy>70?"Release to sync":"Pull to sync";ptr.style.opacity=Math.min(1,pull.dy/70);ptr.style.transform=`translate(-50%,${Math.min(pull.dy,90)/2}px)`}},{passive:true});
 document.addEventListener("touchend",async()=>{if(pull.y0==null)return;const go=pull.dy>70;pull.y0=null;
  if(!go){ptr.style.opacity=0;return}
  ptr.textContent="Syncing…";haptic(8);await forceSync();ptr.textContent=S.note.startsWith("Offline")?"Couldn't reach the server":"Up to date";setTimeout(()=>ptr.style.opacity=0,900)});
