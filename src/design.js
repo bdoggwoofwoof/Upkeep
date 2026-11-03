@@ -33,7 +33,7 @@ function renderBase(){
  if(ui.kid){tabsEl.hidden=true;app.innerHTML=viewKid();softLayer();return}
  tabsEl.hidden=false;renderTabs();app.className="wrap "+(ui.tab==="today"||ui.tab==="home"?"wide":"narrow");
  const v={today:viewToday,shift:viewShift,schedule:viewSchedule,household:viewHousehold,home:viewHome,more:viewMore2}[ui.tab]||viewToday;
- app.innerHTML=v();softLayer();
+ app.innerHTML=v()+(ui.tab==="shift"?"":pageHelp());softLayer();
 }
 function renderTabs(){
  const u=unread()+Object.keys(D.approvals).length,cur=ui.tab==="shift"?"today":ui.tab;
@@ -221,7 +221,7 @@ function viewSchedule(){
 function actDay(ms){const d=ymd(new Date(ms)),n=daysBetween(d,today());return n===0?"Today":n===1?"Yesterday":nice(d)}
 function viewHousehold(){
  const me=myPid(),canApprove=!isKid(me),seen=ui.seenBefore??(ME.lastSeen||0);
- if(ui.tab==="household"&&ui.seenBefore==null){ui.seenBefore=ME.lastSeen||0;setTimeout(()=>{if(ui.tab==="household"){ME.lastSeen=Date.now();ls.set("upkeep-me",ME);renderTabs()}},1200)}
+ if(ui.tab==="household"&&ui.seenBefore==null&&!ui.tour){ui.seenBefore=ME.lastSeen||0;setTimeout(()=>{if(ui.tab==="household"){ME.lastSeen=Date.now();ls.set("upkeep-me",ME);renderTabs()}},1200)}
  const aps=Object.values(D.approvals).sort((a,b)=>a.at-b.at),ws=weekStats(),total=Object.values(ws).reduce((a,x)=>a+x.mins,0);
  const approvals=aps.length&&canApprove?`<section class="group"><div class="group-head"><h2>Waiting for your OK</h2><span class="stamp">${aps.length}</span></div><div class="list">${aps.map(a=>`<div class="row approve"><span class="main"><span class="name">${esc(pName(a.who))}: ${esc(a.label)}</span><span class="meta"><span>${a.kind==="reward"?`Wants this reward · ${a.pts} stars`:`${a.pts} star${a.pts>1?"s":""}`}</span><span>${ago(a.at)}</span></span>${a.photo?`<img src="${esc(photoUrl(a.photo))}" alt="Photo of ${esc(a.label)}" class="proof">`:""}</span><span class="row-acts"><button class="btn small" data-reject="${a.id}">${a.kind==="reward"?"Not now":"Redo"}</button><button class="btn small primary" data-approve="${a.id}">OK</button></span></div>`).join("")}</div></section>`:"";
  const ppl=`<section class="group"><div class="group-head"><h2>People</h2><span class="gh-r">${S.canWrite?`<button class="linkish" data-newperson="1">Add someone</button>`:""}<span class="stamp">This week</span></span></div>
@@ -393,7 +393,7 @@ function renderToastOnly(){layer.querySelectorAll(".toasts").forEach(x=>x.remove
 function softLayer(){if(ui.sheet&&layer._sheet===ui.sheet&&layer.querySelector(".sheet")){renderToastOnly();return}renderLayer()}
 const noticeQ=[];
 function nextToast(){ui.toast=null;if(noticeQ.length){const n=noticeQ.shift();showToast(n.msg,null,"notice")}else renderToastOnly()}
-function showToast(msg,undo,kind){ui.toast={msg,undo,kind};clearTimeout(toastTimer);toastTimer=setTimeout(nextToast,undo?6500:kind==="notice"?4500:3500);renderToastOnly()}
+function showToast(msg,undo,kind){if(ui.tour)return;ui.toast={msg,undo,kind};clearTimeout(toastTimer);toastTimer=setTimeout(nextToast,undo?6500:kind==="notice"?4500:3500);renderToastOnly()}
 function toast(msg,undo){showToast(msg,undo,"action")}
 function notify(msg){if(ui.kid)return;if(ui.toast&&ui.toast.undo){if(noticeQ.length<3)noticeQ.push({msg});return}showToast(msg,null,"notice")}
 

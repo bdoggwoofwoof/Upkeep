@@ -143,7 +143,9 @@ function moreSettings(){
   +setRow("Sync",S.ops.length?`${S.ops.length} change${S.ops.length>1?"s":""} saved on this phone, waiting to sync`:S.note&&/^Offline/.test(S.note)?"Offline. Changes are saved on this phone.":"Everything is synced","")
   +setRow("Leave this house",ui.confirmLeave?"This phone will need a new invite link to come back.":"Signs this phone out. Your person and history stay.",ui.confirmLeave?`<span class="confirm"><button class="btn small danger" data-leave="2">Leave</button><button class="btn small" data-leave="0">Stay</button></span>`:`<button class="btn small danger" data-leave="1">Leave</button>`))
  +group("Help",
-  setMore("h1","Add Upkeep to your Home Screen","",`<p>On iPhone: open Upkeep in Safari, tap Share, then Add to Home Screen. On Android: open the browser menu and tap Install app or Add to Home screen. It opens like an app and works offline.</p>`)
+  setRow("Take the tour","About two minutes, on a sample house",`<button class="btn small" data-tour="all">Start</button>`)
+  +setRow("Help and limitations","How things work, and what Upkeep can't do yet",`<button class="btn small" data-help="1">Open</button>`)
+  +  setMore("h1","Add Upkeep to your Home Screen","",`<p>On iPhone: open Upkeep in Safari, tap Share, then Add to Home Screen. On Android: open the browser menu and tap Install app or Add to Home screen. It opens like an app and works offline.</p>`)
   +setMore("h2","How tasks are scheduled","",`<p>Each task repeats on its own schedule. Seasonal jobs land on the first Saturday of their month. When you finish a task, the next date is set from its schedule, or from the day you finished it if it counts from when it's done.</p>`)
   +setMore("h3","Sharing with your household","",`<p>Adults join with the invite link under Household. Each phone gets its own key, so you can reset the link or remove a phone without signing anyone else out. Kids use Kid view on any family device.</p>`));
 }
@@ -286,6 +288,7 @@ document.addEventListener("change",async e=>{
 function render(){
  renderBase();
  if(S.mode==="db"){checkMilestones();if(!ui.colorsFixed&&Object.keys(D.people).length>1){ui.colorsFixed=true;fixColors()}if(ME.kidDevice&&!ui.kid&&!ui.kidBooted&&kids().length){ui.kidBooted=true;ui.kid=kids().length===1?kids()[0].id:"pick";renderBase()}}
+ maybeAutoTour();
  if(ui.arranging){const l=document.querySelector(`.list[data-sort="${ui.arranging}"]`);if(l&&!l.classList.contains("arranging"))startArrange(l)}
 }
 setInterval(()=>{if(D.house&&D.house.place)loadForecast().then(c=>{if(c&&ui.tab==="today")render()})},30*60e3);

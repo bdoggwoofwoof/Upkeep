@@ -102,13 +102,13 @@ let ME=Object.assign({house:"",key:"",token:"",feed:"",pid:"",device:"",reminder
 if(!ME.device){ME.device=Math.random().toString(36).slice(2,12);ls.set("upkeep-me",ME)}
 const S={mode:"loading",uid:ME.device,canWrite:true,note:"",isOwner:true,bootAt:Date.now(),v:0,ops:ls.get("upkeep-ops",[]),flushing:false,online:navigator.onLine,photos:true,downloads:true};
 function saveMe(){ls.set("upkeep-me",ME);render()}
-function cacheSave(){ls.set("upkeep-cache",{h:ME.house,v:S.v,D})}
+function cacheSave(){if(ui.tour)return;ls.set("upkeep-cache",{h:ME.house,v:S.v,D})}
 function applyOp(o){
  if(o.c==="house"){if(o.t==="del")D.house=null;else D.house=Object.assign({},o.d);return}
  const col=D[o.c];if(!col)return;
  if(o.t==="del")delete col[o.i];else col[o.i]=Object.assign({},o.d,{id:o.i});
 }
-function queueOp(o){applyOp(o);S.ops.push(o);ls.set("upkeep-ops",S.ops);cacheSave();render();scheduleFlush()}
+function queueOp(o){if(ui.tour){applyOp(o);render();return}applyOp(o);S.ops.push(o);ls.set("upkeep-ops",S.ops);cacheSave();render();scheduleFlush()}
 function put(col,id,data){const d=Object.assign({},data);delete d.id;queueOp({t:"set",c:col,i:id,d});return Promise.resolve()}
 function patch(col,id,data){const cur=D[col][id];if(!cur)return;return put(col,id,Object.assign({},cur,data))}
 function remove(col,id){queueOp({t:"del",c:col,i:id});return Promise.resolve()}
@@ -119,6 +119,7 @@ function logEvent(o){const id=rid();put("activity",id,Object.assign({by:S.uid,ac
 function loadMeta(res){let ch=false;if(res.invite&&res.invite!==ME.key){ME.key=res.invite;ch=true}if(res.feed&&res.feed!==ME.feed){ME.feed=res.feed;ch=true}if(res.devices)S.devices=res.devices;if(res.me)S.deviceId=res.me;if(ch)ls.set("upkeep-me",ME)}
 const authKey=()=>ME.token||ME.key;
 function loadDocs(docs,v){
+ if(ui.tour)return; // the real house is set aside during the tour; the next sync check fetches it
  const seenAct=new Set(Object.keys(D.activity));const first=S.v===0;
  D.house=docs.house&&docs.house.main?Object.assign({},docs.house.main):null;
  COLS.forEach(c=>{const m={};Object.entries(docs[c]||{}).forEach(([id,d])=>m[id]=Object.assign({},d,{id}));D[c]=m});
@@ -137,7 +138,7 @@ async function api(method,body,query){
 let flushTimer=null;
 function scheduleFlush(){clearTimeout(flushTimer);flushTimer=setTimeout(flush,350)}
 async function flush(){
- if(!ME.house||S.flushing||!S.ops.length)return;
+ if(ui.tour||!ME.house||S.flushing||!S.ops.length)return;
  S.flushing=true;const batch=S.ops.slice(0,250);
  try{
   const res=await api("POST",{h:ME.house,k:authKey(),ops:batch});loadMeta(res);
@@ -151,7 +152,7 @@ async function flush(){
  S.flushing=false;if(S.ops.length&&!S.note)scheduleFlush();
 }
 async function poll(){
- if(!ME.house||document.hidden||S.flushing||S.ops.length)return;
+ if(ui.tour||!ME.house||document.hidden||S.flushing||S.ops.length)return;
  try{const res=await api("GET",null,{h:ME.house,k:authKey(),v:S.v});if(!res.same){loadMeta(res);loadDocs(res.docs,res.v);render()}if(S.note.startsWith("Offline")){S.note="";render()}}
  catch(e){if(e.code!=="not_found"&&!S.note){S.note="Offline. Your changes are saved on this phone and will sync when you're back online.";render()}}
 }
@@ -583,6 +584,7 @@ function renderLayer(){
   ${s.err?`<p class="note err" role="alert">${esc(s.err)}</p>`:""}`,`<button class="btn primary" data-finish="1" ${s.busy?"disabled":""}>${s.busy?"Uploading…":"Complete task"}</button><button class="btn text" data-close="1">Cancel</button>`,"edit-one");
  }
  if(s&&s.kind==="form")h+=formSheet(s);
+ if(s&&s.kind==="help")h+=helpSheet();
  h+=toastHtml();
  const prev=!!layer.querySelector(".sheet");layer.innerHTML=h;layer._sheet=ui.sheet;afterLayer(prev);
 }
