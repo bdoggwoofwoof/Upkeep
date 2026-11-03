@@ -7,3 +7,17 @@
 .toast{border-radius:14px}
 .task .main .std{margin-top:2px}
 .toast span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+
+.arrange-bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;display:flex;justify-content:space-between;align-items:center;gap:var(--s3);padding:var(--s2) 0;background:var(--paper);font-size:.9rem;color:var(--ink-2)}
+.list.arranging > *{cursor:grab;touch-action:none;user-select:none}
+.list.arranging > * .row{background:var(--paper)}
+.list.arranging > *::after{content:"";position:absolute;inset-inline-end:56px;top:50%;width:16px;height:10px;transform:translateY(-50%);background:linear-gradient(var(--ink-3),var(--ink-3)) 0 0/100% 2px no-repeat,linear-gradient(var(--ink-3),var(--ink-3)) 0 50%/100% 2px no-repeat,linear-gradient(var(--ink-3),var(--ink-3)) 0 100%/100% 2px no-repeat;pointer-events:none}
+.list.arranging > *{position:relative}
+.list.arranging .check,.list.arranging .who,.list.arranging .take{visibility:hidden}
+.dragging{z-index:6;box-shadow:0 8px 24px rgb(0 0 0 / .14);background:var(--leaf)}
+.ptr{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 8px);transform:translate(-50%,0);background:var(--ink);color:var(--paper);font-size:.82rem;font-weight:600;padding:6px 14px;border-radius:999px;opacity:0;pointer-events:none;z-index:45;transition:opacity .2s}
+.pindots{display:flex;gap:14px;margin:var(--s3) 0}
+.pindots i{width:14px;height:14px;border-radius:50%;border:1.6px solid var(--ink-3)}
+.pindots i.on{background:var(--forest);border-color:var(--forest)}
+.pinpad{display:grid;grid-template-columns:repeat(3,72px);gap:12px;justify-content:center}
+.pinpad button{width:72px;height:72px;border-radius:50%;border:1px solid var(--rule);background:var(--paper);font-size:1.5rem;font-weight:500;color:var(--ink)}

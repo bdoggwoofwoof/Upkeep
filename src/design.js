@@ -13,7 +13,7 @@ const IC={
 };
 ui.tab=ui.tab==="family"?"household":ui.tab==="house"?"home":ui.tab;ui.homeView=ui.homeView||"rooms";ui.schedView=ui.schedView||"upcoming";if(!["lists","money","cal","settings"].includes(ui.more))ui.more="lists";
 
-function render(){
+function renderBase(){
  if(S.mode==="loading")return;
  if(S.mode==="welcome"){tabsEl.hidden=true;app.innerHTML=viewWelcome();softLayer();return}
  if(!myPid()&&Object.keys(D.people).length){tabsEl.hidden=true;app.innerHTML=viewWhoAmI();softLayer();return}
@@ -84,8 +84,8 @@ function viewToday(){
  return `<header class="top"><div><span class="eyebrow">${new Date().toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"})}</span><h1>${greeting()}${name?", "+esc(name):""}</h1></div>${whoSeg()}</header>
  ${todo.length?`<p class="summary"><b>${todo.length} to do today</b>, about ${mins} min${late.length?`, ${late.length} carried over`:""}.</p>${split?`<p class="summary" style="margin-top:-16px">${split}</p>`:""}`:""}
  ${banners()}
- <div class="today-grid"><div>${caught}${sect("Needs attention",late)}${sect("Today",tod)}${todo.length?"":coming}</div>
- <div>${tonightCard()}${todo.length?coming:""}${plan}</div></div>`;
+ <div class="today-grid"><div>${caught}${sect("Needs attention",late)}${todaySections(tod)}${todo.length?"":coming}</div>
+ <div>${prepCard()}${tonightCard()}${seasonCard()}${todo.length?coming:""}${plan}</div></div>`;
 }
 function viewSchedule(){
  const seg=`<div class="seg" role="group" aria-label="View">${[["upcoming","Upcoming"],["seasonal","Seasonal"],["routines","Routines"]].map(([v,l])=>`<button data-sv="${v}" aria-pressed="${ui.schedView===v}">${l}</button>`).join("")}</div>`;
@@ -97,7 +97,7 @@ function viewSchedule(){
  }else if(ui.schedView==="seasonal"){
   const months=[...Array(12)].map((_,i)=>{const d=new Date();d.setDate(1);d.setMonth(d.getMonth()+i);return{y:d.getFullYear(),m:d.getMonth()}});
   const long=tasks().filter(t=>(t.months&&t.months.length)||t.unit==="year"||(t.unit==="month"&&t.every>=3));
-  body=`<p class="lede" style="margin-top:0">The bigger jobs, month by month: seasonal maintenance, yearly service and everything that only comes around a few times a year.</p>`+months.map(({y,m})=>{const list=long.filter(t=>{const d=parse(t.next);return d.getFullYear()===y&&d.getMonth()===m}).sort((a,b)=>a.next.localeCompare(b.next));
+  body=seasonBlock()+`<p class="lede" style="margin-top:0">The bigger jobs, month by month: seasonal maintenance, yearly service and everything that only comes around a few times a year.</p>`+months.map(({y,m})=>{const list=long.filter(t=>{const d=parse(t.next);return d.getFullYear()===y&&d.getMonth()===m}).sort((a,b)=>a.next.localeCompare(b.next));
    return list.length?`<section class="group"><div class="group-head"><h2>${new Date(y,m,1).toLocaleDateString(undefined,{month:"long",year:y!==new Date().getFullYear()?"numeric":undefined})}</h2><span class="stamp">${list.length} job${list.length>1?"s":""}</span></div><div class="list">${list.map(taskRow).join("")}</div></section>`:""}).join("");
  }else{
   body=`<div class="list">${routines().map(r=>{const done=r.items.filter(i=>D.checks[checkId(r.id,i.id)]).length;return `<button class="row" data-openroutine="${r.id}"><span class="main"><span class="name">${esc(r.name)}</span><span class="meta"><span>${t12(r.time)}</span><span>${(r.days||[]).length===7?"Every day":(r.days||[]).map(d=>DAYS[d].slice(0,3)).join(", ")}</span><span>${r.items.length} items</span>${routineRunsTonight(r)?`<span>${done} of ${r.items.length} done tonight</span>`:""}</span></span><span class="linkish">Open</span></button>`}).join("")||`<div class="empty"><strong>No routines yet.</strong>A closing shift is the short list everyone runs before bed.</div>`}</div>
@@ -177,7 +177,7 @@ document.addEventListener("click",e=>{
 const swipeState={el:null,x:0,y:0,dx:0,open:null,blockClick:false,moved:false};
 function closeSwipe(){if(swipeState.open){swipeState.open.style.transform="";swipeState.open=null}}
 document.addEventListener("pointerdown",e=>{
- const row=e.target.closest(".swipe > .row");if(!row||e.pointerType==="mouse"&&e.button!==0)return;
+ const row=e.target.closest(".swipe > .row");if(!row||ui.arranging||e.pointerType==="mouse"&&e.button!==0)return;
  if(swipeState.open&&swipeState.open!==row)closeSwipe();
  Object.assign(swipeState,{el:row,x:e.clientX,y:e.clientY,dx:0,moved:false});
 });
@@ -216,8 +216,8 @@ function viewShift(){
  ${rs.length>1?chips:""}
  <div class="progress"><i style="width:${all?done/all*100:0}%"></i></div>
  <p class="note" style="margin-bottom:var(--s4)">${done} of ${all} done${closed?". Nice work, everyone.":""} · Resets at 4 AM</p>
- <div class="list">${order.map(i=>{const c=D.checks[checkId(r.id,i.id)],nc=commentsFor("item:"+r.id+":"+i.id).length,pend=c&&Object.values(D.approvals).some(a=>a.ref===c.id);
-  return `<div class="row task"><button class="main" data-item="${i.id}"><span class="name" ${c?'style="color:var(--ink-2)"':""}>${esc(i.text)}</span>
+ <div class="list" data-sort="shift:${r.id}">${order.map(i=>{const c=D.checks[checkId(r.id,i.id)],nc=commentsFor("item:"+r.id+":"+i.id).length,pend=c&&Object.values(D.approvals).some(a=>a.ref===c.id);
+  return `<div class="row task" data-row="${i.id}"><button class="main" data-item="${i.id}"><span class="name" ${c?'style="color:var(--ink-2)"':""}>${esc(i.text)}</span>
    ${i.standard&&!c?`<span class="std"><b>Done means:</b> ${esc(i.standard)}</span>`:""}
    <span class="meta">${c?`<span class="checked-by">${esc(pShort(c.who))} · ${clock(c.at)}${pend?" · waiting for OK":""}</span>`:""}${nc?`<span>${nc} comment${nc>1?"s":""}</span>`:""}</span></button>
    ${multiUser()?(i.assignee?`<span class="who">${av(i.assignee)}<span>${esc(pShort(i.assignee))}</span></span>`:`<span class="who">Anyone</span>`):"<span></span>"}

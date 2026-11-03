@@ -33,6 +33,7 @@ ${r('lib2.js')}
 ${r('app.js')}
 ${r('design.js')}
 ${r('web.js')}
+${r('features.js')}
 </script>
 </body>
 </html>

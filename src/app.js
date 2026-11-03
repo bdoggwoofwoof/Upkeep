@@ -94,7 +94,7 @@ const money=c=>(c<0?"−":"")+"$"+(Math.abs(c)/100).toFixed(2);
 const COLS=["tasks","routines","checks","comments","activity","people","approvals","rewards","things","service","pros","info","items","expenses"];
 const D={house:null};COLS.forEach(c=>D[c]={});
 const ls={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
-let ME=Object.assign({house:"",key:"",pid:"",device:"",reminder:30,defaultTime:"09:00",lastSeen:0,notify:false},ls.get("upkeep-me",{}));
+let ME=Object.assign({house:"",key:"",token:"",feed:"",pid:"",device:"",reminder:30,defaultTime:"09:00",lastSeen:0,notify:false},ls.get("upkeep-me",{}));
 if(!ME.device){ME.device=Math.random().toString(36).slice(2,12);ls.set("upkeep-me",ME)}
 const S={mode:"loading",uid:ME.device,canWrite:true,note:"",isOwner:true,bootAt:Date.now(),v:0,ops:ls.get("upkeep-ops",[]),flushing:false,online:navigator.onLine,photos:true,downloads:true};
 function saveMe(){ls.set("upkeep-me",ME);render()}
@@ -112,6 +112,8 @@ function putHouse(data){const h=Object.assign({},D.house||{},data);queueOp({t:"s
 function setHouse(h){queueOp({t:"set",c:"house",i:"main",d:h})}
 function logEvent(o){const id=rid();put("activity",id,Object.assign({by:S.uid,actor:myPid(),who:myPid(),at:Date.now(),pts:0,mins:0},o));return id}
 
+function loadMeta(res){let ch=false;if(res.invite&&res.invite!==ME.key){ME.key=res.invite;ch=true}if(res.feed&&res.feed!==ME.feed){ME.feed=res.feed;ch=true}if(res.devices)S.devices=res.devices;if(res.me)S.deviceId=res.me;if(ch)ls.set("upkeep-me",ME)}
+const authKey=()=>ME.token||ME.key;
 function loadDocs(docs,v){
  const seenAct=new Set(Object.keys(D.activity));const first=S.v===0;
  D.house=docs.house&&docs.house.main?Object.assign({},docs.house.main):null;
@@ -134,11 +136,11 @@ async function flush(){
  if(!ME.house||S.flushing||!S.ops.length)return;
  S.flushing=true;const batch=S.ops.slice(0,250);
  try{
-  const res=await api("POST",{h:ME.house,k:ME.key,ops:batch});
+  const res=await api("POST",{h:ME.house,k:authKey(),ops:batch});loadMeta(res);
   S.ops=S.ops.slice(batch.length);ls.set("upkeep-ops",S.ops);
   loadDocs(res.docs,res.v);if(S.note.startsWith("Offline"))S.note="";render();
  }catch(e){
-  if(e.code==="not_found"){S.note="This house link no longer works. Ask for a new invite link.";}
+  if(e.code==="not_found"){S.note="This phone no longer has access to the house. Ask someone in the house for a new invite link.";}
   else S.note="Offline. Your changes are saved on this phone and will sync when you're back online.";
   render();setTimeout(scheduleFlush,8000);
  }
@@ -146,7 +148,7 @@ async function flush(){
 }
 async function poll(){
  if(!ME.house||document.hidden||S.flushing||S.ops.length)return;
- try{const res=await api("GET",null,{h:ME.house,k:ME.key,v:S.v});if(!res.same){loadDocs(res.docs,res.v);render()}if(S.note.startsWith("Offline")){S.note="";render()}}
+ try{const res=await api("GET",null,{h:ME.house,k:authKey(),v:S.v});if(!res.same){loadMeta(res);loadDocs(res.docs,res.v);render()}if(S.note.startsWith("Offline")){S.note="";render()}}
  catch(e){if(e.code!=="not_found"&&!S.note){S.note="Offline. Your changes are saved on this phone and will sync when you're back online.";render()}}
 }
 setInterval(poll,15000);
@@ -157,9 +159,11 @@ async function boot(){
  if(!ME.house){S.mode="welcome";render();if(ui.join)joinHouse(ui.join.h,ui.join.k);return}
  const c=ls.get("upkeep-cache",null);
  if(c&&c.h===ME.house){Object.assign(D,c.D);S.v=c.v||0;S.ops.forEach(applyOp);S.mode="db";render()}
- try{const res=await api("GET",null,{h:ME.house,k:ME.key});S.v=0;loadDocs(res.docs,res.v);S.mode="db";S.note="";afterLoad()}
+ try{
+  if(!ME.token){const j=await api("POST",{join:true,h:ME.house,k:ME.key,label:deviceLabel()});ME.token=j.token;ls.set("upkeep-me",ME)}
+  const res=await api("GET",null,{h:ME.house,k:authKey()});S.v=0;loadMeta(res);loadDocs(res.docs,res.v);S.mode="db";S.note="";afterLoad()}
  catch(e){
-  if(e.code==="not_found"){S.mode="welcome";S.note="That house couldn't be found. Start a new one or use an invite link.";ME.house="";saveMe();return}
+  if(e.code==="not_found"){S.mode="welcome";S.note="This phone no longer has access to that house. Ask someone in the house for a new invite link, or start a new house.";ME.house="";ME.token="";saveMe();return}
   S.mode="db";S.note="Offline. Showing what's saved on this phone.";render();
  }
  scheduleFlush();
@@ -167,8 +171,8 @@ async function boot(){
 async function createHouse(name){
  ui.busy=true;render();
  try{
-  const res=await api("POST",{create:true});
-  ME.house=res.h;ME.key=res.key;S.ops=[];ls.set("upkeep-ops",[]);
+  const res=await api("POST",{create:true,label:deviceLabel()});
+  ME.house=res.h;ME.token=res.token;loadMeta(res);S.ops=[];ls.set("upkeep-ops",[]);
   COLS.forEach(c=>D[c]={});D.house=null;S.v=res.v;
   const pid=rid();ME.pid=pid;saveMe();
   put("people",pid,{name:name||"Me",role:"adult",color:COLORS[0],joined:today(),owner:true});
@@ -177,16 +181,16 @@ async function createHouse(name){
 }
 async function joinHouse(h,k){
  ui.busy=true;render();
- try{const res=await api("GET",null,{h,k});ME.house=h;ME.key=k;ME.pid="";S.ops=[];ls.set("upkeep-ops",[]);S.v=0;loadDocs(res.docs,res.v);saveMe();S.mode="db";ui.busy=false;ui.join=null;render()}
+ try{const res=await api("POST",{join:true,h,k,label:deviceLabel()});ME.house=h;ME.token=res.token;ME.pid="";loadMeta(res);S.ops=[];ls.set("upkeep-ops",[]);S.v=0;loadDocs(res.docs,res.v);saveMe();S.mode="db";ui.busy=false;ui.join=null;render()}
  catch(e){ui.busy=false;S.note=e.code==="not_found"?"That invite link doesn't work. Ask for a new one.":"Couldn't reach the server. Check your connection and try again.";render()}
 }
-function leaveHouse(){ME.house="";ME.key="";ME.pid="";saveMe();S.ops=[];ls.set("upkeep-ops",[]);ls.set("upkeep-cache",null);COLS.forEach(c=>D[c]={});D.house=null;S.mode="welcome";render()}
+function leaveHouse(){ME.house="";ME.key="";ME.token="";ME.feed="";ME.pid="";saveMe();S.ops=[];ls.set("upkeep-ops",[]);ls.set("upkeep-cache",null);COLS.forEach(c=>D[c]={});D.house=null;S.mode="welcome";render()}
 function inviteLink(){return `${location.origin}/#join=${ME.house}.${ME.key}`}
 function afterLoad(){render()}
 function subChecks(){}
 async function uploadPhoto(file){
  const data=await shrink(file);
- const r=await fetch("/api/photo",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({h:ME.house,k:ME.key,data})});
+ const r=await fetch("/api/photo",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({h:ME.house,k:authKey(),data})});
  if(r.status===413)throw{code:"too_large"};if(!r.ok)throw{code:"upload"};
  return(await r.json()).url;
 }
@@ -196,6 +200,8 @@ function shrink(file){
   img.onerror=()=>{URL.revokeObjectURL(u);rej({code:"unsupported_type"})};img.src=u});
 }
 const photoUrl=x=>!x?"":/^https?:/.test(x)?x:"";
+function deviceLabel(){const u=navigator.userAgent;const kind=/iPad/.test(u)?"iPad":/iPhone/.test(u)?"iPhone":/Android/.test(u)?(/Mobile/.test(u)?"Android phone":"Android tablet"):/Mac/.test(u)?"Mac":/Windows/.test(u)?"Windows computer":"Device";return kind+" · "+new Date().toLocaleDateString(undefined,{month:"short",day:"numeric"})}
+async function houseAction(body){const res=await api("POST",Object.assign({h:ME.house,k:authKey()},body));loadMeta(res);loadDocs(res.docs,res.v);render();return res}
 
 /* ---------- People ---------- */
 const names={},asked=new Set();
@@ -334,7 +340,7 @@ function eventTimes(t){const [h,m]=(t.time||"09:00").split(":").map(Number);cons
 function eventDesc(t){let d=t.room?`${t.room} · ${freqText(t)} · about ${t.mins} min`:"";if(t.assignee)d+=`\nWhose job: ${pName(t.assignee)}`;if(t.standard)d+=`\n\nDone means: ${t.standard}`;if(t.steps&&t.steps.length)d+="\n\nChecklist:\n"+t.steps.map(s=>"☐ "+s).join("\n");if(t.notes)d+="\n\n"+t.notes;return(d+"\n\nFrom Upkeep").trim()}
 function gcalLink(t){const {start,end}=eventTimes(t),c=s=>s.replace(/[-:]/g,"");return"https://calendar.google.com/calendar/render?"+new URLSearchParams({action:"TEMPLATE",text:t.name,dates:c(start)+"/"+c(end),details:eventDesc(t),recur:rrule(t)})}
 function routineAsEvent(r){let next=today();const days=r.days||[0,1,2,3,4,5,6];while(!days.includes(parse(next).getDay()))next=addDays(next,1);return{name:r.name,unit:"day",every:1,byday:days,mins:30,time:r.time,next,steps:r.items.map(i=>i.text+(i.assignee?` (${pName(i.assignee)})`:"")),notes:"Check items off in Upkeep so everyone can see.",room:""}}
-function icsUrl(o={}){const q=new URLSearchParams(Object.assign({h:ME.house,k:ME.key,r:String(ME.reminder)},o));return `${location.origin}/api/ics?${q}`}
+function icsUrl(o={}){const q=new URLSearchParams(Object.assign({h:ME.house,k:ME.feed||ME.key,r:String(ME.reminder)},o));return `${location.origin}/api/ics?${q}`}
 const webcal=u=>u.replace(/^https?:/,"webcal:");
 const googleSub=u=>"https://calendar.google.com/calendar/r?cid="+encodeURIComponent(webcal(u));
 
@@ -779,7 +785,7 @@ function readDraft(){
  d.rotate=[...document.querySelectorAll('[data-rot="task"]:checked')].map(x=>x.value);
  if(d.rotate.length>1&&!d.rotate.includes(d.assignee))d.assignee=d.rotate[0];
  d.months=[...document.querySelectorAll("[data-month]:checked")].map(x=>+x.dataset.month);
- d.next=v("f-next").value||today();d.time=v("f-time").value||"09:00";d.flexible=v("f-flex").checked;d.photoProof=v("f-photo").checked;
+ d.next=v("f-next").value||today();d.time=v("f-time").value||"09:00";d.timeSet=!!d.timeSet||d.time!==(ME.defaultTime||"09:00");d.flexible=v("f-flex").checked;d.photoProof=v("f-photo").checked;
  d.standard=v("f-std").value.trim();d.steps=v("f-steps").value.split("\n").map(x=>x.trim()).filter(Boolean);d.notes=v("f-notes").value.trim();
  return d;
 }

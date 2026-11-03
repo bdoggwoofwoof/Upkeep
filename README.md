@@ -12,6 +12,11 @@ A shared household app that takes the mental load out of running a home. It know
 - **Family**: approvals, weekly share of the work, streaks, history, live notices.
 - **More**: home info board, appliances with warranty and service history, contractors, shopping lists, shared expenses, printable fridge chart, Away mode.
 - **Calendar**: subscribe once in Google or Apple Calendar (`/api/ics`) and tasks stay in sync; per-task Google links and .ics files.
+- Today groups tasks by morning, afternoon, evening and anytime; long-press a list to rearrange; pull down to sync.
+- Season checklists (Winter, Spring, Summer, Fall) and household milestones.
+- Freeze, snow, wind and heat prep lists from the forecast.
+- Backup and restore (JSON), tasks as CSV, undo after deleting.
+- Optional PIN to leave Kid view; a device can open straight into Kid view.
 - Installable on the phone (Add to Home Screen), works offline and syncs when back online.
 
 ## How it's built
@@ -19,6 +24,8 @@ A shared household app that takes the mental load out of running a home. It know
 - `api/house.js` stores each house as one private JSON file in Vercel Blob, with conditional writes (`ifMatch`) so simultaneous edits don't overwrite each other. Phones sync every 15 seconds while the app is open.
 - `api/photo.js` stores photos (shrunk to 1600px on the phone) as public Blob files with random names.
 - `api/ics.js` serves the calendar feed.
-- A house is reached by its id and secret key (the invite link). Anyone with the link can see and change that house.
+- Access: the invite link carries a join key. Joining gives that phone its own device key, so the invite link can be reset without signing anyone out, and a single phone can be removed from Household → Phones in this house. Calendar feeds use a separate read-only key.
+- `api/health.js` checks Blob storage end to end (write, read, conditional write, stale write refused).
+- Weather prep uses the free Open-Meteo forecast for the town set in Settings.
 
 Needs a Vercel Blob store connected to the project (`BLOB_READ_WRITE_TOKEN`).

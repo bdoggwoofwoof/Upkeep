@@ -1,4 +1,4 @@
-import { read, keyOk, ID_RE } from './_store.js';
+import { read, auth, ID_RE } from './_store.js';
 
 const RR = ['SU','MO','TU','WE','TH','FR','SA'];
 const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -31,7 +31,7 @@ export default async function handler(req, res) {
     const { h, k, p = 'all', task, routine, dl, r } = req.query;
     if (!ID_RE.test(h || '')) return res.status(400).send('Bad link');
     const cur = await read(h);
-    if (!cur || !keyOk(cur.state, k)) return res.status(404).send('Not found');
+    if (!cur || !auth(cur.state, k)) return res.status(404).send('Not found');
     const docs = cur.state.docs || {}, people = docs.people || {};
     const remind = r === undefined ? 30 : Number(r);
     let tasks = Object.entries(docs.tasks || {}), routines = Object.entries(docs.routines || {});
