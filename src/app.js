@@ -1,4 +1,4 @@
-const STARTER_DAILY_CAP=6;
+const STARTER_DAILY_CAP=5;
 const LIB=LIB_RAW.map((r,i)=>({lib:"L"+i,pack:r[0],room:r[1],name:r[2],unit:r[3],every:r[4],mins:r[5],steps:r[6]?r[6].split("|"):[],months:(r.meta&&r.meta.m)||[],req:(r.meta&&r.meta.r)||[]}));
 const ROOMS=["Kitchen","Bathroom","Bedroom","Living areas","Whole house","Laundry","Outside","Systems","Safety","Money & admin","Supplies","Car","Pets","Other"];
 const DAYS=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
@@ -247,11 +247,11 @@ function spreadStart(src,i){
  if(src.months&&src.months.length){
   const d=new Date();if(!src.months.includes(d.getMonth()+1))return today();
   const left=new Date(d.getFullYear(),d.getMonth()+1,0).getDate()-d.getDate()+1;
-  return addDays(today(),(i*5+(src.lib?parseInt(src.lib.slice(1)):0))%Math.max(1,left));
+  return addDays(today(),left>1?1+(i*5+(src.lib?parseInt(src.lib.slice(1)):0))%(left-1):0);
  }
  if(src.unit==="day")return today();
  const span=Math.min(intervalDays(src),src.unit==="week"?7:45);
- return addDays(today(),(i*3+(src.lib?parseInt(src.lib.slice(1)):0))%span);
+ return addDays(today(),1+(i*3+(src.lib?parseInt(src.lib.slice(1)):0))%span); // nothing but daily tasks lands on day one
 }
 const tasks=()=>Object.values(D.tasks);
 function finishTask(id,credit,photo){
@@ -486,12 +486,12 @@ function profileForm(pr){
 }
 function viewSetup(){
  const pr=ui.setup||(ui.setup={home:"house",own:"own",closing:true});
- const tags=tagsOf(pr),fit=LIB.filter(l=>libFits(l,tags)),count=fit.filter(l=>l.unit!=="day").length+Math.min(STARTER_DAILY_CAP,fit.filter(l=>l.unit==="day").length);
- return `<header class="top"><div><div class="eyebrow">Upkeep · set up your house</div><h1>Tell us about your home</h1></div></header>${note()}
- <p class="lede">Upkeep picks the tasks that fit your home, sets each one to the right season (furnace in fall, AC in spring, faucets before the first freeze), and spreads the rest so nothing piles up on day one.</p>
+ return `<header class="top"><div class="ttl"><h1>Set up your house</h1></div></header>${banners()}
+ <p class="lede">Tell Upkeep a little about your home. It picks the tasks that fit and spaces them out, so you start with a handful each day and seasonal jobs show up when their season comes.</p>
  ${profileForm(pr)}
- <label class="pack" style="margin-top:12px"><input type="checkbox" id="su-closing" ${pr.closing?"checked":""}><span><b>Closing shift</b><small>A nightly checklist the family splits up: dishes, counters, doors, lights</small></span></label>
- <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;align-items:center"><button class="btn primary" data-setup="1">Add ${count} tasks</button><button class="btn" data-setup="0">Start empty</button></div>`;
+ <div class="set-list setup-shift"><label class="set-row"><span class="s-text"><span class="s-label">Closing shift</span><span class="s-sub">A short nightly list the household splits up: dishes, counters, doors, lights</span></span><input type="checkbox" class="sw" id="su-closing" ${pr.closing?"checked":""}></label></div>
+ <p class="note">You can add, change or remove any task later.</p>
+ <div class="btn-row setup-go"><button class="btn primary" data-setup="1">Set up my house</button><button class="btn text" data-setup="0">Start with an empty list</button></div>`;
 }
 
 /* ---------- Sheets ---------- */
