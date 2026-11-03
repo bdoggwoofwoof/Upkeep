@@ -89,8 +89,10 @@ button.row{border:0;border-bottom:1px solid var(--rule);text-align:start;width:1
 .row .meta > span + span::before{content:"";display:none}
 .std{font-size:var(--fs-sm);color:var(--ink-2);overflow-wrap:anywhere;max-width:60ch}
 .std b{color:var(--ink);font-weight:600}
-.empty{padding:var(--s4) 0;color:var(--ink-2);border-bottom:1px solid var(--rule)}
-.empty strong{color:var(--ink);font-weight:600;display:block;margin-bottom:2px}
+.empty{padding:var(--s4) 0 var(--s5);color:var(--ink-2)}
+.empty strong{color:var(--ink);font-family:var(--serif);font-weight:500;font-size:var(--fs-lg);display:block;margin-bottom:2px}
+.skel{height:56px;border-bottom:1px solid var(--rule);background:linear-gradient(90deg,transparent 0,var(--tint) 30%,transparent 60%) 0 0/200% 100%;animation:shimmer 1.4s linear infinite}
+@keyframes shimmer{to{background-position:-200% 0}}
 
 /* Task row: name + who on the left, complete button at the thumb edge */
 .task{grid-template-columns:1fr auto}
@@ -307,8 +309,14 @@ nav.tabs .brand{display:none}
 .sheet .panel{background:var(--leaf);width:100%;max-width:640px;max-height:90vh;overflow:auto;border-radius:var(--r-lg) var(--r-lg) 0 0;padding:var(--s5) max(18px,env(safe-area-inset-right,0px)) calc(var(--s5) + env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:var(--s4);animation:rise .28s var(--ease)}
 .sheet .bar{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--s3)}
 .sheet h2{font-family:var(--serif);font-weight:500;font-size:var(--fs-2xl)}
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(82px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--paper);padding:12px 16px;border-radius:999px;display:flex;gap:var(--s4);align-items:center;z-index:40;font-size:var(--fs-md);max-width:calc(100% - 32px);animation:rise .22s var(--ease)}
-.toast button{background:none;border:0;color:inherit;font-weight:700}
+.toasts{position:fixed;inset-inline:0;bottom:0;z-index:40;pointer-events:none;display:flex;justify-content:center;padding:0 max(8px,env(safe-area-inset-right,0px)) env(safe-area-inset-bottom,0px) max(8px,env(safe-area-inset-left,0px))}
+.toasts.top{bottom:auto;top:0;padding-top:calc(env(safe-area-inset-top,0px) + 8px)}
+.toast{pointer-events:auto;width:100%;max-width:560px;min-height:58px;margin-bottom:4px;background:var(--ink);color:var(--paper);padding:8px 4px 8px 16px;border-radius:var(--r);display:flex;gap:var(--s2);align-items:center;font-size:var(--fs-md);animation:rise .22s var(--ease)}
+.toast > span{flex:1;min-width:0;line-height:1.3}
+.toast button{background:none;border:0;color:inherit;font-weight:700;min-height:44px;padding:0 10px;border-radius:var(--r-sm)}
+.toast .t-x{width:44px;padding:0;display:grid;place-items:center;opacity:.8}
+.toast .t-x svg{width:16px;height:16px}
+.toast.notice{background:var(--forest);color:var(--forest-ink)}
 
 /* Task sheet: a read view with a compact action bar, and a grouped edit form */
 .sheet .panel.split{padding:0;gap:0;overflow:hidden}
@@ -493,7 +501,10 @@ input.sw:disabled{opacity:.5}
   .wrap.narrow{max-width:840px}
   .sheet{inset:0;align-items:center}
   .sheet .panel{border-radius:var(--r-lg);max-height:86vh}
-  .toast{bottom:var(--s5);left:calc(50% + 110px)}
+  .toasts:not(.top){inset-inline:0 auto;width:220px;padding:0 12px 16px}
+  .toasts:not(.top) .toast{font-size:var(--fs-sm);flex-wrap:wrap;padding:12px 4px 4px 14px}
+  .toasts:not(.top) .toast > span{flex-basis:calc(100% - 48px)}
+  .toasts:not(.top) .toast [data-undo]{order:3;margin-inline-start:-10px}
   .ptr{left:calc(50% + 110px)}
   h1{font-size:2.4rem}
 }
@@ -503,9 +514,7 @@ input.sw:disabled{opacity:.5}
 .row:has(> .check:first-child) .check{margin-inline:-8px 0}
 
 .take{border:1px solid var(--rule);background:transparent;border-radius:999px;padding:5px 12px;font-size:var(--fs-sm);font-weight:600;color:var(--forest);white-space:nowrap;min-height:34px}
-.toast{border-radius:14px}
 .task .main .std{margin-top:2px}
-.toast span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 
 .ptr{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 8px);transform:translate(-50%,0);background:var(--ink);color:var(--paper);font-size:var(--fs-sm);font-weight:600;padding:6px 14px;border-radius:999px;opacity:0;pointer-events:none;z-index:45;transition:opacity .2s}
 .pindots{display:flex;gap:14px;margin:var(--s3) 0}
@@ -518,8 +527,9 @@ input.sw:disabled{opacity:.5}
 </head>
 <body>
 <div class="wrap" id="app">
-  <header class="top"><div><div class="eyebrow">Upkeep</div><h1>Opening your house…</h1></div></header>
-  <div class="empty">Loading your tasks.</div>
+  <header class="top"><div><h1>Upkeep</h1></div></header>
+  <p class="summary" role="status">Opening your house…</p>
+  <div class="skel"></div><div class="skel"></div><div class="skel"></div>
 </div>
 <nav class="tabs" id="tabs" hidden><div class="in"></div></nav>
 <div id="layer"></div>
@@ -1312,7 +1322,7 @@ function profileForm(pr){
 }
 function viewSetup(){
  const pr=ui.setup||(ui.setup={home:"house",own:"own",closing:true});
- return `<header class="top"><div class="ttl"><h1>Set up your house</h1></div></header>${banners()}
+ return `<header class="top"><div class="ttl"><h1>Set up your house</h1></div></header>${systemNotices()}
  <p class="lede">Tell Upkeep a little about your home. It picks the tasks that fit and spaces them out, so you start with a handful each day and seasonal jobs show up when their season comes.</p>
  ${profileForm(pr)}
  <div class="set-list setup-shift"><label class="set-row"><span class="s-text"><span class="s-label">Closing shift</span><span class="s-sub">A short nightly list the household splits up: dishes, counters, doors, lights</span></span><input type="checkbox" class="sw" id="su-closing" ${pr.closing?"checked":""}></label></div>
@@ -1418,7 +1428,7 @@ function renderLayer(){
   <div><button class="btn primary" data-finish="1" ${s.busy?"disabled":""}>${s.busy?"Uploading…":"Complete task"}</button></div></div></div>`;
  }
  if(s&&s.kind==="form")h+=formSheet(s);
- if(ui.toast)h+=`<div class="toast" role="status"><span>${esc(ui.toast.msg)}</span>${ui.toast.undo?'<button data-undo="1">Undo</button>':""}</div>`;
+ h+=toastHtml();
  const prev=!!layer.querySelector(".sheet");layer.innerHTML=h;layer._sheet=ui.sheet;afterLayer(prev);
 }
 function readDraft(){
@@ -1478,7 +1488,7 @@ document.addEventListener("click",async e=>{
  if(ds.askdel){readDraft();ui.sheet.confirmDel=true;renderLayer();return}
  if(ds.nodel){readDraft();ui.sheet.confirmDel=false;renderLayer();return}
  if(ds.del){const id=ui.sheet.id;ui.sheet=null;remove("tasks",id);return}
- if(ds.undo){const u=ui.toast&&ui.toast.undo;ui.toast=null;if(u)u();renderLayer();return}
+ if(ds.undo){const u=ui.toast&&ui.toast.undo;clearTimeout(toastTimer);ui.toast=null;if(u)u();nextToast();return}
  if(ds.comment){const inp=document.getElementById("c-text");if(ui.sheet&&ui.sheet.kind==="task")readDraft();addComment(ds.comment,inp?inp.value:"",ds.label);return}
  // plan + timer
  if(ds.plan!=null){const m=+ds.plan;if(!m){ui.plan=null;timerPause();render();return}ui.plan={mins:m,ids:buildPlan(m)};const tot=ui.plan.ids.reduce((a,id)=>a+(D.tasks[id].mins|0),0);timerPause();timer.left=tot*60;render();return}
@@ -1725,7 +1735,7 @@ function viewToday(){
  const notes=houseNotices();
  const extra=`${seasonRow()}${coming}${plan}${notes?`<section class="group"><div class="group-head"><h2>Reminders</h2></div><div class="notices">${notes}</div></section>`:""}${kids().length?`<p class="foot-link"><button class="linkish" data-kidview="1">Open Kid view</button></p>`:""}`;
  return `<header class="top today-head"><div class="ttl"><h1>Today</h1><span class="date">${new Date().toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"})}</span></div>${whoSeg()}</header>
- ${summary}${systemNotices()}${actionNotices()?`<div class="notices">${actionNotices()}</div>`:""}
+ ${systemNotices()}${summary}${actionNotices()?`<div class="notices">${actionNotices()}</div>`:""}
  <div class="today-grid">${top?`<div class="t-top">${top}</div>`:""}
  <div class="t-main">${caught}${listSection("Needs attention",late,{stamp:""})}${todayTasks(tod)}</div>
  <div class="t-side">${extra}</div></div>`;
@@ -1890,7 +1900,7 @@ function viewHome(){
 function viewMore2(){
  const tabs=[["lists","Shopping"],["money","Costs"],["cal","Calendar"],["settings","Settings"]];
  const body={lists:moreLists,money:moreMoney,cal:moreCal,settings:moreSettings}[ui.more]();
- return `<header class="top"><div class="ttl"><h1>${{lists:"Shopping",money:"Shared costs",cal:"Calendar",settings:"Settings"}[ui.more]}</h1></div></header>${banners()}${subnav("More",tabs,ui.more,"more")}${body}`;
+ return `<header class="top"><div class="ttl"><h1>${{lists:"Shopping",money:"Shared costs",cal:"Calendar",settings:"Settings"}[ui.more]}</h1></div></header>${systemNotices()}${subnav("More",tabs,ui.more,"more")}${body}`;
 }
 
 /* ---------- Interaction: completion moment, swipe, haptics, kid chime ---------- */
@@ -1928,6 +1938,7 @@ document.addEventListener("click",e=>{
  if(ds.claim&&b.closest(".acts")){e.stopImmediatePropagation();closeSwipe();claim(ds.claim);return}
  if(ds.actmore){e.stopImmediatePropagation();ui.actLimit=(ui.actLimit||25)+50;render();return}
  if(ds.more&&b.closest(".set-row")){e.stopImmediatePropagation();ui.more=ds.more;render();window.scrollTo(0,0);return}
+ if(ds.toastx){e.stopImmediatePropagation();clearTimeout(toastTimer);nextToast();return}
  if(ds.jump){e.stopImmediatePropagation();jumpTo(ds.jump);return}
  if(ds.sv){e.stopImmediatePropagation();ui.schedView=ds.sv;render();return}
  if(ds.hv2){e.stopImmediatePropagation();ui.homeView=ds.hv2;ui.q="";ui.roomOpen=null;render();window.scrollTo(0,0);if(ds.hv2!=="rooms")document.querySelector("h1")?.setAttribute("tabindex","-1"),document.querySelector("h1")?.focus({preventScroll:true});return}
@@ -1960,21 +1971,31 @@ document.addEventListener("pointerup",()=>{
 document.addEventListener("pointercancel",()=>{if(swipeState.el){swipeState.el.style.transform="";swipeState.el=null}});
 
 /* Background re-renders (sync, polling) must not rebuild an open sheet, or typed input is lost. */
-function toastHtml(){return ui.toast?`<div class="toast" role="status"><span>${esc(ui.toast.msg)}</span>${ui.toast.undo?'<button data-undo="1">Undo</button>':""}</div>`:""}
-function renderToastOnly(){layer.querySelectorAll(".toast").forEach(x=>x.remove());if(ui.toast)layer.insertAdjacentHTML("beforeend",toastHtml())}
+/* Feedback: one slot over the tab bar (top of the screen when a sheet or Kid view is open).
+   Undo has priority; notices about what others did wait their turn and never replace an Undo. */
+function toastHtml(){
+ const t=ui.toast;if(!t)return"";
+ const top=!!(ui.sheet||ui.kid||tabsEl.hidden);
+ return `<div class="toasts${top?" top":""}"><div class="toast${t.kind==="notice"?" notice":""}" role="status" aria-live="polite"><span>${esc(t.msg)}</span>${t.undo?'<button data-undo="1">Undo</button>':""}<button class="t-x" data-toastx="1" aria-label="Dismiss">${IC.x}</button></div></div>`;
+}
+function renderToastOnly(){layer.querySelectorAll(".toasts").forEach(x=>x.remove());if(ui.toast)layer.insertAdjacentHTML("beforeend",toastHtml())}
 function softLayer(){if(ui.sheet&&layer._sheet===ui.sheet&&layer.querySelector(".sheet")){renderToastOnly();return}renderLayer()}
-function toast(msg,undo){ui.toast={msg,undo};clearTimeout(toastTimer);toastTimer=setTimeout(()=>{ui.toast=null;renderToastOnly()},5500);renderToastOnly()}
+const noticeQ=[];
+function nextToast(){ui.toast=null;if(noticeQ.length){const n=noticeQ.shift();showToast(n.msg,null,"notice")}else renderToastOnly()}
+function showToast(msg,undo,kind){ui.toast={msg,undo,kind};clearTimeout(toastTimer);toastTimer=setTimeout(nextToast,undo?6500:kind==="notice"?4500:3500);renderToastOnly()}
+function toast(msg,undo){showToast(msg,undo,"action")}
+function notify(msg){if(ui.kid)return;if(ui.toast&&ui.toast.undo){if(noticeQ.length<3)noticeQ.push({msg});return}showToast(msg,null,"notice")}
 
 function viewShift(){
  const rs=routines();
- if(!rs.length)return `<button class="linkish" data-tab="today">← Today</button><header class="top" style="margin-top:var(--s4)"><div><span class="eyebrow">Routines</span><h1>Closing shift</h1></div></header>${banners()}<div class="caught"><span class="big">No closing shift yet.</span><span class="muted">It's the short list the household runs before bed, each person with their own part.</span></div>${S.canWrite?`<div style="margin-top:var(--s4)"><button class="btn primary" data-mkclosing="1">Start a closing shift</button></div>`:""}`;
+ if(!rs.length)return `<button class="linkish" data-tab="today">← Today</button><header class="top" style="margin-top:var(--s4)"><div><span class="eyebrow">Routines</span><h1>Closing shift</h1></div></header>${systemNotices()}<div class="caught"><span class="big">No closing shift yet.</span><span class="muted">It's the short list the household runs before bed, each person with their own part.</span></div>${S.canWrite?`<div style="margin-top:var(--s4)"><button class="btn primary" data-mkclosing="1">Start a closing shift</button></div>`:""}`;
  if(!ui.routine||!D.routines[ui.routine])ui.routine=(rs.find(routineRunsTonight)||rs[0]).id;
  const r=D.routines[ui.routine],done=r.items.filter(i=>D.checks[checkId(r.id,i.id)]).length,all=r.items.length,closed=all&&done===all;
  const chips=rs.length>1?subnav("Routines",rs.map(x=>[x.id,esc(x.name)]),r.id,"routine"):"";
  if(ui.editShift)return viewShiftEdit(r);
  const me=myPid(),order=[...r.items].sort((a,b)=>(a.assignee===me?0:1)-(b.assignee===me?0:1));
  return `<button class="linkish" data-tab="today">← Today</button>
- <header class="top" style="margin-top:var(--s4)"><div><span class="eyebrow">${routineRunsTonight(r)?`Tonight · ${t12(r.time)}`:"Not scheduled tonight"}</span><h1>${closed?"Closed for the night":esc(r.name)}</h1></div>${S.canWrite?`<button class="btn small" data-editshift="1">Edit</button>`:""}</header>${banners()}
+ <header class="top" style="margin-top:var(--s4)"><div><span class="eyebrow">${routineRunsTonight(r)?`Tonight · ${t12(r.time)}`:"Not scheduled tonight"}</span><h1>${closed?"Closed for the night":esc(r.name)}</h1></div>${S.canWrite?`<button class="btn small" data-editshift="1">Edit</button>`:""}</header>${systemNotices()}
  ${chips}
  <div class="progress"><i style="width:${all?done/all*100:0}%"></i></div>
  <p class="note" style="margin-bottom:var(--s4)">${done} of ${all} done${closed?". Nice work, everyone.":""} · Resets at 4 AM</p>
@@ -2226,7 +2247,7 @@ function wxAlert(){
 }
 function liveNotice(a){
  if(ui.kid)return; // Kid view: no adult household notices
- const text=`${pName(a.actor||a.who)} ${a.text}`;toast(text);
+ const text=`${pName(a.actor||a.who)} ${a.text}`;notify(text);
  if(ME.notify&&document.hidden&&"Notification" in window&&Notification.permission==="granted"){try{navigator.serviceWorker?.ready.then(r=>r.showNotification("Upkeep",{body:text,icon:"/icon-192.png",tag:a.id})).catch(()=>{})}catch(e){}}
 }
 async function findPlace(q){
@@ -2362,7 +2383,7 @@ document.addEventListener("click",async e=>{
  const b=e.target.closest("button,label");if(!b)return;const ds=b.dataset;
  // Undo for deletes
  if(ds.del!=null&&ui.sheet&&ui.sheet.kind==="task"){const id=ui.sheet.id,copy=Object.assign({},D.tasks[id]);setTimeout(()=>toast(`Deleted “${copy.name}”`,()=>put("tasks",id,copy)),0);return}
- if(ds.gdel!=null&&ui.sheet&&ui.sheet.kind==="form"){const {col,id}=ui.sheet,copy=Object.assign({},D[col][id]);setTimeout(()=>toast("Deleted",()=>put(col,id,copy)),0);return}
+ if(ds.gdel!=null&&ui.sheet&&ui.sheet.kind==="form"){const {col,id}=ui.sheet,copy=Object.assign({},D[col][id]);setTimeout(()=>toast(`Deleted ${(copy.name||copy.what||copy.label||"it")}`,()=>put(col,id,copy)),0);return}
  if(ds.rotate){e.stopImmediatePropagation();if(ds.rotate==="1"){ui.confirmRotate=true;render();return}if(ds.rotate==="0"){ui.confirmRotate=false;render();return}
   try{await houseAction({rotate:true});ui.confirmRotate=false;toast("New invite link ready. The old one no longer works.")}catch(err){toast("Couldn't reset the link. Check your connection.")}render();return}
  if(ds.askrevoke){e.stopImmediatePropagation();ui.confirmRevoke=ds.askrevoke;render();return}

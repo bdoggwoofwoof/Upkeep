@@ -87,7 +87,7 @@ function wxAlert(){
 }
 function liveNotice(a){
  if(ui.kid)return; // Kid view: no adult household notices
- const text=`${pName(a.actor||a.who)} ${a.text}`;toast(text);
+ const text=`${pName(a.actor||a.who)} ${a.text}`;notify(text);
  if(ME.notify&&document.hidden&&"Notification" in window&&Notification.permission==="granted"){try{navigator.serviceWorker?.ready.then(r=>r.showNotification("Upkeep",{body:text,icon:"/icon-192.png",tag:a.id})).catch(()=>{})}catch(e){}}
 }
 async function findPlace(q){
@@ -223,7 +223,7 @@ document.addEventListener("click",async e=>{
  const b=e.target.closest("button,label");if(!b)return;const ds=b.dataset;
  // Undo for deletes
  if(ds.del!=null&&ui.sheet&&ui.sheet.kind==="task"){const id=ui.sheet.id,copy=Object.assign({},D.tasks[id]);setTimeout(()=>toast(`Deleted “${copy.name}”`,()=>put("tasks",id,copy)),0);return}
- if(ds.gdel!=null&&ui.sheet&&ui.sheet.kind==="form"){const {col,id}=ui.sheet,copy=Object.assign({},D[col][id]);setTimeout(()=>toast("Deleted",()=>put(col,id,copy)),0);return}
+ if(ds.gdel!=null&&ui.sheet&&ui.sheet.kind==="form"){const {col,id}=ui.sheet,copy=Object.assign({},D[col][id]);setTimeout(()=>toast(`Deleted ${(copy.name||copy.what||copy.label||"it")}`,()=>put(col,id,copy)),0);return}
  if(ds.rotate){e.stopImmediatePropagation();if(ds.rotate==="1"){ui.confirmRotate=true;render();return}if(ds.rotate==="0"){ui.confirmRotate=false;render();return}
   try{await houseAction({rotate:true});ui.confirmRotate=false;toast("New invite link ready. The old one no longer works.")}catch(err){toast("Couldn't reset the link. Check your connection.")}render();return}
  if(ds.askrevoke){e.stopImmediatePropagation();ui.confirmRevoke=ds.askrevoke;render();return}

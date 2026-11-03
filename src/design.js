@@ -146,7 +146,7 @@ function viewToday(){
  const notes=houseNotices();
  const extra=`${seasonRow()}${coming}${plan}${notes?`<section class="group"><div class="group-head"><h2>Reminders</h2></div><div class="notices">${notes}</div></section>`:""}${kids().length?`<p class="foot-link"><button class="linkish" data-kidview="1">Open Kid view</button></p>`:""}`;
  return `<header class="top today-head"><div class="ttl"><h1>Today</h1><span class="date">${new Date().toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"})}</span></div>${whoSeg()}</header>
- ${summary}${systemNotices()}${actionNotices()?`<div class="notices">${actionNotices()}</div>`:""}
+ ${systemNotices()}${summary}${actionNotices()?`<div class="notices">${actionNotices()}</div>`:""}
  <div class="today-grid">${top?`<div class="t-top">${top}</div>`:""}
  <div class="t-main">${caught}${listSection("Needs attention",late,{stamp:""})}${todayTasks(tod)}</div>
  <div class="t-side">${extra}</div></div>`;
@@ -311,7 +311,7 @@ function viewHome(){
 function viewMore2(){
  const tabs=[["lists","Shopping"],["money","Costs"],["cal","Calendar"],["settings","Settings"]];
  const body={lists:moreLists,money:moreMoney,cal:moreCal,settings:moreSettings}[ui.more]();
- return `<header class="top"><div class="ttl"><h1>${{lists:"Shopping",money:"Shared costs",cal:"Calendar",settings:"Settings"}[ui.more]}</h1></div></header>${banners()}${subnav("More",tabs,ui.more,"more")}${body}`;
+ return `<header class="top"><div class="ttl"><h1>${{lists:"Shopping",money:"Shared costs",cal:"Calendar",settings:"Settings"}[ui.more]}</h1></div></header>${systemNotices()}${subnav("More",tabs,ui.more,"more")}${body}`;
 }
 
 /* ---------- Interaction: completion moment, swipe, haptics, kid chime ---------- */
@@ -349,6 +349,7 @@ document.addEventListener("click",e=>{
  if(ds.claim&&b.closest(".acts")){e.stopImmediatePropagation();closeSwipe();claim(ds.claim);return}
  if(ds.actmore){e.stopImmediatePropagation();ui.actLimit=(ui.actLimit||25)+50;render();return}
  if(ds.more&&b.closest(".set-row")){e.stopImmediatePropagation();ui.more=ds.more;render();window.scrollTo(0,0);return}
+ if(ds.toastx){e.stopImmediatePropagation();clearTimeout(toastTimer);nextToast();return}
  if(ds.jump){e.stopImmediatePropagation();jumpTo(ds.jump);return}
  if(ds.sv){e.stopImmediatePropagation();ui.schedView=ds.sv;render();return}
  if(ds.hv2){e.stopImmediatePropagation();ui.homeView=ds.hv2;ui.q="";ui.roomOpen=null;render();window.scrollTo(0,0);if(ds.hv2!=="rooms")document.querySelector("h1")?.setAttribute("tabindex","-1"),document.querySelector("h1")?.focus({preventScroll:true});return}
@@ -381,21 +382,31 @@ document.addEventListener("pointerup",()=>{
 document.addEventListener("pointercancel",()=>{if(swipeState.el){swipeState.el.style.transform="";swipeState.el=null}});
 
 /* Background re-renders (sync, polling) must not rebuild an open sheet, or typed input is lost. */
-function toastHtml(){return ui.toast?`<div class="toast" role="status"><span>${esc(ui.toast.msg)}</span>${ui.toast.undo?'<button data-undo="1">Undo</button>':""}</div>`:""}
-function renderToastOnly(){layer.querySelectorAll(".toast").forEach(x=>x.remove());if(ui.toast)layer.insertAdjacentHTML("beforeend",toastHtml())}
+/* Feedback: one slot over the tab bar (top of the screen when a sheet or Kid view is open).
+   Undo has priority; notices about what others did wait their turn and never replace an Undo. */
+function toastHtml(){
+ const t=ui.toast;if(!t)return"";
+ const top=!!(ui.sheet||ui.kid||tabsEl.hidden);
+ return `<div class="toasts${top?" top":""}"><div class="toast${t.kind==="notice"?" notice":""}" role="status" aria-live="polite"><span>${esc(t.msg)}</span>${t.undo?'<button data-undo="1">Undo</button>':""}<button class="t-x" data-toastx="1" aria-label="Dismiss">${IC.x}</button></div></div>`;
+}
+function renderToastOnly(){layer.querySelectorAll(".toasts").forEach(x=>x.remove());if(ui.toast)layer.insertAdjacentHTML("beforeend",toastHtml())}
 function softLayer(){if(ui.sheet&&layer._sheet===ui.sheet&&layer.querySelector(".sheet")){renderToastOnly();return}renderLayer()}
-function toast(msg,undo){ui.toast={msg,undo};clearTimeout(toastTimer);toastTimer=setTimeout(()=>{ui.toast=null;renderToastOnly()},5500);renderToastOnly()}
+const noticeQ=[];
+function nextToast(){ui.toast=null;if(noticeQ.length){const n=noticeQ.shift();showToast(n.msg,null,"notice")}else renderToastOnly()}
+function showToast(msg,undo,kind){ui.toast={msg,undo,kind};clearTimeout(toastTimer);toastTimer=setTimeout(nextToast,undo?6500:kind==="notice"?4500:3500);renderToastOnly()}
+function toast(msg,undo){showToast(msg,undo,"action")}
+function notify(msg){if(ui.kid)return;if(ui.toast&&ui.toast.undo){if(noticeQ.length<3)noticeQ.push({msg});return}showToast(msg,null,"notice")}
 
 function viewShift(){
  const rs=routines();
- if(!rs.length)return `<button class="linkish" data-tab="today">← Today</button><header class="top" style="margin-top:var(--s4)"><div><span class="eyebrow">Routines</span><h1>Closing shift</h1></div></header>${banners()}<div class="caught"><span class="big">No closing shift yet.</span><span class="muted">It's the short list the household runs before bed, each person with their own part.</span></div>${S.canWrite?`<div style="margin-top:var(--s4)"><button class="btn primary" data-mkclosing="1">Start a closing shift</button></div>`:""}`;
+ if(!rs.length)return `<button class="linkish" data-tab="today">← Today</button><header class="top" style="margin-top:var(--s4)"><div><span class="eyebrow">Routines</span><h1>Closing shift</h1></div></header>${systemNotices()}<div class="caught"><span class="big">No closing shift yet.</span><span class="muted">It's the short list the household runs before bed, each person with their own part.</span></div>${S.canWrite?`<div style="margin-top:var(--s4)"><button class="btn primary" data-mkclosing="1">Start a closing shift</button></div>`:""}`;
  if(!ui.routine||!D.routines[ui.routine])ui.routine=(rs.find(routineRunsTonight)||rs[0]).id;
  const r=D.routines[ui.routine],done=r.items.filter(i=>D.checks[checkId(r.id,i.id)]).length,all=r.items.length,closed=all&&done===all;
  const chips=rs.length>1?subnav("Routines",rs.map(x=>[x.id,esc(x.name)]),r.id,"routine"):"";
  if(ui.editShift)return viewShiftEdit(r);
  const me=myPid(),order=[...r.items].sort((a,b)=>(a.assignee===me?0:1)-(b.assignee===me?0:1));
  return `<button class="linkish" data-tab="today">← Today</button>
- <header class="top" style="margin-top:var(--s4)"><div><span class="eyebrow">${routineRunsTonight(r)?`Tonight · ${t12(r.time)}`:"Not scheduled tonight"}</span><h1>${closed?"Closed for the night":esc(r.name)}</h1></div>${S.canWrite?`<button class="btn small" data-editshift="1">Edit</button>`:""}</header>${banners()}
+ <header class="top" style="margin-top:var(--s4)"><div><span class="eyebrow">${routineRunsTonight(r)?`Tonight · ${t12(r.time)}`:"Not scheduled tonight"}</span><h1>${closed?"Closed for the night":esc(r.name)}</h1></div>${S.canWrite?`<button class="btn small" data-editshift="1">Edit</button>`:""}</header>${systemNotices()}
  ${chips}
  <div class="progress"><i style="width:${all?done/all*100:0}%"></i></div>
  <p class="note" style="margin-bottom:var(--s4)">${done} of ${all} done${closed?". Nice work, everyone.":""} · Resets at 4 AM</p>

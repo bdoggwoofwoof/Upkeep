@@ -486,7 +486,7 @@ function profileForm(pr){
 }
 function viewSetup(){
  const pr=ui.setup||(ui.setup={home:"house",own:"own",closing:true});
- return `<header class="top"><div class="ttl"><h1>Set up your house</h1></div></header>${banners()}
+ return `<header class="top"><div class="ttl"><h1>Set up your house</h1></div></header>${systemNotices()}
  <p class="lede">Tell Upkeep a little about your home. It picks the tasks that fit and spaces them out, so you start with a handful each day and seasonal jobs show up when their season comes.</p>
  ${profileForm(pr)}
  <div class="set-list setup-shift"><label class="set-row"><span class="s-text"><span class="s-label">Closing shift</span><span class="s-sub">A short nightly list the household splits up: dishes, counters, doors, lights</span></span><input type="checkbox" class="sw" id="su-closing" ${pr.closing?"checked":""}></label></div>
@@ -592,7 +592,7 @@ function renderLayer(){
   <div><button class="btn primary" data-finish="1" ${s.busy?"disabled":""}>${s.busy?"Uploading…":"Complete task"}</button></div></div></div>`;
  }
  if(s&&s.kind==="form")h+=formSheet(s);
- if(ui.toast)h+=`<div class="toast" role="status"><span>${esc(ui.toast.msg)}</span>${ui.toast.undo?'<button data-undo="1">Undo</button>':""}</div>`;
+ h+=toastHtml();
  const prev=!!layer.querySelector(".sheet");layer.innerHTML=h;layer._sheet=ui.sheet;afterLayer(prev);
 }
 function readDraft(){
@@ -652,7 +652,7 @@ document.addEventListener("click",async e=>{
  if(ds.askdel){readDraft();ui.sheet.confirmDel=true;renderLayer();return}
  if(ds.nodel){readDraft();ui.sheet.confirmDel=false;renderLayer();return}
  if(ds.del){const id=ui.sheet.id;ui.sheet=null;remove("tasks",id);return}
- if(ds.undo){const u=ui.toast&&ui.toast.undo;ui.toast=null;if(u)u();renderLayer();return}
+ if(ds.undo){const u=ui.toast&&ui.toast.undo;clearTimeout(toastTimer);ui.toast=null;if(u)u();nextToast();return}
  if(ds.comment){const inp=document.getElementById("c-text");if(ui.sheet&&ui.sheet.kind==="task")readDraft();addComment(ds.comment,inp?inp.value:"",ds.label);return}
  // plan + timer
  if(ds.plan!=null){const m=+ds.plan;if(!m){ui.plan=null;timerPause();render();return}ui.plan={mins:m,ids:buildPlan(m)};const tot=ui.plan.ids.reduce((a,id)=>a+(D.tasks[id].mins|0),0);timerPause();timer.left=tot*60;render();return}

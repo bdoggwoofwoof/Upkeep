@@ -22,8 +22,9 @@ ${r('extra.css')}
 </head>
 <body>
 <div class="wrap" id="app">
-  <header class="top"><div><div class="eyebrow">Upkeep</div><h1>Opening your house…</h1></div></header>
-  <div class="empty">Loading your tasks.</div>
+  <header class="top"><div><h1>Upkeep</h1></div></header>
+  <p class="summary" role="status">Opening your house…</p>
+  <div class="skel"></div><div class="skel"></div><div class="skel"></div>
 </div>
 <nav class="tabs" id="tabs" hidden><div class="in"></div></nav>
 <div id="layer"></div>
