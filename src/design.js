@@ -10,6 +10,7 @@ const IC={
  tri:'<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1.5 11 10.5H1z" fill="currentColor"/></svg>',
  ring:'<svg viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>',
  tick:'<svg class="tk" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+ chevd:'<svg class="chevd" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>',
  chev:'<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>',
  x:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
  moon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 14.5A7.5 7.5 0 0 1 9.5 5a7.5 7.5 0 1 0 9.5 9.5z"/></svg>',
@@ -21,13 +22,13 @@ const IC={
 ui.tab=ui.tab==="family"?"household":ui.tab==="house"?"home":ui.tab;ui.homeView=ui.homeView||"rooms";ui.schedView=ui.schedView||"upcoming";if(!["lists","money","cal","settings"].includes(ui.more))ui.more="lists";
 
 function renderBase(){
- if(S.mode==="loading")return;
+ if(S.mode==="loading")return;app.className="wrap narrow";
  if(S.mode==="welcome"){tabsEl.hidden=true;app.innerHTML=viewWelcome();softLayer();return}
  if(!myPid()&&Object.keys(D.people).length){tabsEl.hidden=true;app.innerHTML=viewWhoAmI();softLayer();return}
  const empty=!(D.house&&D.house.setupDone)&&!tasks().length;
  if(empty){tabsEl.hidden=true;app.innerHTML=viewSetup();softLayer();return}
  if(ui.kid){tabsEl.hidden=true;app.innerHTML=viewKid();softLayer();return}
- tabsEl.hidden=false;renderTabs();
+ tabsEl.hidden=false;renderTabs();app.className="wrap "+(ui.tab==="today"||ui.tab==="home"?"wide":"narrow");
  const v={today:viewToday,shift:viewShift,schedule:viewSchedule,household:viewHousehold,home:viewHome,more:viewMore2}[ui.tab]||viewToday;
  app.innerHTML=v();softLayer();
 }
@@ -147,23 +148,71 @@ function viewToday(){
  <div class="t-main">${caught}${listSection("Needs attention",late,{stamp:""})}${todayTasks(tod)}</div>
  <div class="t-side">${extra}</div></div>`;
 }
+/* ---------- Shared: sub-navigation (changes the view) and folding groups ---------- */
+function subnav(label,items,cur,attr){
+ return `<nav class="subnav" aria-label="${esc(label)}">${items.map(([v,l])=>`<button data-${attr}="${v}" ${cur===v?'aria-current="page"':""}>${l}</button>`).join("")}</nav>`;
+}
+function fold(id,title,stamp,inner,defOpen,preview,cls=""){
+ const open=ui.folds&&id in ui.folds?ui.folds[id]:defOpen;
+ return `<details class="fold ${cls}" id="g-${id}" data-fold="${id}" ${open?"open":""}><summary><span class="f-head"><span class="f-title">${title}</span>${preview&&!open?`<span class="f-prev">${preview}</span>`:""}</span><span class="stamp">${stamp}</span>${IC.chevd}</summary><div class="f-body">${open?inner():""}</div></details>`;
+}
+const preview=l=>{const n=l.slice(0,2).map(t=>esc(t.name)).join(", ");return l.length>2?`${n} and ${l.length-2} more`:n};
+document.addEventListener("toggle",e=>{const d=e.target;if(d&&d.dataset&&d.dataset.fold){const prev=ui.folds&&ui.folds[d.dataset.fold];ui.folds=Object.assign({},ui.folds||{},{[d.dataset.fold]:d.open});if(!!prev!==d.open&&(d.open?!d.querySelector(".f-body").children.length:d.querySelector(".f-prev")===null)){const id=d.id;render();document.getElementById(id)?.querySelector("summary")?.focus({preventScroll:true})}}},true);
+function jumpTo(id){if(id!=="routines")ui.folds=Object.assign({},ui.folds||{},{[id]:true});render();const el=document.getElementById("g-"+id);if(el){el.scrollIntoView({block:"start",behavior:reduced()?"auto":"smooth"});el.querySelector("summary,h2")?.focus({preventScroll:true})}}
+
+/* ---------- Schedule: the next two weeks open, later months folded, seasons by season ---------- */
+const dayLabel=d=>{const n=daysBetween(today(),d);return n===1?"Tomorrow":parse(d).toLocaleDateString(undefined,{weekday:"long",month:"short",day:"numeric"})};
+function byDay(list,openFirst){
+ const g={};list.forEach(t=>(g[t.next]=g[t.next]||[]).push(t));
+ return Object.keys(g).sort().map((k,i)=>fold("d"+k,dayLabel(k),`${g[k].length} · ${fmtMins(g[k].reduce((a,t)=>a+(t.mins|0),0))}`,()=>`<div class="list">${g[k].map(t=>taskRow(t,{due:false})).join("")}</div>`,openFirst&&i===0,preview(g[k]),"day")).join("");
+}
+function routinesSection(){
+ const rs=routines();
+ const rows=rs.map(r=>{const done=r.items.filter(i=>D.checks[checkId(r.id,i.id)]).length,days=r.days||[0,1,2,3,4,5,6];
+  return `<button class="row link" data-openroutine="${r.id}"><span class="main"><span class="name">${esc(r.name)}</span><span class="meta"><span>${days.length===7?"Every night":days.map(d=>DAYS[d].slice(0,3)).join(", ")} at ${t12(r.time)}</span><span>${r.items.length} item${r.items.length===1?"":"s"}</span>${routineRunsTonight(r)?`<span>${done} of ${r.items.length} done tonight</span>`:""}</span></span>${IC.chev}</button>`}).join("");
+ return `<section class="group" id="g-routines"><div class="group-head"><h2>Routines</h2>${S.canWrite&&rs.length?`<button class="linkish" data-newroutine="1">New routine</button>`:""}</div>
+ ${rs.length?`<div class="list">${rows}</div>`:`<div class="empty"><strong>No routines yet.</strong>A closing shift is the short list everyone runs before bed.${S.canWrite?`<div class="btn-row"><button class="btn" data-mkclosing="1">Start a closing shift</button><button class="linkish" data-newroutine="1">New routine</button></div>`:""}</div>`}</section>`;
+}
 function viewSchedule(){
- const seg=`<div class="seg" role="group" aria-label="View">${[["upcoming","Upcoming"],["seasonal","Seasonal"],["routines","Routines"]].map(([v,l])=>`<button data-sv="${v}" aria-pressed="${ui.schedView===v}">${l}</button>`).join("")}</div>`;
- let body="";
+ if(ui.schedView==="routines")ui.schedView="upcoming";
+ const nav=subnav("Schedule views",[["upcoming","Upcoming"],["seasonal","By season"]],ui.schedView,"sv");
+ let body="",index=[];
  if(ui.schedView==="upcoming"){
-  const end=addDays(today(),30),ts=tasks().filter(t=>passWho(t)&&t.next<=end).sort((a,b)=>a.next.localeCompare(b.next));
-  const by={};ts.forEach(t=>{const d=t.next<today()?today():t.next;(by[d]=by[d]||[]).push(t)});
-  body=Object.keys(by).sort().map(d=>`<section class="group"><div class="group-head"><h2>${d===today()?"Today":nice(d)}</h2><span class="stamp">${by[d].reduce((a,t)=>a+(t.mins|0),0)} min</span></div><div class="list">${by[d].map(taskRow).join("")}</div></section>`).join("")||`<div class="empty"><strong>Nothing in the next 30 days.</strong>Add tasks from Home → Library.</div>`;
- }else if(ui.schedView==="seasonal"){
-  const months=[...Array(12)].map((_,i)=>{const d=new Date();d.setDate(1);d.setMonth(d.getMonth()+i);return{y:d.getFullYear(),m:d.getMonth()}});
-  const long=tasks().filter(t=>(t.months&&t.months.length)||t.unit==="year"||(t.unit==="month"&&t.every>=3));
-  body=seasonBlock()+`<p class="lede" style="margin-top:0">The bigger jobs, month by month: seasonal maintenance, yearly service and everything that only comes around a few times a year.</p>`+months.map(({y,m})=>{const list=long.filter(t=>{const d=parse(t.next);return d.getFullYear()===y&&d.getMonth()===m}).sort((a,b)=>a.next.localeCompare(b.next));
-   return list.length?`<section class="group"><div class="group-head"><h2>${new Date(y,m,1).toLocaleDateString(undefined,{month:"long",year:y!==new Date().getFullYear()?"numeric":undefined})}</h2><span class="stamp">${list.length} job${list.length>1?"s":""}</span></div><div class="list">${list.map(taskRow).join("")}</div></section>`:""}).join("");
+  const t0=today(),w1=addDays(t0,7),w2=addDays(t0,14),y1=addDays(t0,366);
+  const ts=tasks().filter(t=>passWho(t)&&t.next>t0&&t.next<=y1).sort((a,b)=>a.next.localeCompare(b.next)||a.name.localeCompare(b.name));
+  const wk=ts.filter(t=>t.next<=w1),nx=ts.filter(t=>t.next>w1&&t.next<=w2),later=ts.filter(t=>t.next>w2);
+  const mins=l=>fmtMins(l.reduce((a,t)=>a+(t.mins|0),0));
+  const months={};later.forEach(t=>{const k=t.next.slice(0,7);(months[k]=months[k]||[]).push(t)});
+  const thisMonth=t0.slice(0,7);
+  const mName=k=>{const [y,m]=k.split("-").map(Number),d=new Date(y,m-1,1);const n=d.toLocaleDateString(undefined,{month:"long",year:y!==new Date().getFullYear()?"numeric":undefined});return k===thisMonth?`Later in ${d.toLocaleDateString(undefined,{month:"long"})}`:n};
+  if(nx.length)index.push(["next","Week after"]);
+  Object.keys(months).sort().forEach(k=>{const [y,m]=k.split("-").map(Number);index.push(["m"+k,new Date(y,m-1,1).toLocaleDateString(undefined,{month:"short"})+(y!==new Date().getFullYear()?" ’"+String(y).slice(2):"")])});
+  index.push(["routines","Routines"]);
+  body=`${ts.length?`<p class="summary">Next 7 days: <b>${wk.length} task${wk.length===1?"":"s"}</b>, about ${mins(wk)}. Today's tasks are on Today.</p>`:""}
+  <nav class="jump" aria-label="Jump to"><span>Jump to</span>${index.map(([id,l])=>`<button data-jump="${id}">${esc(l)}</button>`).join("")}</nav>
+  ${wk.length?`<section class="group" id="g-week"><div class="group-head"><h2>Next 7 days</h2><span class="stamp">${wk.length} · ${mins(wk)}</span></div>${byDay(wk,true)}</section>`:""}
+  ${nx.length||Object.keys(months).length?`<section class="group"><div class="group-head"><h2>Later</h2></div>`:""}
+  ${nx.length?fold("next","The week after",`${nx.length} · ${mins(nx)}`,()=>`<div class="list">${nx.map(t=>taskRow(t)).join("")}</div>`,false,preview(nx)):""}
+  ${Object.keys(months).sort().map(k=>fold("m"+k,mName(k),`${months[k].length} task${months[k].length===1?"":"s"}`,()=>`<div class="list">${months[k].map(t=>taskRow(t)).join("")}</div>`,false,preview(months[k]))).join("")}
+  ${nx.length||Object.keys(months).length?`</section>`:""}
+  ${!ts.length?`<div class="empty"><strong>Nothing else on the schedule.</strong>Add tasks from Home → Library.</div>`:""}
+  ${routinesSection()}`;
  }else{
-  body=`<div class="list">${routines().map(r=>{const done=r.items.filter(i=>D.checks[checkId(r.id,i.id)]).length;return `<button class="row" data-openroutine="${r.id}"><span class="main"><span class="name">${esc(r.name)}</span><span class="meta"><span>${t12(r.time)}</span><span>${(r.days||[]).length===7?"Every day":(r.days||[]).map(d=>DAYS[d].slice(0,3)).join(", ")}</span><span>${r.items.length} items</span>${routineRunsTonight(r)?`<span>${done} of ${r.items.length} done tonight</span>`:""}</span></span><span class="linkish">Open</span></button>`}).join("")||`<div class="empty"><strong>No routines yet.</strong>A closing shift is the short list everyone runs before bed.</div>`}</div>
-  <div style="display:flex;gap:var(--s2);margin-top:var(--s4)">${routines().length?"":`<button class="btn primary" data-mkclosing="1">Start a closing shift</button>`}<button class="btn" data-newroutine="1">New routine</button></div>`;
+  const cur=seasonNow(),order=[...Array(4)].map((_,i)=>SEASONS[(SEASONS.findIndex(s=>s[0]===cur.name)+i)%4]);
+  const long=tasks().filter(t=>passWho(t)&&!(t.months&&t.months.length)&&(t.unit==="year"||(t.unit==="month"&&t.every>=3)));
+  const y1=addDays(today(),366);
+  body=`<p class="summary">Seasonal jobs and the bigger ones that come around once or a few times a year.</p>`+order.map(([name,ms],i)=>{
+   const list=tasks().filter(t=>passWho(t)&&t.months&&t.months.some(m=>ms.includes(m)));
+   const big=long.filter(t=>(i===0?t.next<=cur.end:t.next<=y1)&&ms.includes(parse(t.next).getMonth()+1));
+   const all=[...list,...big];if(!all.length)return"";
+   if(i===0){const st=seasonTasks();const left=st.left.filter(passWho),done=st.done.filter(passWho);
+    return `<section class="group" id="g-s${name}"><div class="group-head"><h2>${name} checklist</h2><span class="stamp">${done.length} of ${list.length} done</span></div><p class="more-note">This season runs through ${nice(cur.end)}.</p><span class="meter wide" aria-hidden="true"><i style="width:${list.length?done.length/list.length*100:0}%"></i></span>${left.length?`<div class="list">${left.sort((a,b)=>a.next.localeCompare(b.next)).map(t=>taskRow(t)).join("")}</div>`:`<p class="caught-line">The ${name.toLowerCase()} checklist is done.</p>`}
+    ${big.length?fold("sbig",`Other big jobs before ${nice(cur.end)}`,`${big.length}`,()=>`<div class="list">${big.sort((a,b)=>a.next.localeCompare(b.next)).map(t=>taskRow(t)).join("")}</div>`,false,preview(big)):""}
+    ${done.length?fold("sdone","Done this season",`${done.length}`,()=>`<div class="list">${done.map(t=>`<div class="row"><span class="main"><span class="name done-name">${esc(t.name)}</span><span class="meta"><span class="checked-by">${IC.tick}Done ${nice(t.lastDone)}${t.lastBy?" · "+esc(pShort(t.lastBy)):""}</span></span></span><span></span></div>`).join("")}</div>`,false):""}</section>${order.length>1?`<div class="group-head next-seasons"><h2>Later seasons</h2></div>`:""}`}
+   return fold("s"+name,name,`${all.length} task${all.length===1?"":"s"}`,()=>`<div class="list">${all.sort((a,b)=>a.next.localeCompare(b.next)).map(t=>taskRow(t)).join("")}</div>`,false,preview(all));
+  }).join("");
  }
- return `<header class="top"><div><span class="eyebrow">${tasks().length} recurring tasks</span><h1>Schedule</h1></div>${ui.schedView==="routines"?"":whoSeg()}</header>${seg}<div style="height:var(--s5)"></div>${body}`;
+ return `<header class="top"><div class="ttl"><h1>Schedule</h1><span class="date">${tasks().length} recurring tasks</span></div></header>${nav}${whoSeg()?`<div class="filter-row">${whoSeg()}</div>`:""}${body}`;
 }
 function viewHome(){
  const seg=`<div class="seg" role="group" aria-label="Section">${[["rooms","Rooms"],["library","Library"],["things","Appliances"],["pros","Contractors"],["info","Home info"]].map(([v,l])=>`<button data-hv2="${v}" aria-pressed="${ui.homeView===v}">${l}</button>`).join("")}</div>`;
@@ -230,6 +279,7 @@ document.addEventListener("click",e=>{
  if(ds.prepopen){e.stopImmediatePropagation();const a=wxAlert();ui.prepOpen=Object.assign({},ui.prepOpen||{},{[ds.prepopen]:!(ui.prepOpen&&ds.prepopen in ui.prepOpen?ui.prepOpen[ds.prepopen]:a&&a.day<=1)});render();return}
  if(ds.dismiss){e.stopImmediatePropagation();ME.dismissed=Object.assign({},ME.dismissed||{},{[ds.dismiss]:Date.now()});saveMe();return}
  if(ds.claim&&b.closest(".acts")){e.stopImmediatePropagation();closeSwipe();claim(ds.claim);return}
+ if(ds.jump){e.stopImmediatePropagation();jumpTo(ds.jump);return}
  if(ds.sv){e.stopImmediatePropagation();ui.schedView=ds.sv;render();return}
  if(ds.hv2){e.stopImmediatePropagation();ui.homeView=ds.hv2;ui.q="";ui.roomOpen=null;render();return}
  if(ds.roomopen!=null){e.stopImmediatePropagation();ui.roomOpen=ds.roomopen||null;render();window.scrollTo(0,0);return}
